@@ -9,12 +9,23 @@ import { bookData } from '@/data/books/crowded-bed-empty-throne';
 
 export default function ReaderHomePage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   // Load preferences
   useEffect(() => {
+    setMounted(true);
     const savedDarkMode = localStorage.getItem('reader-dark-mode');
     if (savedDarkMode !== null) setIsDarkMode(savedDarkMode === 'true');
   }, []);
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-onyx flex items-center justify-center">
+        <div className="text-gold animate-pulse">Loading your library...</div>
+      </div>
+    );
+  }
 
   // Save preferences
   useEffect(() => {
