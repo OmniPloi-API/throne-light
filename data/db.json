@@ -205,6 +205,24 @@
       "device": "Desktop",
       "id": "e13eb306-1815-491f-84fe-9130e30286b1",
       "createdAt": "2025-12-15T22:43:54.464Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:146.0) Gecko/20100101 Firefox/146.0",
+      "device": "Desktop",
+      "id": "94e560bd-e722-45c8-aa60-0656d423bc15",
+      "createdAt": "2025-12-23T19:25:46.625Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:146.0) Gecko/20100101 Firefox/146.0",
+      "device": "Desktop",
+      "id": "a789ddd8-63c5-45cd-b5f8-e7b7b0ff034a",
+      "createdAt": "2025-12-23T19:25:46.630Z"
     }
   ],
   "orders": [],

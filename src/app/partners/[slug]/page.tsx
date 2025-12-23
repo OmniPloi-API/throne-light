@@ -148,13 +148,14 @@ export default function BridgePage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="aspect-[3/4] bg-charcoal rounded-lg overflow-hidden shadow-2xl border border-gold/20">
+            <div className="relative aspect-[3/4] bg-charcoal rounded-lg overflow-hidden shadow-2xl border border-gold/20">
               <Image
                 src="/images/book-cover.jpg"
                 alt="The Crowded Bed & The Empty Throne by Eolles"
                 fill
                 className="object-cover"
                 priority
+                unoptimized
               />
             </div>
             {/* Discount Badge */}
