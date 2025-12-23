@@ -1,0 +1,215 @@
+{
+  "partners": [
+    {
+      "id": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "name": "Nate",
+      "email": "skynationlife@gmail.com",
+      "slug": "n",
+      "couponCode": "NATE20",
+      "amazonUrl": null,
+      "bookBabyUrl": null,
+      "commissionPercent": 20,
+      "clickBounty": 0.1,
+      "discountPercent": 20,
+      "createdAt": "2025-12-15T04:48:33.597Z",
+      "updatedAt": "2025-12-15T04:48:33.597Z"
+    },
+    {
+      "id": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "name": "Test1",
+      "email": "skywaynation@gmail.com",
+      "slug": "test20",
+      "couponCode": "TEST20",
+      "amazonUrl": null,
+      "bookBabyUrl": null,
+      "commissionPercent": 20,
+      "clickBounty": 0,
+      "discountPercent": 20,
+      "createdAt": "2025-12-15T04:58:02.047Z",
+      "updatedAt": "2025-12-15T04:58:02.047Z"
+    },
+    {
+      "id": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "name": "EOLLES",
+      "email": "OLIVIA@THRONELIGHTPUBLISHING.COM",
+      "slug": "eolles50",
+      "couponCode": "NATE50",
+      "amazonUrl": null,
+      "bookBabyUrl": null,
+      "commissionPercent": 20,
+      "clickBounty": 0.1,
+      "discountPercent": 10,
+      "createdAt": "2025-12-15T22:31:31.084Z",
+      "updatedAt": "2025-12-15T22:31:31.084Z"
+    }
+  ],
+  "events": [
+    {
+      "partnerId": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "dd5fc996-e368-4551-a505-4c804daa7806",
+      "createdAt": "2025-12-15T04:49:17.060Z"
+    },
+    {
+      "partnerId": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "217cd7f2-5d70-4dc0-9746-7c5b7488a75e",
+      "createdAt": "2025-12-15T04:49:17.076Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "0b5e4b35-390b-44ed-9a9b-3557f5d038e8",
+      "createdAt": "2025-12-15T04:59:21.952Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "b88908c5-f4a3-4a66-93a6-ff1812a5a6f8",
+      "createdAt": "2025-12-15T04:59:22.020Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "CLICK_DIRECT",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "8feb95fa-25b7-4138-bd5f-536524df95b3",
+      "createdAt": "2025-12-15T05:10:47.189Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "f74d2552-d60b-4d06-9c54-01fff3a528a8",
+      "createdAt": "2025-12-15T22:31:48.279Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0",
+      "device": "Desktop",
+      "id": "792ae5dd-3c2e-4a81-8f4b-1e8ad46b37f7",
+      "createdAt": "2025-12-15T22:31:48.281Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "c355bc31-4cdd-4ae0-8d3e-4055edcea847",
+      "createdAt": "2025-12-15T22:38:16.816Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "5c15dca4-5337-4304-8f82-83fc9b8ca661",
+      "createdAt": "2025-12-15T22:38:16.987Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "073a8a3d-fdc0-44e3-9778-6fd81cef4644",
+      "createdAt": "2025-12-15T22:39:15.890Z"
+    },
+    {
+      "partnerId": "76464514-1b8f-4cb7-b728-10080b346b03",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "ae8f7197-ea8c-4284-a664-f7106e87a284",
+      "createdAt": "2025-12-15T22:39:16.036Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "3fa959e5-673d-4ce5-82a1-5ddd8bf86795",
+      "createdAt": "2025-12-15T22:41:10.628Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "a584fb01-8eb8-4136-a989-2088899d694b",
+      "createdAt": "2025-12-15T22:41:10.705Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "d6423cca-d54b-4dc2-9382-2d5f76c17afd",
+      "createdAt": "2025-12-15T22:42:59.463Z"
+    },
+    {
+      "partnerId": "4e1674c3-1608-4cba-b5a9-8a064d1eb764",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "7ea5ba61-0755-4712-9611-d7e43470b60e",
+      "createdAt": "2025-12-15T22:42:59.558Z"
+    },
+    {
+      "partnerId": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "f5f703d4-cf05-4100-9b2f-c3140cb07153",
+      "createdAt": "2025-12-15T22:43:11.111Z"
+    },
+    {
+      "partnerId": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "type": "PAGE_VIEW",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "9a496093-3b5a-4682-82cc-7a883fcd5516",
+      "createdAt": "2025-12-15T22:43:11.163Z"
+    },
+    {
+      "partnerId": "fa1cb851-3f22-42e4-a0a2-0a1e1b9087fe",
+      "type": "CLICK_DIRECT",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "device": "Desktop",
+      "id": "e13eb306-1815-491f-84fe-9130e30286b1",
+      "createdAt": "2025-12-15T22:43:54.464Z"
+    }
+  ],
+  "orders": [],
+  "payouts": [],
+  "users": [],
+  "books": [],
+  "libraryAccess": []
+}

@@ -1,0 +1,215 @@
+// Throne Light Publishing - Partner & Admin Platform
+// Database Schema for Hybrid Bridge Architecture
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------
+// 1. ADMIN USERS (Staff)
+// ---------------------------------------------------------
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      String   @default("SUPER_ADMIN")
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------
+// 2. PARTNERS (Influencers)
+// ---------------------------------------------------------
+model Partner {
+  id                  String   @id @default(uuid())
+  name                String
+  email               String   @unique
+  password            String?
+  
+  // Marketing Assets
+  slug                String   @unique
+  couponCode          String   @unique
+  
+  // External Links
+  amazonUrl           String?
+  bookBabyUrl         String?
+  
+  // Financial Settings (Hybrid Logic)
+  commissionPercent   Decimal  @default(20.0)
+  clickBounty         Decimal  @default(0.10)
+  discountPercent     Decimal  @default(20.0)
+  
+  // Relations
+  events              TrackingEvent[]
+  orders              Order[]
+  payouts             Payout[]
+  bonusClaims         BonusClaim[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// 3. TRACKING EVENTS (Bridge Page Analytics)
+// ---------------------------------------------------------
+model TrackingEvent {
+  id        String    @id @default(uuid())
+  
+  partner   Partner   @relation(fields: [partnerId], references: [id])
+  partnerId String
+  
+  type      EventType
+  
+  ipAddress String?
+  userAgent String?
+  country   String?
+  city      String?
+  device    String?
+  
+  createdAt DateTime  @default(now())
+}
+
+// ---------------------------------------------------------
+// 4. ORDERS (Direct Sales via Stripe)
+// ---------------------------------------------------------
+model Order {
+  id               String      @id @default(uuid())
+  
+  partner          Partner?    @relation(fields: [partnerId], references: [id])
+  partnerId        String?
+  
+  stripeSessionId  String      @unique
+  totalAmount      Decimal
+  commissionEarned Decimal
+  
+  customerEmail    String?
+  status           OrderStatus @default(COMPLETED)
+  createdAt        DateTime    @default(now())
+}
+
+// ---------------------------------------------------------
+// 5. BONUS CLAIMS (Amazon Receipt Workaround)
+// ---------------------------------------------------------
+model BonusClaim {
+  id            String      @id @default(uuid())
+  partner       Partner     @relation(fields: [partnerId], references: [id])
+  partnerId     String
+  
+  customerEmail String
+  receiptImage  String?
+  orderNumber   String?
+  status        ClaimStatus @default(PENDING)
+  amount        Decimal?
+  
+  createdAt     DateTime    @default(now())
+  reviewedAt    DateTime?
+}
+
+// ---------------------------------------------------------
+// 6. PAYOUTS (Paying Influencers)
+// ---------------------------------------------------------
+model Payout {
+  id          String       @id @default(uuid())
+  partner     Partner      @relation(fields: [partnerId], references: [id])
+  partnerId   String
+  
+  amount      Decimal
+  status      PayoutStatus @default(PROCESSING)
+  
+  periodStart DateTime
+  periodEnd   DateTime
+  
+  paidAt      DateTime?
+  createdAt   DateTime     @default(now())
+}
+
+// ---------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------
+enum EventType {
+  PAGE_VIEW
+  CLICK_AMAZON
+  CLICK_BOOKBABY
+  CLICK_DIRECT
+}
+
+enum OrderStatus {
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayoutStatus {
+  PROCESSING
+  PAID
+  FAILED
+}
+
+// ---------------------------------------------------------
+// 7. USER (Customers who purchase digital books)
+// ---------------------------------------------------------
+model User {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  password           String   // Hashed with bcrypt
+  name               String?
+  
+  // SECURITY: "One Device" Session Enforcement
+  activeSessionToken String?  // Current valid session token (login elsewhere invalidates)
+  
+  // Relations
+  library            LibraryAccess[]
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// 8. DIGITAL BOOK (Products for sale)
+// ---------------------------------------------------------
+model DigitalBook {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String?
+  author      String   @default("Eolles")
+  description String?
+  coverImage  String   // URL to cover image
+  fileUrl     String   // URL to secure .epub file (Private S3/Blob)
+  price       Decimal
+  isActive    Boolean  @default(true)
+  
+  // Relations
+  accessGrants LibraryAccess[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// 9. LIBRARY ACCESS (User owns which books)
+// ---------------------------------------------------------
+model LibraryAccess {
+  id        String      @id @default(uuid())
+  
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+  
+  book      DigitalBook @relation(fields: [bookId], references: [id])
+  bookId    String
+  
+  // Track how they got access
+  orderId   String?     // Link to Order if purchased
+  grantedAt DateTime    @default(now())
+  
+  @@unique([userId, bookId]) // One copy per user
+}

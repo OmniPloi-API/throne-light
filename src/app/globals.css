@@ -1,0 +1,250 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== THRONE LIGHT DESIGN SYSTEM ===== */
+
+:root {
+  /* The Sacred Palette */
+  --onyx: #0a0a0a;
+  --charcoal: #2a2a2a;
+  --slate: #3a3a3a;
+  --parchment: #f5f0e8;
+  --cream: #f8f4ec;
+  --gold: #c9a961;
+  --gold-light: #d4b87a;
+  --gold-dark: #b8944a;
+  
+  /* Author Page - Heavenly Ivory */
+  --ivory: #fffef9;
+  --ivory-soft: #fdfbf5;
+  --ivory-warm: #f9f6ef;
+  
+  /* Publisher Page - Manuscript Beige/Gold */
+  --manuscript: #e8dcc8;
+  --manuscript-light: #f5f0e6;
+  --manuscript-warm: #dccfb5;
+  
+  /* Scroll Physics */
+  --scroll-behavior: smooth;
+  --transition-throne: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth Scrolling - "Heavy" Physics */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  background: var(--onyx);
+  color: var(--parchment);
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ===== TYPOGRAPHY HIERARCHY ===== */
+
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  
+  h1 {
+    font-size: clamp(2.5rem, 8vw, 6rem);
+  }
+  
+  h2 {
+    font-size: clamp(1.75rem, 5vw, 3.5rem);
+  }
+  
+  h3 {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+  
+  p {
+    font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* ===== CUSTOM COMPONENTS ===== */
+
+@layer components {
+  /* Royal Button - Gold Border */
+  .btn-royal {
+    @apply relative inline-flex items-center justify-center px-8 py-4;
+    @apply border border-gold text-gold bg-transparent;
+    @apply font-sans text-sm uppercase tracking-[0.2em];
+    @apply transition-all duration-500 ease-throne;
+    @apply hover:bg-gold hover:text-onyx;
+    @apply focus:outline-none focus:ring-2 focus:ring-gold/50 focus:ring-offset-2 focus:ring-offset-onyx;
+  }
+  
+  .btn-royal::before {
+    content: '';
+    @apply absolute inset-0 border border-gold opacity-0;
+    @apply transition-all duration-500;
+    transform: scale(1.1);
+  }
+  
+  .btn-royal:hover::before {
+    @apply opacity-100;
+    transform: scale(1);
+  }
+  
+  /* Sovereign Button - Filled Gold */
+  .btn-sovereign {
+    @apply relative inline-flex items-center justify-center px-8 py-4;
+    @apply bg-gold text-onyx;
+    @apply font-sans text-sm uppercase tracking-[0.2em] font-medium;
+    @apply transition-all duration-500 ease-throne;
+    @apply hover:bg-gold-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-gold/50 focus:ring-offset-2 focus:ring-offset-onyx;
+  }
+  
+  /* Section Container */
+  .section-altar {
+    @apply relative min-h-screen flex flex-col justify-center;
+    @apply px-6 py-24 md:px-12 lg:px-24;
+  }
+  
+  /* Pull Quote Style */
+  .pull-quote {
+    @apply text-2xl md:text-4xl lg:text-5xl font-serif text-center;
+    @apply text-gold italic;
+    @apply max-w-4xl mx-auto;
+    @apply border-l-2 border-gold pl-8 md:border-l-0 md:pl-0;
+    @apply md:border-y md:border-gold/30 md:py-12;
+  }
+  
+  /* Text Reveal Animation */
+  .text-reveal {
+    @apply opacity-0;
+    animation: textReveal 1.2s ease-out forwards;
+    animation-play-state: paused;
+  }
+  
+  .text-reveal.animate {
+    animation-play-state: running;
+  }
+  
+  /* Unblur on scroll */
+  .unblur-scroll {
+    filter: blur(8px);
+    opacity: 0;
+    transition: filter 1s ease-out, opacity 1s ease-out;
+  }
+  
+  .unblur-scroll.revealed {
+    filter: blur(0);
+    opacity: 1;
+  }
+  
+  /* Gradient Text */
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold-300 via-gold to-gold-300;
+    @apply bg-clip-text text-transparent;
+  }
+  
+  /* Divider */
+  .divider-throne {
+    @apply w-24 h-px bg-gradient-to-r from-transparent via-gold to-transparent mx-auto;
+  }
+  
+  /* Crown Icon (SVG replacement for stars) */
+  .crown-rating {
+    @apply flex gap-1 text-gold;
+  }
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--onyx);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-light);
+}
+
+/* ===== SELECTION ===== */
+
+::selection {
+  background: var(--gold);
+  color: var(--onyx);
+}
+
+/* ===== PARTICLE EFFECTS ===== */
+
+.particles-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float 8s ease-in-out infinite;
+}
+
+/* ===== NOISE TEXTURE OVERLAY ===== */
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ===== UTILITIES ===== */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .ease-throne {
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-800 { animation-delay: 800ms; }
+  
+  /* For sticky scroll sections */
+  .sticky-section {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+  }
+}
