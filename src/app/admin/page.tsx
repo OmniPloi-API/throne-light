@@ -58,6 +58,7 @@ interface Stats {
 
 export default function AdminPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [events, setEvents] = useState<TrackingEvent[]>([]);
@@ -68,8 +69,14 @@ export default function AdminPage() {
   const [showAccessCode, setShowAccessCode] = useState(false);
   const [createdPartner, setCreatedPartner] = useState<any>(null);
 
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Check authentication on mount
   useEffect(() => {
+    if (!mounted) return;
     async function checkAuth() {
       try {
         const res = await fetch('/api/admin/auth');
@@ -84,7 +91,7 @@ export default function AdminPage() {
       }
     }
     checkAuth();
-  }, [router]);
+  }, [router, mounted]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
@@ -143,8 +150,8 @@ export default function AdminPage() {
     return sum + ((partnerAmazonClicks + partnerBookBabyClicks) * p.clickBounty);
   }, 0);
 
-  // Show loading while checking auth
-  if (isAuthenticated === null) {
+  // Show loading while checking auth or before mount (prevents hydration mismatch)
+  if (!mounted || isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
@@ -152,17 +159,21 @@ export default function AdminPage() {
     );
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading…</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+      <Loader2 className="w-8 h-8 animate-spin text-gold" />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Header */}
       <header className="border-b border-[#222] px-8 py-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Command Center</h1>
-            <p className="text-gray-400 text-sm mt-1">Throne Light Publishing – Hybrid Tracking Dashboard</p>
-          </div>
+        <div className="flex flex-col items-center mb-4">
+          <h1 className="text-3xl font-bold text-gold">Admin Command Center</h1>
+          <p className="text-gray-400 text-sm mt-1">Throne Light Publishing – Hybrid Tracking Dashboard</p>
+        </div>
+        <div className="flex justify-center">
           <div className="flex gap-3">
             <Link href="/admin/support" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
               Support Tickets
@@ -458,6 +469,17 @@ function CreatePartnerForm({ onCreated, onPartnerCreated }: {
       setCouponCode(name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) + '20');
     }
   }, [name]);
+
+  // Auto-set commission and click bounty to 0 for flat fee partners
+  useEffect(() => {
+    if (partnerType === 'FLAT_FEE') {
+      setCommissionPercent(0);
+      setClickBounty(0);
+    } else {
+      setCommissionPercent(20);
+      setClickBounty(0.10);
+    }
+  }, [partnerType]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
