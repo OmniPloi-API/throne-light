@@ -4,7 +4,7 @@ import { getPartnerById, readDb } from '@/lib/db';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
-const DEFAULT_BOOK_PRICE = 9.99; // Digital book price
+const DEFAULT_BOOK_PRICE = 29.99; // Digital book price
 const DEFAULT_BOOK_NAME = 'The Crowded Bed & The Empty Throne';
 
 export async function POST(req: NextRequest) {

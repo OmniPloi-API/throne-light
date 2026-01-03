@@ -27,10 +27,32 @@ function CheckoutContent() {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [partnerLoading, setPartnerLoading] = useState(!!partnerId);
 
   const BOOK_PRICE = 29.99; // Digital book price
-  const discountPercent = couponCode ? 20 : 0; // Default 20% for partner codes
   const finalPrice = BOOK_PRICE * (1 - discountPercent / 100);
+
+  // Fetch partner's actual discount percentage
+  useEffect(() => {
+    async function fetchPartnerDiscount() {
+      if (!partnerId) {
+        setPartnerLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/partners/${partnerId}`);
+        if (res.ok) {
+          const partner = await res.json();
+          setDiscountPercent(partner.discountPercent || 0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch partner discount:', err);
+      }
+      setPartnerLoading(false);
+    }
+    fetchPartnerDiscount();
+  }, [partnerId]);
 
   async function handleCheckout() {
     setLoading(true);
@@ -74,10 +96,10 @@ function CheckoutContent() {
             <span>${BOOK_PRICE.toFixed(2)}</span>
           </div>
           
-          {couponCode && (
+          {discountPercent > 0 && (
             <div className="flex justify-between items-center py-3 border-b border-gray-700 text-green-400">
               <div>
-                <span>Discount ({couponCode})</span>
+                <span>Discount ({couponCode || `${discountPercent}% off`})</span>
               </div>
               <span>-${(BOOK_PRICE * discountPercent / 100).toFixed(2)}</span>
             </div>
@@ -105,15 +127,15 @@ function CheckoutContent() {
         {/* Checkout Button */}
         <button
           onClick={handleCheckout}
-          disabled={loading}
+          disabled={loading || partnerLoading}
           className="w-full bg-gold hover:bg-gold/90 text-onyx font-bold py-4 px-6 rounded-lg 
                    flex items-center justify-center gap-3 transition-all duration-300
                    disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? (
+          {loading || partnerLoading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Processing...</span>
+              <span>{partnerLoading ? 'Loading...' : 'Processing...'}</span>
             </>
           ) : (
             <>
