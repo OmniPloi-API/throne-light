@@ -432,8 +432,8 @@ const dictionaries: Record<Language, Dictionary> = {
       slogan: 'Sovereignty in every word.',
     },
     footer: {
-      taglinePart1: "We do not distribute books.",
-      taglinePart2: "We distribute purpose.",
+      taglinePart1: "We don't distribute books.",
+      taglinePart2: "We share light.",
       constellation: "The Constellation",
       connect: "Connect",
       rights: "Throne Light Publishing LLC. All Rights Reserved.",
