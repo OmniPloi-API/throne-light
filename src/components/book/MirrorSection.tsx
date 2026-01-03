@@ -58,11 +58,11 @@ export default function MirrorSection() {
     >
       {/* Section header */}
       <div className="absolute top-16 left-0 right-0 text-center">
-        <AnimatedSection animation="fadeIn" delay={200}>
+        <DivineReveal delay={200}>
           <span className="text-gold-600/60 text-xs uppercase tracking-[0.3em] font-sans">
             {dict.mirror.label}
           </span>
-        </AnimatedSection>
+        </DivineReveal>
       </div>
 
       <div className="max-w-6xl mx-auto px-6">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -38,7 +39,7 @@ export default function RemnantSection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as const }}
         >
           <motion.div
             animate={{ 
@@ -48,7 +49,8 @@ export default function RemnantSection() {
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             className="text-gold text-5xl mb-8"
           >
-            ♛
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/THRONELIGHT-CROWN.png" alt="Crown" width="64" height="64" className="w-16 h-16 mx-auto" style={{ display: 'block' }} />
           </motion.div>
         </motion.div>
 
@@ -138,7 +140,7 @@ export default function RemnantSection() {
                   transition={{ type: 'spring', delay: 0.2 }}
                   className="text-gold text-4xl mb-4"
                 >
-                  ♛
+                  <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12" />
                 </motion.div>
                 <h3 className="font-serif text-2xl text-gold-600 mb-2">
                   {dict.remnant.successTitle}

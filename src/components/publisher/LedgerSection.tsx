@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { Mail, Instagram, Youtube, Twitter, Facebook } from 'lucide-react';
 import { getCopyrightYear } from '@/lib/copyright';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
+import PurchaseModal from '@/components/book/PurchaseModal';
 
 const SnapchatIcon = ({ className }: { className?: string }) => (
   <svg
@@ -32,8 +35,11 @@ const socialLinks = [
 export default function LedgerSection() {
   const { language } = useLanguage();
   const dict = getDictionary(language);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
 
   return (
+    <>
+      <PurchaseModal isOpen={isPurchaseModalOpen} onClose={() => setIsPurchaseModalOpen(false)} />
     <section className="relative bg-onyx py-24 md:py-32 border-t border-gold/10">
       {/* Subtle gold accent at top */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
@@ -98,14 +104,12 @@ export default function LedgerSection() {
             {dict.ledger.links.author}
           </Link>
           <span className="hidden md:block text-parchment/20">•</span>
-          <a 
-            href="https://a.co/d/iCOaWms"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button 
+            onClick={() => setIsPurchaseModalOpen(true)}
             className="text-parchment/50 hover:text-gold transition-colors duration-300"
           >
             {dict.ledger.links.amazon}
-          </a>
+          </button>
         </motion.div>
 
         {/* Social Links */}
@@ -132,18 +136,15 @@ export default function LedgerSection() {
         </motion.div>
 
         {/* Publisher Seal */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-12"
-        >
-          <div className="inline-block">
-            <div className="text-gold text-3xl mb-2">♛</div>
-            <p className="font-serif text-gold text-lg">Throne Light Publishing</p>
-          </div>
-        </motion.div>
+        <div className="text-center mb-12">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/images/THRONELIGHT-LOGO.png" 
+            alt="Throne Light Publishing" 
+            width="150"
+            height="150"
+          />
+        </div>
 
         {/* Copyright */}
         <motion.div
@@ -156,11 +157,27 @@ export default function LedgerSection() {
           <p className="text-parchment/30 text-sm mb-2">
             © {getCopyrightYear()} {dict.ledger.copyright}
           </p>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <Link 
+              href="/privacy" 
+              className="text-parchment/30 text-xs hover:text-gold transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-parchment/20">•</span>
+            <Link 
+              href="/terms" 
+              className="text-parchment/30 text-xs hover:text-gold transition-colors"
+            >
+              Terms of Service
+            </Link>
+          </div>
           <p className="text-parchment/20 text-xs italic">
             {dict.ledger.slogan}
           </p>
         </motion.div>
       </div>
     </section>
+    </>
   );
 }

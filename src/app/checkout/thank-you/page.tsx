@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Crown, Download, Smartphone, Share, Plus, CheckCircle } from 'lucide-react';
+import { Download, Smartphone, Share, Plus, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function ThankYouPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -53,7 +54,7 @@ export default function ThankYouPage() {
     <div className="min-h-screen bg-gradient-to-b from-onyx to-charcoal text-parchment flex flex-col">
       {/* Header */}
       <header className="py-8 px-4 text-center">
-        <Crown className="w-16 h-16 text-gold mx-auto mb-4" />
+        <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={64} height={64} className="w-16 h-16 mx-auto mb-4" />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome to the Kingdom</h1>
         <p className="text-gray-400">Your purchase was successful</p>
       </header>

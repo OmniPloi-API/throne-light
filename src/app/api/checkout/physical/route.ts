@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     //           description: 'Premium paperback delivered to your throne',
     //           images: ['https://yourdomain.com/images/book-cover.jpg'],
     //         },
-    //         unit_amount: 3599, // $35.99 in cents (10% off $39.99)
+    //         unit_amount: 3499, // $34.99 in cents
     //       },
     //       quantity: 1,
     //     },

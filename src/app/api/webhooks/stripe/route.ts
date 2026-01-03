@@ -42,14 +42,29 @@ export async function POST(req: NextRequest) {
         if (partner) {
           commissionEarned = (totalAmount * partner.commissionPercent) / 100;
           
-          // Also record the CLICK_DIRECT event if not already recorded
+          // Convert PENDING_SALE to SALE or create new SALE event
           const db = readDb();
-          db.events.push({
-            id: crypto.randomUUID(),
-            partnerId,
-            type: 'CLICK_DIRECT',
-            createdAt: new Date().toISOString(),
-          });
+          const pendingSaleEvent = db.events.find(e => 
+            e.partnerId === partnerId && 
+            e.type === 'PENDING_SALE' &&
+            // Find the most recent pending sale (within last hour)
+            new Date(e.createdAt).getTime() > Date.now() - (60 * 60 * 1000)
+          );
+          
+          if (pendingSaleEvent) {
+            // Convert pending to sale
+            pendingSaleEvent.type = 'SALE';
+            console.log(`Converted pending sale to actual sale for partner ${partnerId}`);
+          } else {
+            // Create new sale event
+            db.events.push({
+              id: crypto.randomUUID(),
+              partnerId,
+              type: 'SALE',
+              createdAt: new Date().toISOString(),
+            });
+            console.log(`Created new sale event for partner ${partnerId}`);
+          }
           writeDb(db);
         }
       }
@@ -57,16 +72,26 @@ export async function POST(req: NextRequest) {
       // Create order record (idempotent via stripeSessionId unique constraint)
       let orderId: string | undefined;
       try {
+        // Calculate maturity date (16 days from now)
+        const maturityDate = new Date();
+        maturityDate.setDate(maturityDate.getDate() + 16);
+        
         const order = createOrder({
           partnerId: partnerId || undefined,
           stripeSessionId: session.id,
+          stripeChargeId: session.payment_intent as string || undefined,
+          stripePaymentIntentId: session.payment_intent as string || undefined,
           totalAmount,
           commissionEarned,
           customerEmail,
+          customerName: session.customer_details?.name || undefined,
           status: 'COMPLETED',
+          maturityDate: maturityDate.toISOString(),
+          isMatured: false,
+          refundStatus: 'NONE',
         });
         orderId = order.id;
-        console.log(`Order recorded: $${totalAmount}, commission: $${commissionEarned}`);
+        console.log(`Order recorded: $${totalAmount}, commission: $${commissionEarned}, matures: ${maturityDate.toDateString()}`);
       } catch (dbError) {
         // Likely duplicate - Stripe may send webhook twice
         console.log('Order may already exist (duplicate webhook)');
@@ -126,11 +151,34 @@ export async function POST(req: NextRequest) {
       const db = readDb();
       
       // Find and update the order status
-      const order = db.orders.find((o) => o.stripeSessionId === charge.payment_intent);
+      const order = db.orders.find((o) => 
+        o.stripeSessionId === charge.payment_intent || 
+        o.stripePaymentIntentId === charge.payment_intent
+      );
       if (order) {
         order.status = 'REFUNDED';
+        order.refundStatus = 'APPROVED';
+        order.refundApprovedAt = new Date().toISOString();
         writeDb(db);
         console.log(`Order ${order.id} marked as refunded`);
+      }
+    }
+    
+    // Handle disputes (chargebacks)
+    if (event.type === 'charge.dispute.created') {
+      const dispute = event.data.object as Stripe.Dispute;
+      const db = readDb();
+      
+      // Find and flag the order as disputed
+      const order = db.orders.find((o) => 
+        o.stripeChargeId === dispute.charge ||
+        o.stripePaymentIntentId === dispute.payment_intent
+      );
+      if (order) {
+        order.refundStatus = 'DISPUTED';
+        writeDb(db);
+        console.log(`Order ${order.id} flagged as DISPUTED - chargeback detected`);
+        // TODO: Send admin notification
       }
     }
     

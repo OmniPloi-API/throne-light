@@ -1,10 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ShoppingBag, CreditCard, Shield, Loader2 } from 'lucide-react';
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+function CheckoutLoading() {
+  return (
+    <div className="min-h-screen bg-onyx text-parchment flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-gold" />
+    </div>
+  );
+}
+
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const partnerId = searchParams.get('partner');
   const couponCode = searchParams.get('code');

@@ -3,6 +3,8 @@ import { Playfair_Display, Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { AudioToggle } from "@/components/shared";
 import { LanguageProvider } from "@/components/shared/LanguageProvider";
+import { ModalProvider } from "@/components/shared/GlobalModal";
+import ServiceWorkerRegistration from "@/components/reader/ServiceWorkerRegistration";
 
 // Sharp, high-end Serif for headers
 const playfair = Playfair_Display({
@@ -53,18 +55,21 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Throne Light" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="/images/Light-of-Eolles-Crown.png" />
       </head>
       <body
         className={`${playfair.variable} ${inter.variable} ${cormorant.variable} antialiased bg-onyx text-parchment`}
       >
         {/* Noise texture overlay for premium feel */}
         <div className="noise-overlay" aria-hidden="true" />
-        <LanguageProvider>
-          {children}
-          {/* Global audio control so soundtrack persists across pages */}
-          <AudioToggle />
-        </LanguageProvider>
+        <ServiceWorkerRegistration />
+        <ModalProvider>
+          <LanguageProvider>
+            {children}
+            {/* Global audio control so soundtrack persists across pages */}
+            <AudioToggle />
+          </LanguageProvider>
+        </ModalProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -45,10 +46,15 @@ export default function FoundationSection() {
               className="absolute -inset-8 border border-gold/20 rounded-full"
             />
             {/* Inner seal */}
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-b from-charcoal to-onyx border-2 border-gold/50 flex items-center justify-center shadow-2xl shadow-gold/30">
-              <div className="text-center">
-                <span className="text-gold text-3xl md:text-4xl block">♛</span>
-                <span className="text-gold/60 text-[8px] uppercase tracking-[0.3em] mt-1 block">Est. 2025</span>
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-b from-charcoal to-onyx border-2 border-gold/50 flex items-center justify-center shadow-2xl shadow-gold/30 p-3">
+              <div className="text-center flex flex-col items-center justify-center w-full h-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/images/THRONELIGHT-LOGO.png" 
+                  alt="Throne Light Publishing" 
+                  style={{ maxWidth: '100%', maxHeight: '70%', objectFit: 'contain' }}
+                />
+                <span className="text-gold/60 text-[8px] uppercase tracking-[0.3em] block mt-1">Est. 2025</span>
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -68,14 +69,19 @@ export default function ConfrontationSection() {
           </p>
         </motion.div>
 
-        {/* Decorative element */}
-        <AnimatedSection animation="fadeIn" delay={800}>
-          <div className="mt-16 flex items-center justify-center gap-4">
-            <div className="w-12 h-px bg-gold/30" />
-            <div className="text-gold text-2xl">♛</div>
-            <div className="w-12 h-px bg-gold/30" />
-          </div>
-        </AnimatedSection>
+        {/* Decorative element - calm one-time fade in */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-16 flex items-center justify-center gap-4"
+        >
+          <div className="w-12 h-px bg-gold/30" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/THRONELIGHT-CROWN.png" alt="Crown" width="32" height="32" className="w-8 h-8" />
+          <div className="w-12 h-px bg-gold/30" />
+        </motion.div>
       </div>
     </section>
   );

@@ -80,17 +80,17 @@ export default function ScrollSection() {
 
           {/* Right: Content */}
           <div className="space-y-8">
-            <AnimatedSection animation="slideRight">
+            <FeatureReveal>
               <p className="text-charcoal/80 text-lg leading-relaxed">
                 <span className="text-gold-700 font-serif text-xl">{dict.scrollSection.text1Part1}</span>{dict.scrollSection.text1Part2}
               </p>
-            </AnimatedSection>
+            </FeatureReveal>
 
-            <AnimatedSection animation="slideRight" delay={200}>
+            <FeatureReveal delay={800}>
               <p className="text-charcoal/70 text-lg leading-relaxed">
                 {dict.scrollSection.text2}
               </p>
-            </AnimatedSection>
+            </FeatureReveal>
 
             {/* Features with Crown icons */}
             <div className="space-y-6 pt-6">

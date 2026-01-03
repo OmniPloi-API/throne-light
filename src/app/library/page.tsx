@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  Crown, BookOpen, LogOut, User, Download, 
+  BookOpen, LogOut, User, Download, 
   Smartphone, AlertCircle
 } from 'lucide-react';
 
@@ -97,7 +97,7 @@ export default function LibraryPage() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <Crown className="w-12 h-12 text-gold mx-auto mb-4 animate-pulse" />
+          <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-400">Loading your library...</p>
         </div>
       </div>
@@ -136,7 +136,7 @@ export default function LibraryPage() {
       <header className="border-b border-[#222] px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Crown className="w-8 h-8 text-gold" />
+            <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={32} height={32} className="w-8 h-8" />
             <span className="font-bold text-lg hidden sm:inline">Throne Light</span>
           </Link>
 
@@ -218,7 +218,7 @@ export default function LibraryPage() {
       {/* Footer */}
       <footer className="border-t border-[#222] px-4 py-6 mt-auto">
         <div className="max-w-4xl mx-auto text-center text-gray-500 text-sm">
-          <p>© 2025 Throne Light Publishing. All Rights Reserved.</p>
+          <p>© 2025 Throne Light Publishing LLC. All Rights Reserved.</p>
         </div>
       </footer>
     </div>

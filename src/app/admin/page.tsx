@@ -15,6 +15,7 @@ interface Partner {
   slug: string;
   couponCode: string;
   amazonUrl?: string;
+  kindleUrl?: string;
   bookBabyUrl?: string;
   commissionPercent: number;
   clickBounty: number;
@@ -25,7 +26,7 @@ interface Partner {
 interface TrackingEvent {
   id: string;
   partnerId: string;
-  type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT';
+  type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_KINDLE' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
   createdAt: string;
@@ -61,6 +62,8 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [showAccessCode, setShowAccessCode] = useState(false);
+  const [createdPartner, setCreatedPartner] = useState<any>(null);
 
   async function fetchAll() {
     try {
@@ -126,6 +129,12 @@ export default function AdminPage() {
             <p className="text-gray-400 text-sm mt-1">Throne Light Publishing – Hybrid Tracking Dashboard</p>
           </div>
           <div className="flex gap-3">
+            <Link href="/admin/support" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
+              Support Tickets
+            </Link>
+            <Link href="/admin/reviews" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
+              Review Management
+            </Link>
             <Link href="/partner" className="px-4 py-2 bg-[#222] hover:bg-[#333] rounded-lg text-sm transition">
               Partner View →
             </Link>
@@ -153,7 +162,7 @@ export default function AdminPage() {
               icon={<ArrowDownRight className="text-orange-400" />} 
               label="Bounce to Retail" 
               value={`${bounceRate.toFixed(1)}%`}
-              sublabel="Clicked Amazon/BookBaby"
+              sublabel="Clicked Amazon/books.by"
               color="orange"
             />
             <StatCard icon={<ShoppingCart />} label="Direct Sales" value={orders.length} color="green" />
@@ -205,8 +214,22 @@ export default function AdminPage() {
             <Users className="w-5 h-5 text-gold" />
             Onboard New Partner
           </h2>
-          <CreatePartnerForm onCreated={fetchAll} />
+          <CreatePartnerForm onCreated={fetchAll} onPartnerCreated={(partner) => {
+          setCreatedPartner(partner);
+          setShowAccessCode(true);
+        }} />
         </section>
+        
+        {/* Access Code Modal */}
+        {showAccessCode && createdPartner && (
+          <AccessCodeModal 
+            partner={createdPartner} 
+            onClose={() => {
+              setShowAccessCode(false);
+              setCreatedPartner(null);
+            }} 
+          />
+        )}
 
         {/* Partners Table */}
         <section className="mb-10">
@@ -350,9 +373,10 @@ function StatCard({ icon, label, value, sublabel, color = 'gold' }: {
 function EventBadge({ type }: { type: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
     PAGE_VIEW: { bg: 'bg-blue-900/30', text: 'text-blue-300', label: 'Page View' },
-    CLICK_DIRECT: { bg: 'bg-green-900/30', text: 'text-green-300', label: 'Buy Direct' },
+    PENDING_SALE: { bg: 'bg-yellow-900/30', text: 'text-yellow-300', label: '⏳ Pending Sale' },
+    CLICK_DIRECT: { bg: 'bg-green-900/30', text: 'text-green-300', label: '💰 Sale!' },
     CLICK_AMAZON: { bg: 'bg-orange-900/30', text: 'text-orange-300', label: 'Amazon Click' },
-    CLICK_BOOKBABY: { bg: 'bg-purple-900/30', text: 'text-purple-300', label: 'BookBaby Click' },
+    CLICK_BOOKBABY: { bg: 'bg-purple-900/30', text: 'text-purple-300', label: 'books.by Click' },
   };
   const c = config[type] || { bg: 'bg-gray-900/30', text: 'text-gray-300', label: type };
   return (
@@ -362,7 +386,10 @@ function EventBadge({ type }: { type: string }) {
   );
 }
 
-function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
+function CreatePartnerForm({ onCreated, onPartnerCreated }: { 
+  onCreated: () => void; 
+  onPartnerCreated?: (partner: any) => void; 
+}) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [slug, setSlug] = useState('');
@@ -371,8 +398,14 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
   const [clickBounty, setClickBounty] = useState(0.10);
   const [discountPercent, setDiscountPercent] = useState(20);
   const [amazonUrl, setAmazonUrl] = useState('');
+  const [kindleUrl, setKindleUrl] = useState('');
+  const [bookBabyUrl, setBookBabyUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAccessCode, setShowAccessCode] = useState(false);
+  const [createdPartner, setCreatedPartner] = useState<any>(null);
+  const [partnerType, setPartnerType] = useState<'REV_SHARE' | 'FLAT_FEE'>('REV_SHARE');
+  const [country, setCountry] = useState('US');
 
   // Auto-generate slug and coupon code from name
   useEffect(() => {
@@ -396,6 +429,10 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
         name, email, slug, couponCode, 
         commissionPercent, clickBounty, discountPercent,
         amazonUrl: amazonUrl || undefined,
+        kindleUrl: kindleUrl || undefined,
+        bookBabyUrl: bookBabyUrl || undefined,
+        partnerType,
+        country,
       }),
     });
     
@@ -406,6 +443,14 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
       return;
     }
     
+    const partner = await res.json();
+    setCreatedPartner(partner);
+    setShowAccessCode(true);
+    
+    if (onPartnerCreated) {
+      onPartnerCreated(partner);
+    }
+    
     setName('');
     setEmail('');
     setSlug('');
@@ -414,6 +459,8 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
     setClickBounty(0.10);
     setDiscountPercent(20);
     setAmazonUrl('');
+    setKindleUrl('');
+    setBookBabyUrl('');
     setLoading(false);
     onCreated();
   }
@@ -491,14 +538,89 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
           />
         </div>
       </div>
-      <div className="mb-4">
-        <input
-          placeholder="Amazon Product URL (optional)"
-          value={amazonUrl}
-          onChange={(e) => setAmazonUrl(e.target.value)}
-          className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="text-xs text-gray-500 block mb-1">Amazon Physical Book URL</label>
+          <input
+            placeholder="https://amazon.com/dp/..."
+            value={amazonUrl}
+            onChange={(e) => setAmazonUrl(e.target.value)}
+            className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 block mb-1">Kindle Digital Book URL</label>
+          <input
+            placeholder="https://amazon.com/dp/B0..."
+            value={kindleUrl}
+            onChange={(e) => setKindleUrl(e.target.value)}
+            className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white"
+          />
+        </div>
       </div>
+      
+      {/* Partner Type Selection */}
+      <div className="mb-4 p-4 bg-[#1a1a1a] border border-[#333] rounded">
+        <label className="text-sm text-gray-400 block mb-2">Partner Type</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="partnerType"
+              value="REV_SHARE"
+              checked={partnerType === 'REV_SHARE'}
+              onChange={(e) => setPartnerType('REV_SHARE')}
+              className="accent-gold"
+            />
+            <span className="text-white">Revenue Share</span>
+            <span className="text-xs text-gray-500">(Earns commission on sales)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="partnerType"
+              value="FLAT_FEE"
+              checked={partnerType === 'FLAT_FEE'}
+              onChange={(e) => setPartnerType('FLAT_FEE')}
+              className="accent-gold"
+            />
+            <span className="text-white">Flat Fee</span>
+            <span className="text-xs text-gray-500">(Traffic stats only, no payouts)</span>
+          </label>
+        </div>
+        {partnerType === 'FLAT_FEE' && (
+          <p className="text-xs text-yellow-400 mt-2">
+            ⚠️ This partner will only see traffic statistics. Commission tracking and payout features will be disabled.
+          </p>
+        )}
+      </div>
+      
+      {/* Country Selection */}
+      <div className="mb-4">
+        <label className="text-sm text-gray-400 block mb-2">Partner Country</label>
+        <select
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white"
+        >
+          <option value="US">🇺🇸 United States ($10 min, standard fees)</option>
+          <option value="GB">🇬🇧 United Kingdom ($25 min, 0.5% intl fee)</option>
+          <option value="NG">🇳🇬 Nigeria ($50 min, 1.5% intl fee)</option>
+          <option value="CA">🇨🇦 Canada ($25 min, 0.8% intl fee)</option>
+          <option value="DE">🇩🇪 Germany ($25 min, 0.8% intl fee)</option>
+          <option value="FR">🇫🇷 France ($25 min, 0.8% intl fee)</option>
+          <option value="AU">🇦🇺 Australia ($50 min, 1% intl fee)</option>
+          <option value="IN">🇮🇳 India ($50 min, 1% intl fee)</option>
+          <option value="PH">🇵🇭 Philippines ($50 min, 1% intl fee)</option>
+          <option value="OTHER">🌍 Other International ($50 min, 1% intl fee)</option>
+        </select>
+        {country !== 'US' && (
+          <p className="text-xs text-gray-500 mt-1">
+            International partners require W-8BEN tax form and have higher withdrawal minimums.
+          </p>
+        )}
+      </div>
+      
       <button
         type="submit"
         disabled={loading}
@@ -507,5 +629,65 @@ function CreatePartnerForm({ onCreated }: { onCreated: () => void }) {
         {loading ? 'Creating…' : 'Create Partner'}
       </button>
     </form>
+  );
+}
+
+// Access Code Modal
+function AccessCodeModal({ partner, onClose }: { partner: any; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  
+  function copyToClipboard() {
+    navigator.clipboard.writeText(partner.accessCode || partner.couponCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-[#111] border border-[#222] rounded-xl p-6 max-w-md w-full">
+        <h3 className="text-xl font-semibold text-gold mb-4">Partner Created Successfully!</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <p className="text-gray-400 text-sm mb-1">Partner Name</p>
+            <p className="text-white font-medium">{partner.name}</p>
+          </div>
+          
+          <div>
+            <p className="text-gray-400 text-sm mb-1">Email</p>
+            <p className="text-white font-medium">{partner.email}</p>
+          </div>
+          
+          <div>
+            <p className="text-gray-400 text-sm mb-2">Access Code (for portal login)</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-[#1a1a1a] border border-gold/50 px-4 py-3 rounded text-gold font-mono text-xl tracking-widest text-center">
+                {partner.accessCode || partner.couponCode}
+              </code>
+              <button
+                onClick={copyToClipboard}
+                className="bg-gold hover:bg-gold/90 text-black px-4 py-3 rounded transition font-semibold"
+              >
+                {copied ? '✓ Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-gold/10 border border-gold/30 rounded p-4">
+            <p className="text-sm text-gray-300">
+              <strong className="text-gold">Important:</strong> Share this access code with {partner.name}. 
+              They will use it to log into their partner portal at <code className="text-gold">/partner/login</code>
+            </p>
+          </div>
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
+        >
+          Done
+        </button>
+      </div>
+    </div>
   );
 }

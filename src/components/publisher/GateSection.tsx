@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { Send, X, FileText, User, Mail, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -100,7 +101,7 @@ export default function GateSection() {
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                 className="text-gold text-4xl mb-4"
               >
-                ♛
+                <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12" />
               </motion.div>
               
               <h2 className="font-serif text-2xl md:text-3xl text-parchment mb-2">
@@ -386,7 +387,8 @@ export default function GateSection() {
           className="mt-16 flex items-center justify-center gap-4"
         >
           <div className="w-16 h-px bg-gradient-to-r from-transparent to-gold/20" />
-          <span className="text-gold/30 text-xl">♛</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/THRONELIGHT-LOGO.png" alt="Throne Light Publishing" className="w-8 h-8 opacity-30" />
           <div className="w-16 h-px bg-gradient-to-l from-transparent to-gold/20" />
         </motion.div>
       </div>

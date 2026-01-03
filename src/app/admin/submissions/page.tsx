@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   FileText, 
   User, 
@@ -129,7 +130,7 @@ export default function AdminSubmissionsPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-gold text-2xl">♛</span>
+              <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={32} height={32} className="w-8 h-8" />
               <div>
                 <h1 className="font-serif text-xl text-parchment">Manuscript Submissions</h1>
                 <p className="text-parchment/40 text-sm">Throne Light Publishing Admin</p>

@@ -70,11 +70,12 @@ export default function AudioToggle() {
       }`}
       aria-label={isPlaying ? dict.audio.mute : dict.audio.play}
     >
-      {/* Pulsing ring when audio is off (to invite click) */}
+      {/* Subtle one-time reveal ring when audio is off (no looping flicker) */}
       {!isPlaying && (
         <motion.span
-          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 rounded-full border border-gold/30"
         />
       )}

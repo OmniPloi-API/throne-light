@@ -1,11 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { 
-  DollarSign, TrendingUp, BarChart3, Copy, Check, 
-  ExternalLink, ShoppingCart, Eye, Calendar, Wallet,
-  Link2, Download, Info
+  Users, DollarSign, TrendingUp, ExternalLink, 
+  Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
+  ArrowUpRight, ArrowDownRight, Link2, Wallet, Calendar, Info, Download, Power, Loader2
 } from 'lucide-react';
+import { useModal } from '@/components/shared/GlobalModal';
+
+export default function PartnerPage() {
+  return (
+    <Suspense fallback={<PartnerLoading />}>
+      <PartnerContent />
+    </Suspense>
+  );
+}
+
+function PartnerLoading() {
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+      <Loader2 className="w-8 h-8 animate-spin text-gold" />
+    </div>
+  );
+}
 
 interface Partner {
   id: string;
@@ -22,7 +41,7 @@ interface Partner {
 interface TrackingEvent {
   id: string;
   partnerId: string;
-  type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT';
+  type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
   createdAt: string;
@@ -37,7 +56,9 @@ interface Order {
   createdAt: string;
 }
 
-export default function PartnerPage() {
+function PartnerContent() {
+  const searchParams = useSearchParams();
+  const modal = useModal();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [events, setEvents] = useState<TrackingEvent[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -45,6 +66,28 @@ export default function PartnerPage() {
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  
+  // Stripe Connect / Withdrawal state (must be at top with other hooks)
+  const [stripeStatus, setStripeStatus] = useState<any>(null);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showStripeOnboardingModal, setShowStripeOnboardingModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawError, setWithdrawError] = useState('');
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [showMaturityTooltip, setShowMaturityTooltip] = useState(false);
+
+  // Check for logged-in partner from URL params or session
+  useEffect(() => {
+    const partnerIdFromUrl = searchParams.get('id');
+    const partnerIdFromSession = sessionStorage.getItem('partnerId');
+    
+    if (partnerIdFromUrl || partnerIdFromSession) {
+      const partnerId = partnerIdFromUrl || partnerIdFromSession;
+      // We'll set this after partners are loaded
+      sessionStorage.setItem('partnerId', partnerId!);
+    }
+  }, [searchParams]);
 
   async function fetchAll() {
     try {
@@ -61,6 +104,15 @@ export default function PartnerPage() {
       setPartners(Array.isArray(p) ? p : []);
       setEvents(Array.isArray(e) ? e : []);
       setOrders(Array.isArray(o) ? o : []);
+      
+      // Auto-select logged-in partner
+      const partnerIdFromSession = sessionStorage.getItem('partnerId');
+      if (partnerIdFromSession && Array.isArray(p)) {
+        const loggedInPartner = p.find((partner: any) => partner.id === partnerIdFromSession);
+        if (loggedInPartner) {
+          setSelectedPartner(loggedInPartner);
+        }
+      }
     } catch (err) {
       console.error('Fetch error:', err);
     }
@@ -81,14 +133,126 @@ export default function PartnerPage() {
   const pageViews = myEvents.filter((e) => e.type === 'PAGE_VIEW').length;
   const directSales = myOrders.filter((o) => o.status === 'COMPLETED').length;
   const amazonClicks = myEvents.filter((e) => e.type === 'CLICK_AMAZON').length;
-  const bookBabyClicks = myEvents.filter((e) => e.type === 'CLICK_BOOKBABY').length;
+  const booksByClicks = myEvents.filter((e) => e.type === 'CLICK_BOOKBABY').length;
+  const pendingSales = myEvents.filter((e) => e.type === 'PENDING_SALE').length;
+  const actualSales = myEvents.filter((e) => e.type === 'SALE').length;
   
-  const totalCommission = myOrders.reduce((sum, o) => sum + o.commissionEarned, 0);
-  const clickBountyEarned = (amazonClicks + bookBabyClicks) * (selectedPartner?.clickBounty || 0.10);
-  const pendingPayout = totalCommission + clickBountyEarned;
+  // Commission maturity tracking (7-day rule)
+  const now = new Date();
+  const completedOrders = myOrders.filter((o: any) => o.status === 'COMPLETED' && o.refundStatus !== 'APPROVED');
+  
+  // Calculate maturity for each order (8 days after creation)
+  const maturedOrders = completedOrders.filter((o: any) => {
+    const createdAt = new Date(o.createdAt);
+    const maturityDate = new Date(createdAt.getTime() + 8 * 24 * 60 * 60 * 1000);
+    return now >= maturityDate;
+  });
+  const pendingOrders = completedOrders.filter((o: any) => {
+    const createdAt = new Date(o.createdAt);
+    const maturityDate = new Date(createdAt.getTime() + 8 * 24 * 60 * 60 * 1000);
+    return now < maturityDate;
+  });
+  
+  const totalCommission = completedOrders.reduce((sum: number, o: any) => sum + o.commissionEarned, 0);
+  const maturedCommission = maturedOrders.reduce((sum: number, o: any) => sum + o.commissionEarned, 0);
+  const lockedCommission = pendingOrders.reduce((sum: number, o: any) => sum + o.commissionEarned, 0);
+  
+  const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.clickBounty || 0.10);
+  
+  // Live Commissions = Total gross earnings
+  const liveCommissionsEarned = totalCommission + clickBountyEarned;
+  // Available = Matured + Click Bounty (click bounties are instant)
+  const availableForWithdrawal = maturedCommission + clickBountyEarned;
+  // Locked = Still in 7-day window
+  const lockedFunds = lockedCommission;
+  
+  // Check Stripe Connect status when partner is selected
+  useEffect(() => {
+    if (selectedPartner) {
+      fetch(`/api/partners/stripe-connect?partnerId=${selectedPartner.id}`)
+        .then(res => res.json())
+        .then(data => setStripeStatus(data))
+        .catch(err => console.error('Failed to check Stripe status:', err));
+    }
+  }, [selectedPartner]);
+  
+  // Handle withdrawal request
+  const handleWithdrawal = async () => {
+    if (!withdrawAmount || !selectedPartner) return;
+    
+    setWithdrawLoading(true);
+    setWithdrawError('');
+    
+    try {
+      const res = await fetch('/api/partners/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partnerId: selectedPartner.id,
+          amount: parseFloat(withdrawAmount),
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setWithdrawSuccess(true);
+        setWithdrawAmount('');
+        // Refresh data
+        window.location.reload();
+      } else {
+        setWithdrawError(data.error || 'Withdrawal failed');
+      }
+    } catch (error) {
+      setWithdrawError('Network error. Please try again.');
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
+  
+  // Start Stripe Connect onboarding
+  const startStripeOnboarding = async () => {
+    if (!selectedPartner) return;
+    
+    try {
+      const res = await fetch('/api/partners/stripe-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partnerId: selectedPartner.id,
+          returnUrl: `${window.location.origin}/partner?stripe_success=true`,
+          refreshUrl: `${window.location.origin}/partner?stripe_refresh=true`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        window.location.href = data.onboardingUrl;
+      } else {
+        modal.showError(data.error || 'Failed to start onboarding', 'Onboarding Error');
+      }
+    } catch (error) {
+      modal.showError('Network error. Please try again.', 'Connection Error');
+    }
+  };
+  
+  // Legacy field
+  const pendingPayout = liveCommissionsEarned;
+  
+  // Upcoming maturity schedule
+  const upcomingMaturity = pendingOrders.map((o: any) => {
+    const createdAt = new Date(o.createdAt);
+    const maturityDate = new Date(createdAt.getTime() + 16 * 24 * 60 * 60 * 1000);
+    return {
+      date: maturityDate.toISOString(),
+      amount: o.commissionEarned,
+      orderId: o.id,
+    };
+  }).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
   const conversionRate = pageViews > 0 
-    ? ((directSales + amazonClicks + bookBabyClicks) / pageViews * 100) 
+    ? ((actualSales + amazonClicks + booksByClicks) / pageViews * 100) 
     : 0;
 
   function copyLink() {
@@ -105,6 +269,13 @@ export default function PartnerPage() {
     setTimeout(() => setCopiedCode(false), 2000);
   }
 
+  function logout() {
+    sessionStorage.removeItem('partnerId');
+    sessionStorage.removeItem('partnerName');
+    setSelectedPartner(null);
+    window.location.href = '/partner/login';
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
@@ -117,26 +288,39 @@ export default function PartnerPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Mobile-First Header */}
       <header className="border-b border-[#222] px-4 md:px-8 py-4">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Partner Portal</h1>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col items-center flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-gold">Partner Portal</h1>
             <p className="text-gray-400 text-sm">Throne Light Publishing</p>
+            {selectedPartner && (
+              <span className="text-gray-300 text-sm mt-1">Welcome, {selectedPartner.name}</span>
+            )}
           </div>
-          <select
-            value={selectedPartner?.id || ''}
-            onChange={(e) => {
-              const p = partners.find((p) => p.id === e.target.value) || null;
-              setSelectedPartner(p);
-            }}
-            className="bg-[#1a1a1a] border border-[#333] px-4 py-2 rounded-lg text-white"
-          >
-            <option value="">Select your profile</option>
-            {partners.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          {selectedPartner ? (
+            <button
+              onClick={logout}
+              className="text-gold hover:text-red-400 transition ml-4 p-2 rounded-lg hover:bg-red-400/10"
+              title="Logout"
+            >
+              <Power className="w-5 h-5" />
+            </button>
+          ) : (
+            <select
+              value=""
+              onChange={(e) => {
+                const p = partners.find((partner) => partner.id === e.target.value) || null;
+                setSelectedPartner(p);
+              }}
+              className="bg-[#1a1a1a] border border-[#333] px-4 py-2 rounded-lg text-white ml-4"
+            >
+              <option value="">Select your profile</option>
+              {partners.map((partner) => (
+                <option key={partner.id} value={partner.id}>
+                  {partner.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </header>
 
@@ -152,24 +336,69 @@ export default function PartnerPage() {
           {/* Zone 1: The "Money" Header - Wallet */}
           <section className="mb-6 md:mb-10">
             <div className="bg-gradient-to-r from-gold/20 to-gold/5 rounded-xl p-6 border border-gold/30">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <p className="text-gray-400 text-sm mb-1">Welcome back,</p>
+              {/* Partner Name and Status */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
+                <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold">{selectedPartner.name}</h2>
+                  <span className="px-3 py-1 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-semibold">
+                    Active Partner
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-gray-400 text-sm flex items-center gap-1 justify-end">
+                
+                {/* Available for Withdrawal */}
+                <div className="text-center md:text-right">
+                  <p className="text-green-400 text-sm flex items-center gap-1 justify-center md:justify-end">
                     <Wallet className="w-4 h-4" />
-                    Pending Payout
+                    Available for Withdrawal
                   </p>
-                  <p className="text-3xl md:text-4xl font-bold text-gold">
-                    ${pendingPayout.toFixed(2)}
+                  <p className="text-3xl md:text-4xl font-bold text-green-400">
+                    ${availableForWithdrawal.toFixed(2)}
                   </p>
-                  <p className="text-xs text-gray-500 flex items-center gap-1 justify-end mt-1">
-                    <Calendar className="w-3 h-3" />
-                    Next payout: End of month
-                  </p>
+                  <button 
+                    className="text-xs text-gold hover:text-gold/80 mt-1 transition"
+                    onClick={() => {
+                      // Check if Stripe Connect is set up
+                      if (!stripeStatus?.connected) {
+                        // Show custom onboarding modal
+                        setShowStripeOnboardingModal(true);
+                      } else if (!stripeStatus?.taxFormVerified) {
+                        modal.showInfo('Please complete your tax form (W-9 or W-8BEN) in the Stripe portal to receive withdrawals.', 'Tax Form Required');
+                      } else if (!stripeStatus?.onboardingComplete) {
+                        setShowStripeOnboardingModal(true);
+                      } else {
+                        // Show withdrawal modal
+                        setShowWithdrawModal(true);
+                      }
+                    }}
+                  >
+                    Request Withdrawal →
+                  </button>
                 </div>
+              </div>
+              
+              {/* Live Commissions Earned - Centered */}
+              <div className="text-center relative flex items-center justify-center min-h-[120px]">
+                {/* Left line segment */}
+                <div className="absolute left-0 top-1/2 h-px bg-gold/20" style={{ width: 'calc(50% - 100px)' }}></div>
+                
+                {/* Center content */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <p className="text-gray-400 text-xs mb-2 flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    Live Commissions Earned
+                  </p>
+                  
+                  <div className="bg-gradient-to-r from-gold/20 to-gold/5 px-6 py-3 rounded-xl border border-gold/30">
+                    <p className="text-3xl md:text-4xl font-bold text-gold">
+                      ${liveCommissionsEarned.toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 mt-2">Total gross earnings</p>
+                </div>
+                
+                {/* Right line segment */}
+                <div className="absolute right-0 top-1/2 h-px bg-gold/20" style={{ width: 'calc(50% - 100px)' }}></div>
               </div>
             </div>
           </section>
@@ -389,6 +618,25 @@ export default function PartnerPage() {
           </section>
         </main>
       )}
+      
+      {/* Withdrawal Modal */}
+      <WithdrawalModal
+        isOpen={showWithdrawModal}
+        onClose={() => {
+          setShowWithdrawModal(false);
+          setWithdrawAmount('');
+          setWithdrawError('');
+        }}
+        availableAmount={availableForWithdrawal}
+        onWithdraw={handleWithdrawal}
+      />
+      
+      {/* Stripe Connect Onboarding Modal */}
+      <StripeOnboardingModal
+        isOpen={showStripeOnboardingModal}
+        onClose={() => setShowStripeOnboardingModal(false)}
+        onConfirm={startStripeOnboarding}
+      />
     </div>
   );
 }
@@ -421,14 +669,203 @@ function StatCard({ icon, label, value, sublabel, color = 'gold' }: {
 function EventBadge({ type }: { type: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
     PAGE_VIEW: { bg: 'bg-blue-900/30', text: 'text-blue-300', label: 'Visited' },
+    PENDING_SALE: { bg: 'bg-yellow-900/30', text: 'text-yellow-300', label: '⏳ Pending Sale' },
     CLICK_DIRECT: { bg: 'bg-green-900/30', text: 'text-green-300', label: '💰 Sale!' },
     CLICK_AMAZON: { bg: 'bg-orange-900/30', text: 'text-orange-300', label: '→ Amazon' },
-    CLICK_BOOKBABY: { bg: 'bg-purple-900/30', text: 'text-purple-300', label: '→ BookBaby' },
+    CLICK_BOOKBABY: { bg: 'bg-purple-900/30', text: 'text-purple-300', label: '→ books.by' },
   };
   const c = config[type] || { bg: 'bg-gray-900/30', text: 'text-gray-300', label: type };
   return (
     <span className={`px-2 py-1 rounded text-xs font-medium ${c.bg} ${c.text}`}>
       {c.label}
     </span>
+  );
+}
+
+// Withdrawal Modal
+function WithdrawalModal({ 
+  isOpen, 
+  onClose, 
+  availableAmount, 
+  onWithdraw 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  availableAmount: number; 
+  onWithdraw: (amount: string) => void;
+}) {
+  const [amount, setAmount] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  if (!isOpen) return null;
+  
+  const handleSubmit = async () => {
+    const numAmount = parseFloat(amount);
+    if (!amount || isNaN(numAmount)) {
+      setError('Please enter a valid amount');
+      return;
+    }
+    if (numAmount < 10) {
+      setError('Minimum withdrawal is $10.00');
+      return;
+    }
+    if (numAmount > availableAmount) {
+      setError(`Maximum withdrawal is $${availableAmount.toFixed(2)}`);
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    await onWithdraw(amount);
+    setLoading(false);
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-[#111] border border-[#222] rounded-xl p-6 max-w-md w-full">
+        <h3 className="text-xl font-semibold text-gold mb-4">Request Withdrawal</h3>
+        
+        <div className="mb-4">
+          <p className="text-gray-400 text-sm mb-1">Available Balance</p>
+          <p className="text-2xl font-bold text-green-400">${availableAmount.toFixed(2)}</p>
+        </div>
+        
+        <div className="mb-4">
+          <label className="text-sm text-gray-400 block mb-2">Withdrawal Amount</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            step="0.01"
+            min="10"
+            max={availableAmount}
+            className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white"
+          />
+          {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        </div>
+        
+        <div className="mb-4 p-3 bg-[#1a1a1a] rounded text-xs text-gray-400">
+          <p className="font-semibold text-yellow-400 mb-1">Fee Breakdown:</p>
+          <p>• Payout Fee: $0.25</p>
+          <p>• Monthly Fee: $2.00 (if first payout this month)</p>
+          <p>• International Fee: 1% (if applicable)</p>
+          <p className="mt-2 text-green-400">You'll receive the net amount after fees.</p>
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !amount}
+            className="flex-1 bg-gold hover:bg-gold/90 text-black px-4 py-2 rounded font-semibold disabled:opacity-50 transition"
+          >
+            {loading ? 'Processing...' : 'Request Withdrawal'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-[#222] hover:bg-[#333] text-white px-4 py-2 rounded font-semibold transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Stripe Connect Onboarding Modal
+function StripeOnboardingModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => Promise<void>;
+}) {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  if (!isOpen) return null;
+  
+  const handleSetupNow = async () => {
+    setIsLoading(true);
+    await onConfirm();
+    // Note: If successful, user will be redirected. 
+    // If error, the modal will close and error modal will show.
+    setIsLoading(false);
+    onClose();
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-gold/30 rounded-xl p-8 max-w-md w-full shadow-2xl">
+        {isLoading ? (
+          // Loading state
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center animate-pulse">
+              <Wallet className="w-8 h-8 text-gold" />
+            </div>
+            <h3 className="text-xl font-bold text-gold mb-3">Connecting to Stripe...</h3>
+            <p className="text-gray-400 text-sm">You'll be redirected to complete setup</p>
+            <div className="mt-6 flex justify-center">
+              <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Icon */}
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
+              <Wallet className="w-8 h-8 text-gold" />
+            </div>
+            
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-gold mb-3 text-center">Set Up Payouts</h3>
+            
+            {/* Description */}
+            <p className="text-gray-300 text-center mb-6 leading-relaxed">
+              To receive withdrawals, you need to set up a Stripe Connect account. 
+              This allows <span className="text-gold font-semibold">secure direct deposits</span> to your bank account.
+            </p>
+            
+            {/* Features */}
+            <div className="bg-[#111] rounded-lg p-4 mb-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-400">Bank-level security & encryption</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-400">Fast direct deposits (2-3 business days)</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-400">Automated tax form handling (W-9/W-8BEN)</p>
+              </div>
+            </div>
+            
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleSetupNow}
+                className="flex-1 bg-gold hover:bg-gold/90 text-black px-6 py-3 rounded-lg font-semibold transition shadow-lg shadow-gold/20 hover:shadow-gold/30"
+              >
+                Set Up Now
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-[#222] hover:bg-[#333] text-gray-300 px-6 py-3 rounded-lg font-semibold transition border border-[#333]"
+              >
+                Maybe Later
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-500 text-center mt-4">
+              Takes about 2 minutes to complete
+            </p>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { MapPin, Calendar, ThumbsUp, Plus } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
@@ -436,7 +437,7 @@ export default function GatheringSection() {
               animate={{ scale: 1, opacity: 1 }}
               className="bg-ivory border border-gold/40 rounded-2xl p-8 max-w-md w-full text-center shadow-xl"
             >
-              <div className="text-gold text-4xl mb-4">♛</div>
+              <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12 mb-4" />
               <h3 className="font-serif text-2xl text-gold-600 mb-2">
                 {dict.gathering.successMessage.split('!')[0] + '!'}
               </h3>

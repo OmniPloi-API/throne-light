@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------
@@ -135,6 +134,8 @@ enum EventType {
   CLICK_AMAZON
   CLICK_BOOKBABY
   CLICK_DIRECT
+  PENDING_SALE
+  SALE
 }
 
 enum OrderStatus {

@@ -61,9 +61,17 @@ export default function AltarSection() {
           <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="text-gold text-5xl md:text-6xl mb-8"
+            className="mb-8"
           >
-            ♛
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/THRONELIGHT-CROWN.png"
+              alt=""
+              width={64}
+              height={64}
+              className="w-16 h-16 mx-auto"
+              aria-hidden="true"
+            />
           </motion.div>
         </motion.div>
 

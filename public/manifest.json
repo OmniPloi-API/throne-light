@@ -1,8 +1,9 @@
 {
   "name": "Throne Light Reader",
-  "short_name": "Throne Light",
+  "short_name": "TL Reader",
   "description": "Where Queens Find Crowns - Your Royal Digital Library",
   "start_url": "/reader/home",
+  "scope": "/reader",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#d4af37",
@@ -12,22 +13,20 @@
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Light-of-Eolles-Crown.png",
+      "sizes": "any",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["books", "education"],
-  "screenshots": [
-    {
-      "src": "/screenshots/library.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ]
+  "categories": ["books", "education"]
 }

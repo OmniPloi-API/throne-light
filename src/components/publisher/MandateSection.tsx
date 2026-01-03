@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
 
@@ -9,7 +10,7 @@ const divineReveal = {
   initial: { opacity: 0, filter: 'blur(8px)', clipPath: 'inset(0 50% 0 50%)' },
   whileInView: { opacity: 1, filter: 'blur(0px)', clipPath: 'inset(0 0% 0 0%)' },
   viewport: { once: true },
-  transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] }
+  transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] as const }
 };
 
 export default function MandateSection() {
@@ -78,7 +79,8 @@ export default function MandateSection() {
               
               {/* Main seal */}
               <div className="bg-onyx/90 border border-gold/40 rounded-lg p-8 md:p-12 shadow-xl">
-                <div className="text-gold text-4xl md:text-5xl mb-4">♛</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/THRONELIGHT-LOGO.png" alt="Throne Light Publishing" className="w-20 h-20 mx-auto mb-4" />
                 <h3 className="font-serif text-xl md:text-2xl text-gold mb-2">
                   {dict.mandate.sealTitle}
                 </h3>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb, generateId, Partner } from '@/lib/db';
+import { readDb, writeDb, generateId, generateAccessCode, Partner } from '@/lib/db';
 
 export async function GET() {
   const db = readDb();
@@ -18,6 +18,9 @@ export async function POST(req: NextRequest) {
     commissionPercent = 20,
     clickBounty = 0.10,
     discountPercent = 20,
+    partnerType = 'REV_SHARE',
+    autoWithdrawEnabled = false,
+    country = 'US',
   } = body;
   
   if (!name || !email || !slug || !couponCode) {
@@ -39,17 +42,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Coupon code already exists' }, { status: 409 });
   }
 
+  // Generate unique access code
+  let accessCode = generateAccessCode();
+  while (db.partners.find((p) => p.accessCode === accessCode)) {
+    accessCode = generateAccessCode();
+  }
+
   const partner: Partner = {
     id: generateId(),
     name,
     email,
     slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, ''),
     couponCode: couponCode.toUpperCase(),
+    accessCode,
     amazonUrl: amazonUrl || null,
     bookBabyUrl: bookBabyUrl || null,
     commissionPercent,
     clickBounty,
     discountPercent,
+    partnerType: partnerType as 'REV_SHARE' | 'FLAT_FEE',
+    autoWithdrawEnabled,
+    // Stripe Connect fields (pending onboarding)
+    stripeOnboardingComplete: false,
+    taxFormVerified: false,
+    // Location & Payout
+    country: country.toUpperCase(),
+    payoutMethod: 'STRIPE',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

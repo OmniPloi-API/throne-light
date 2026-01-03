@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShoppingBag, ExternalLink, Crown, Star } from 'lucide-react';
+import { ShoppingBag, ExternalLink, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCopyrightYear } from '@/lib/copyright';
 
@@ -13,16 +13,24 @@ interface Partner {
   slug: string;
   couponCode: string;
   discountPercent: number;
-  amazonUrl?: string;
-  bookBabyUrl?: string;
+  amazonUrl?: string;      // Physical book on Amazon
+  kindleUrl?: string;      // Digital book on Kindle
+  bookBabyUrl?: string;    // Keep for future use
+}
+
+interface ReviewStats {
+  totalReviews: number;
+  averageRating: number;
 }
 
 export default function BridgePage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const [partner, setPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviewStats, setReviewStats] = useState<ReviewStats>({ totalReviews: 0, averageRating: 0 });
 
   useEffect(() => {
     async function loadPartner() {
@@ -53,16 +61,30 @@ export default function BridgePage() {
       setLoading(false);
     }
     loadPartner();
+    
+    // Fetch review stats
+    async function loadReviewStats() {
+      try {
+        const res = await fetch('/api/reviews');
+        if (res.ok) {
+          const data = await res.json();
+          setReviewStats(data.stats);
+        }
+      } catch (err) {
+        console.error('Failed to load review stats');
+      }
+    }
+    loadReviewStats();
   }, [slug]);
 
   async function handleDirectBuy() {
     if (!partner) return;
     
-    // Track direct click
+    // Track pending sale
     await fetch('/api/events/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ partnerId: partner.id, type: 'CLICK_DIRECT' }),
+      body: JSON.stringify({ partnerId: partner.id, type: 'PENDING_SALE' }),
     });
     
     // Redirect to checkout with auto-applied coupon
@@ -84,19 +106,19 @@ export default function BridgePage() {
     window.location.href = amazonUrl;
   }
 
-  async function handleBookBabyClick() {
+  async function handleKindleClick() {
     if (!partner) return;
     
     // Track outbound click
     await fetch('/api/events/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ partnerId: partner.id, type: 'CLICK_BOOKBABY' }),
+      body: JSON.stringify({ partnerId: partner.id, type: 'CLICK_KINDLE' }),
     });
     
-    // Redirect to BookBaby
-    const bookBabyUrl = partner.bookBabyUrl || 'https://store.bookbaby.com/YOUR_BOOK';
-    window.location.href = bookBabyUrl;
+    // Redirect to Kindle
+    const kindleUrl = partner.kindleUrl || 'https://www.amazon.com/dp/B0YOUR_KINDLE_ASIN';
+    window.location.href = kindleUrl;
   }
 
   if (loading) {
@@ -128,7 +150,8 @@ export default function BridgePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Crown className="w-12 h-12 text-gold mx-auto mb-4" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/THRONELIGHT-CROWN.png" alt="" width={48} height={48} className="w-12 h-12 mx-auto mb-4" />
             <p className="text-gold text-sm uppercase tracking-widest mb-2">Special Offer</p>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               <span className="text-gold">{partner.name}</span> recommends
@@ -175,18 +198,23 @@ export default function BridgePage() {
               <h3 className="text-xl font-semibold text-gold mb-3">About the Book</h3>
               <p className="text-gray-300 leading-relaxed">
                 A prophetic confrontation of the modern soul. This book peels back the layers 
-                of distraction and comfort to reveal what you've been avoiding—and what's been 
+                of distraction and comfort to reveal what you've been avoiding and what's been 
                 waiting for you on the other side of surrender.
               </p>
             </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-8">
+            {/* Rating - Clickable */}
+            <button
+              onClick={() => router.push('/reviews')}
+              className="flex items-center gap-2 mb-8 group cursor-pointer"
+            >
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star key={i} className="w-5 h-5 fill-gold text-gold" />
               ))}
-              <span className="text-gray-400 ml-2">4.9 (127 reviews)</span>
-            </div>
+              <span className="text-gray-400 ml-2 group-hover:text-gold transition-colors underline-offset-2 group-hover:underline">
+                {reviewStats.averageRating} ({reviewStats.totalReviews} reviews)
+              </span>
+            </button>
 
             {/* CTA Buttons - The Fork in the Road */}
             <div className="space-y-4">
@@ -204,24 +232,45 @@ export default function BridgePage() {
                 Code <span className="font-mono text-gold">{partner.couponCode}</span> auto-applied
               </p>
 
-              {/* Secondary CTAs - External Retailers */}
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-center text-sm text-gray-500 mb-3">Or purchase from retailers:</p>
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleAmazonClick}
-                    className="bg-transparent border border-gray-600 hover:border-gray-400 
-                             text-gray-300 hover:text-white py-3 px-4 rounded-lg
-                             flex items-center justify-center gap-2 transition-all duration-300 w-full max-w-[240px]"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span className="text-sm">Amazon</span>
-                  </button>
+              {/* Secondary CTAs - External Retailers (only show if URLs provided) */}
+              {(partner.amazonUrl || partner.kindleUrl) && (
+                <div className="pt-4 border-t border-gray-700">
+                  <p className="text-center text-sm text-gray-500 mb-3">Or purchase from retailers:</p>
+                  <div className="flex justify-center gap-4">
+                    {partner.amazonUrl && (
+                      <button
+                        onClick={handleAmazonClick}
+                        className="bg-transparent border border-gray-600 hover:border-gray-400 
+                                 text-gray-300 hover:text-white py-3 px-4 rounded-lg
+                                 flex items-center justify-center gap-2 transition-all duration-300 w-full max-w-[160px]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <div className="text-left">
+                          <span className="text-sm block">Amazon</span>
+                          <span className="text-xs text-gray-500">Physical</span>
+                        </div>
+                      </button>
+                    )}
+                    {partner.kindleUrl && (
+                      <button
+                        onClick={handleKindleClick}
+                        className="bg-transparent border border-gray-600 hover:border-gray-400 
+                                 text-gray-300 hover:text-white py-3 px-4 rounded-lg
+                                 flex items-center justify-center gap-2 transition-all duration-300 w-full max-w-[160px]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <div className="text-left">
+                          <span className="text-sm block">Kindle</span>
+                          <span className="text-xs text-gray-500">Digital</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-center text-xs text-gray-500 mt-2">
+                    (Full price, no discount)
+                  </p>
                 </div>
-                <p className="text-center text-xs text-gray-500 mt-2">
-                  (Full price, no discount)
-                </p>
-              </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -243,7 +292,7 @@ export default function BridgePage() {
               <p className="text-sm text-gray-400">Average Rating</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gold">15-Day</p>
+              <p className="text-2xl font-bold text-gold">7-Day</p>
               <p className="text-sm text-gray-400">Money Back</p>
             </div>
           </div>
@@ -253,7 +302,7 @@ export default function BridgePage() {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-gray-800">
         <div className="max-w-4xl mx-auto text-center text-sm text-gray-500">
-          <p>© {getCopyrightYear()} Throne Light Publishing</p>
+          <p>© {getCopyrightYear()} Throne Light Publishing LLC</p>
           <p>All Rights Reserved</p>
         </div>
       </footer>

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { X, BookOpen, Package, Smartphone, ExternalLink, Crown } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -17,6 +18,13 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
   const { language } = useLanguage();
   const dict = getDictionary(language);
   const [selectedFormat, setSelectedFormat] = useState<PurchaseFormat>(null);
+  const [hasPurchased, setHasPurchased] = useState(false);
+
+  // Check if user has already purchased on mount
+  useEffect(() => {
+    const purchased = localStorage.getItem('throne-light-purchased');
+    setHasPurchased(purchased === 'true');
+  }, [isOpen]);
 
   const handleClose = () => {
     setSelectedFormat(null);
@@ -24,8 +32,15 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
   };
 
   const handleDigitalPurchase = async () => {
+    // Check if user has already purchased
+    if (hasPurchased) {
+      // User already owns the book, redirect to reader home
+      window.location.href = '/reader/home';
+      return;
+    }
+    
     try {
-      // TODO: Collect email before checkout
+      // Proceed to Stripe checkout
       const response = await fetch('/api/checkout/digital', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,20 +51,19 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
       
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe checkout
-      } else {
-        // Stripe not set up yet, show reader
-        window.open('/reader', '_blank');
+      } else if (data.error) {
+        console.error('Checkout error:', data.error);
+        alert('Stripe checkout is not yet configured. Please contact support or try again later.');
       }
     } catch (error) {
       console.error('Purchase error:', error);
-      // Fallback to reader
-      window.open('/reader', '_blank');
+      alert('Unable to process purchase. Please try again.');
     }
   };
 
   const handlePhysicalPurchase = async (retailer: 'amazon' | 'direct') => {
     if (retailer === 'amazon') {
-      window.open('https://a.co/d/iCOaWms', '_blank');
+      window.open('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=900&openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fcheckout%2Fentry%2Fbuynow%3FclientName%3DOffersX_OfferDisplay_DetailPage%26ASIN%3DB0G1TTMC2T%26storeID%3D%26qid%3D%26anti-csrftoken-a2z%3DhDcpG2jOjXbHaNcczXOE%252Bh01KkM2MRmysMC0VohBDHW0AAAAAGlXItswNDE4OTcyMy01MGZiLTQ4NzQtODZmYi03YzJiZTc4MmIxMDE%253D%26sellingCustomerID%3D%26sourceCustomerOrgListID%3D%26dropdown-selection-ubb%3Dadd-new%26viewID%3Dglance%26ctaDeviceType%3Ddesktop%26isAddon%3D0%26ref_%3Ddp_start-bbf_1_glance_chw%26dropdown-selection%3Dadd-new%26nodeID%3D%26items%255B0.base%255D%255Bquantity%255D%3D1%26sr%3D%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BdisplayString%255D%3D%252435.00%26tagActionCode%3D%26usePrimeHandler%3D0%26ctaPageType%3Ddetail%26quantity%3D1%26smokeTestEnabled%3Dfalse%26rsid%3D132-7857833-0393815%26isBuyNow%3D1%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255Bamount%255D%3D35.0%26pageLoadTimestampUTC%3D2026-01-02T01%253A43%253A55.508979180Z%26isEligibilityLogicDisabled%3D1%26items%255B0.base%255D%255Basin%255D%3DB0G1TTMC2T%26referrer%3Ddetail%26isMerchantExclusive%3D0%26merchantID%3DATVPDKIKX0DER%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BcurrencyCode%255D%3DUSD%26items%255B0.base%255D%255BofferListingId%255D%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26sourceCustomerOrgListItemID%3D%26submit.buy-now%3DSubmit%2BQuery%26pipelineType%3DChewbacca%26rebateId%3D%26offerListingID%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26session-id%3D132-7857833-0393815%26wlPopCommand%3D%26isUnrec%3D1&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=amazon_checkout_us&openid.mode=checkid_setup&language=en_US&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', '_blank');
     } else {
       try {
         // TODO: Collect email and shipping before checkout
@@ -65,12 +79,12 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
           window.location.href = data.url; // Redirect to Stripe checkout
         } else {
           // Stripe not set up yet, fallback to Amazon
-          window.open('https://a.co/d/iCOaWms', '_blank');
+          window.open('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=900&openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fcheckout%2Fentry%2Fbuynow%3FclientName%3DOffersX_OfferDisplay_DetailPage%26ASIN%3DB0G1TTMC2T%26storeID%3D%26qid%3D%26anti-csrftoken-a2z%3DhDcpG2jOjXbHaNcczXOE%252Bh01KkM2MRmysMC0VohBDHW0AAAAAGlXItswNDE4OTcyMy01MGZiLTQ4NzQtODZmYi03YzJiZTc4MmIxMDE%253D%26sellingCustomerID%3D%26sourceCustomerOrgListID%3D%26dropdown-selection-ubb%3Dadd-new%26viewID%3Dglance%26ctaDeviceType%3Ddesktop%26isAddon%3D0%26ref_%3Ddp_start-bbf_1_glance_chw%26dropdown-selection%3Dadd-new%26nodeID%3D%26items%255B0.base%255D%255Bquantity%255D%3D1%26sr%3D%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BdisplayString%255D%3D%252435.00%26tagActionCode%3D%26usePrimeHandler%3D0%26ctaPageType%3Ddetail%26quantity%3D1%26smokeTestEnabled%3Dfalse%26rsid%3D132-7857833-0393815%26isBuyNow%3D1%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255Bamount%255D%3D35.0%26pageLoadTimestampUTC%3D2026-01-02T01%253A43%253A55.508979180Z%26isEligibilityLogicDisabled%3D1%26items%255B0.base%255D%255Basin%255D%3DB0G1TTMC2T%26referrer%3Ddetail%26isMerchantExclusive%3D0%26merchantID%3DATVPDKIKX0DER%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BcurrencyCode%255D%3DUSD%26items%255B0.base%255D%255BofferListingId%255D%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26sourceCustomerOrgListItemID%3D%26submit.buy-now%3DSubmit%2BQuery%26pipelineType%3DChewbacca%26rebateId%3D%26offerListingID%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26session-id%3D132-7857833-0393815%26wlPopCommand%3D%26isUnrec%3D1&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=amazon_checkout_us&openid.mode=checkid_setup&language=en_US&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', '_blank');
         }
       } catch (error) {
         console.error('Purchase error:', error);
         // Fallback to Amazon
-        window.open('https://a.co/d/iCOaWms', '_blank');
+        window.open('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=900&openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fcheckout%2Fentry%2Fbuynow%3FclientName%3DOffersX_OfferDisplay_DetailPage%26ASIN%3DB0G1TTMC2T%26storeID%3D%26qid%3D%26anti-csrftoken-a2z%3DhDcpG2jOjXbHaNcczXOE%252Bh01KkM2MRmysMC0VohBDHW0AAAAAGlXItswNDE4OTcyMy01MGZiLTQ4NzQtODZmYi03YzJiZTc4MmIxMDE%253D%26sellingCustomerID%3D%26sourceCustomerOrgListID%3D%26dropdown-selection-ubb%3Dadd-new%26viewID%3Dglance%26ctaDeviceType%3Ddesktop%26isAddon%3D0%26ref_%3Ddp_start-bbf_1_glance_chw%26dropdown-selection%3Dadd-new%26nodeID%3D%26items%255B0.base%255D%255Bquantity%255D%3D1%26sr%3D%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BdisplayString%255D%3D%252435.00%26tagActionCode%3D%26usePrimeHandler%3D0%26ctaPageType%3Ddetail%26quantity%3D1%26smokeTestEnabled%3Dfalse%26rsid%3D132-7857833-0393815%26isBuyNow%3D1%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255Bamount%255D%3D35.0%26pageLoadTimestampUTC%3D2026-01-02T01%253A43%253A55.508979180Z%26isEligibilityLogicDisabled%3D1%26items%255B0.base%255D%255Basin%255D%3DB0G1TTMC2T%26referrer%3Ddetail%26isMerchantExclusive%3D0%26merchantID%3DATVPDKIKX0DER%26items%255B0.base%255D%255BcustomerVisiblePrice%255D%255BcurrencyCode%255D%3DUSD%26items%255B0.base%255D%255BofferListingId%255D%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26sourceCustomerOrgListItemID%3D%26submit.buy-now%3DSubmit%2BQuery%26pipelineType%3DChewbacca%26rebateId%3D%26offerListingID%3DWu680EAnQ6WPuEJWqGtevTruE6r%25252BD1VrRwxN%25252Finmmltc6%25252FLH%25252FTIWzl77xWgikh24ZpoJMij4jHADPAlWvynvckXlcnl09Wkk4bnGxANjOQ9xLTS0xhhBzjMS76exB8Zg9NCsLhUpsylE%25252FB26dd2beA%25253D%25253D%26session-id%3D132-7857833-0393815%26wlPopCommand%3D%26isUnrec%3D1&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=amazon_checkout_us&openid.mode=checkid_setup&language=en_US&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', '_blank');
       }
     }
   };
@@ -105,9 +119,16 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
               <motion.div
                 animate={{ y: [0, -3, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="text-gold text-4xl mb-4"
+                className="flex justify-center mb-4"
               >
-                ♛
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/images/THRONELIGHT-CROWN.png" 
+                  alt="" 
+                  width={48} 
+                  height={48} 
+                  className="w-12 h-12"
+                />
               </motion.div>
               
               <h2 className="font-serif text-2xl md:text-3xl text-charcoal mb-2">
@@ -144,18 +165,18 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
                       <p className="text-charcoal/60 text-sm mb-2">
                         {dict.purchase?.digitalDesc || 'Read on the Throne Light Reader app. Secure, beautiful, yours forever.'}
                       </p>
-                      <p className="text-gold font-semibold">$9.99</p>
+                      <p className="text-gold font-semibold">$29.99</p>
                     </div>
                     <svg className="w-5 h-5 text-gold/40 group-hover:text-gold group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </motion.button>
 
-                  {/* Physical Option */}
+                  {/* Physical Option - Direct to Amazon */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedFormat('physical')}
+                    onClick={() => handlePhysicalPurchase('amazon')}
                     className="group relative flex items-start gap-4 p-5 bg-white border-2 border-charcoal/10 rounded-xl hover:border-gold/40 transition-all duration-300 text-left"
                   >
                     <div className="flex-shrink-0 w-12 h-12 rounded-full bg-charcoal/5 flex items-center justify-center group-hover:bg-gold/10 transition-colors">
@@ -168,11 +189,7 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
                       <p className="text-charcoal/60 text-sm mb-2">
                         {dict.purchase?.physicalDesc || 'Premium paperback delivered to your throne. Perfect for your royal library.'}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-charcoal/40 font-semibold line-through text-sm">$39.99</p>
-                        <p className="text-gold font-semibold">$35.99</p>
-                        <span className="px-2 py-0.5 bg-gold/10 text-gold text-xs rounded-full font-sans">10% OFF</span>
-                      </div>
+                      <p className="text-gold font-semibold">$34.99</p>
                     </div>
                     <svg className="w-5 h-5 text-charcoal/20 group-hover:text-gold group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -228,71 +245,11 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
                       className="w-full btn-royal inline-flex items-center justify-center gap-2"
                     >
                       <BookOpen className="w-5 h-5" />
-                      <span>{dict.purchase?.buyDigital || 'Purchase Digital — $9.99'}</span>
+                      <span>{dict.purchase?.buyDigital || 'Purchase Digital — $29.99'}</span>
                     </motion.button>
                   </div>
                 </motion.div>
-              ) : (
-                /* Physical Purchase Flow */
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-4"
-                >
-                  <button
-                    onClick={() => setSelectedFormat(null)}
-                    className="flex items-center gap-2 text-charcoal/60 hover:text-charcoal text-sm mb-4"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    {dict.purchase?.back || 'Back to options'}
-                  </button>
-
-                  <div className="space-y-3">
-                    {/* Amazon Option */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handlePhysicalPurchase('amazon')}
-                      className="w-full flex items-center justify-between p-4 bg-[#FF9900]/10 border border-[#FF9900]/30 rounded-xl hover:bg-[#FF9900]/20 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#FF9900]/20 flex items-center justify-center">
-                          <span className="text-[#FF9900] text-lg">📖</span>
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-charcoal">{dict.purchase?.amazon || 'Buy on Amazon'}</p>
-                          <p className="text-charcoal/60 text-xs">{dict.purchase?.amazonDesc || 'Prime shipping available'}</p>
-                        </div>
-                      </div>
-                      <ExternalLink className="w-4 h-4 text-charcoal/40" />
-                    </motion.button>
-
-                    {/* Direct Purchase Option */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handlePhysicalPurchase('direct')}
-                      className="w-full flex items-center justify-between p-4 bg-gold/5 border border-gold/20 rounded-xl hover:bg-gold/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
-                          <span className="text-gold text-lg">♛</span>
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-charcoal">{dict.purchase?.direct || 'Buy Direct'}</p>
-                          <p className="text-charcoal/60 text-xs">{dict.purchase?.directDesc || 'Support the author directly'}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-charcoal/40 text-xs line-through">$39.99</span>
-                        <span className="text-gold text-sm font-semibold">$35.99</span>
-                      </div>
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
+              ) : null}
             </div>
 
             {/* Footer */}

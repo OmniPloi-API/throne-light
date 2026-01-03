@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0a0a0a"/>
+  <text x="256" y="280" font-size="200" text-anchor="middle" fill="#d4af37">👑</text>
+  <text x="256" y="400" font-size="48" text-anchor="middle" fill="#f5f0e8" font-family="Georgia, serif">Throne Light</text>
+  <text x="256" y="450" font-size="32" text-anchor="middle" fill="rgba(245,240,232,0.6)" font-family="Georgia, serif">Reader</text>
+</svg>

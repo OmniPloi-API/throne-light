@@ -102,7 +102,7 @@ export default function VoiceSection() {
           transition={{ delay: 0.5, duration: 1 }}
         >
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-gold-600 tracking-wide mb-4">
-            Light of Eolles
+            {dict.authorHero.name}
           </h1>
         </motion.div>
 

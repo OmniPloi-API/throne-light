@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -50,38 +51,42 @@ export default function DispatchSection() {
           </h2>
         </AnimatedSection>
 
-        {/* Editorial Layout - Two Columns */}
+        {/* Editorial Layout - Two Columns (Divine reveal, no looping flicker) */}
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-start">
           {/* Column 1 */}
-          <AnimatedSection animation="slideLeft">
-            <div className="space-y-6">
+          <div className="space-y-6">
+            <DivineReveal>
               <p className="text-charcoal/80 text-lg md:text-xl leading-relaxed font-sans first-letter:text-5xl first-letter:font-serif first-letter:text-gold-600 first-letter:float-left first-letter:mr-3 first-letter:leading-none">
                 Eolles is a sovereign voice forged in the fire of silence. She carries 
                 the ancestral roar of bold women and the sacred hush of divine downloads. 
                 A soul appointed not by algorithms, but by assignment.
               </p>
+            </DivineReveal>
+            <DivineReveal delay={400}>
               <p className="text-charcoal/70 text-lg leading-relaxed">
                 Her name means <span className="text-gold-600 italic">&ldquo;light,&rdquo;</span> but her 
                 work is thunder: poetic, prophetic, and unapologetically throne-bound.
               </p>
-            </div>
-          </AnimatedSection>
+            </DivineReveal>
+          </div>
 
           {/* Column 2 */}
-          <AnimatedSection animation="slideRight" delay={200}>
-            <div className="space-y-6">
+          <div className="space-y-6">
+            <DivineReveal>
               <p className="text-charcoal/80 text-lg md:text-xl leading-relaxed font-sans">
                 She writes not for entertainment but for <span className="text-gold-600">enthronement</span>. 
                 Her debut, <em>The Crowded Bed & The Empty Throne</em>, is more than a book, it 
                 is a spiritual awakening.
               </p>
+            </DivineReveal>
+            <DivineReveal delay={400}>
               <p className="text-charcoal/70 text-lg leading-relaxed">
                 With the cadence of scripture and the punch of protest, Eolles exposes 
                 the counterfeit of being &ldquo;chosen&rdquo; and calls women into alignment with 
                 destiny, not desire.
               </p>
-            </div>
-          </AnimatedSection>
+            </DivineReveal>
+          </div>
         </div>
 
         {/* Pull Quote */}
@@ -112,7 +117,7 @@ export default function DispatchSection() {
           className="mt-24 flex items-center justify-center gap-6"
         >
           <div className="w-24 h-px bg-gradient-to-r from-transparent to-gold-500/40" />
-          <span className="text-gold-600 text-2xl">♛</span>
+          <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={32} height={32} className="w-8 h-8" />
           <div className="w-24 h-px bg-gradient-to-l from-transparent to-gold-500/40" />
         </motion.div>
 

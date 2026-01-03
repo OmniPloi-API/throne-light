@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "tauri": "./node_modules/.bin/tauri",
+    "tauri:dev": "./node_modules/.bin/tauri dev",
+    "tauri:build": "./node_modules/.bin/tauri build",
+    "tauri:build:mac": "./node_modules/.bin/tauri build --target universal-apple-darwin",
+    "tauri:build:win": "./node_modules/.bin/tauri build --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
     "@prisma/client": "^7.1.0",
@@ -19,10 +24,12 @@
     "react": "^18",
     "react-dom": "^18",
     "react-reader": "^2.0.15",
+    "resend": "^6.6.0",
     "stripe": "^20.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^1.5.11",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",

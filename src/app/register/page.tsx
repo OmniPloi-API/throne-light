@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/">
-            <Crown className="w-12 h-12 text-gold mx-auto mb-4" />
+            <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12 mx-auto mb-4" />
           </Link>
           <h1 className="text-2xl font-bold text-parchment">Create Account</h1>
           <p className="text-gray-400 text-sm mt-1">Join Throne Light Publishing</p>

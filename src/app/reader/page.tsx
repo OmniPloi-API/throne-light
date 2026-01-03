@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
@@ -16,7 +16,10 @@ import {
   List
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { bookData, Chapter } from '@/data/books/crowded-bed-empty-throne';
+import LanguageSelector from '@/components/reader/LanguageSelector';
+import { translateParagraphs } from '@/lib/translate';
 
 export default function ReaderPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -25,6 +28,11 @@ export default function ReaderPage() {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [fontSize, setFontSize] = useState(18);
   const [readingProgress, setReadingProgress] = useState(0);
+  
+  // Language translation state
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<Record<string, string[]>>({});
 
   // Load saved preferences
   useEffect(() => {
@@ -32,11 +40,13 @@ export default function ReaderPage() {
     const savedChapter = localStorage.getItem('reader-chapter');
     const savedBookmarks = localStorage.getItem('reader-bookmarks');
     const savedFontSize = localStorage.getItem('reader-font-size');
+    const savedLanguage = localStorage.getItem('reader-language');
     
     if (savedDarkMode !== null) setIsDarkMode(savedDarkMode === 'true');
     if (savedChapter !== null) setCurrentChapterIndex(parseInt(savedChapter));
     if (savedBookmarks !== null) setBookmarks(JSON.parse(savedBookmarks));
     if (savedFontSize !== null) setFontSize(parseInt(savedFontSize));
+    if (savedLanguage !== null) setSelectedLanguage(savedLanguage);
   }, []);
 
   // Save preferences
@@ -45,7 +55,68 @@ export default function ReaderPage() {
     localStorage.setItem('reader-chapter', String(currentChapterIndex));
     localStorage.setItem('reader-bookmarks', JSON.stringify(bookmarks));
     localStorage.setItem('reader-font-size', String(fontSize));
-  }, [isDarkMode, currentChapterIndex, bookmarks, fontSize]);
+    localStorage.setItem('reader-language', selectedLanguage);
+  }, [isDarkMode, currentChapterIndex, bookmarks, fontSize, selectedLanguage]);
+
+  // Handle language change and translation
+  const handleLanguageChange = useCallback(async (langCode: string) => {
+    setSelectedLanguage(langCode);
+    
+    // If switching back to English, clear translations
+    if (langCode === 'en') {
+      setTranslatedContent({});
+      return;
+    }
+    
+    // Translate current section content
+    setIsTranslating(true);
+    try {
+      const section = allSections[currentChapterIndex];
+      const contentKey = `${section.id}_${langCode}`;
+      
+      // Check if we already have this translation cached
+      if (translatedContent[contentKey]) {
+        setIsTranslating(false);
+        return;
+      }
+      
+      // Get the content to translate based on section type
+      let contentToTranslate: string[] = [];
+      
+      if (section.type === 'front' && section.id === 'dedication') {
+        contentToTranslate = bookData.dedication || [];
+      } else if (section.type === 'front' && section.id === 'manifesto') {
+        contentToTranslate = bookData.manifesto || [];
+      } else if (section.type === 'front' && section.id === 'foreword') {
+        contentToTranslate = bookData.foreword || [];
+      } else if (section.type === 'chapter' && section.content) {
+        contentToTranslate = section.content;
+      } else if (section.type === 'back' && section.id === 'appendices') {
+        contentToTranslate = bookData.appendices || [];
+      } else if (section.type === 'back' && section.id === 'epilogue') {
+        contentToTranslate = bookData.epilogue || [];
+      }
+      
+      if (contentToTranslate.length > 0) {
+        const translated = await translateParagraphs(contentToTranslate, langCode);
+        setTranslatedContent(prev => ({
+          ...prev,
+          [contentKey]: translated,
+        }));
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [currentChapterIndex, translatedContent]);
+
+  // Re-translate when chapter changes (if not English)
+  useEffect(() => {
+    if (selectedLanguage !== 'en') {
+      handleLanguageChange(selectedLanguage);
+    }
+  }, [currentChapterIndex, selectedLanguage]);
 
   // Calculate reading progress
   useEffect(() => {
@@ -138,7 +209,7 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
           {/* Left: Menu & Home */}
           <div className="flex items-center gap-2">
             <button
@@ -180,7 +251,13 @@ export default function ReaderPage() {
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <LanguageSelector
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={handleLanguageChange}
+              isTranslating={isTranslating}
+              isDarkMode={isDarkMode}
+            />
             <button
               onClick={() => toggleBookmark(currentSection.id)}
               className={`p-2 rounded-lg transition-colors ${
@@ -408,24 +485,60 @@ export default function ReaderPage() {
                 color: ${isDarkMode ? '#D4AF37' : '#B8860B'};
               }
             `}</style>
-            {currentSection.type === 'front' && currentSection.id === 'dedication' && bookData.dedication?.map((p: string, i: number) => (
-              <p key={i} className="text-center italic">{p}</p>
-            ))}
-            {currentSection.type === 'front' && currentSection.id === 'manifesto' && bookData.manifesto?.map((p: string, i: number) => (
-              <p key={i} className="text-justify">{p}</p>
-            ))}
-            {currentSection.type === 'front' && currentSection.id === 'foreword' && bookData.foreword?.map((p: string, i: number) => (
-              <p key={i} className="text-justify">{p}</p>
-            ))}
-            {currentSection.type === 'chapter' && currentSection.content?.map((p: string, i: number) => (
-              <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
-            ))}
-            {currentSection.type === 'back' && currentSection.id === 'appendices' && bookData.appendices?.map((p: string, i: number) => (
-              <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold mt-8 mb-2' : 'text-justify'}>{p}</p>
-            ))}
-            {currentSection.type === 'back' && currentSection.id === 'epilogue' && bookData.epilogue?.map((p: string, i: number) => (
-              <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
-            ))}
+            
+            {/* Translation loading indicator */}
+            {isTranslating && (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-3 text-gold">
+                  <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">Translating content...</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Content - use translated if available */}
+            {!isTranslating && (() => {
+              const contentKey = `${currentSection.id}_${selectedLanguage}`;
+              const translatedParagraphs = translatedContent[contentKey];
+              
+              if (currentSection.type === 'front' && currentSection.id === 'dedication') {
+                const content = translatedParagraphs || bookData.dedication || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className="text-center italic">{p}</p>
+                ));
+              }
+              if (currentSection.type === 'front' && currentSection.id === 'manifesto') {
+                const content = translatedParagraphs || bookData.manifesto || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className="text-justify">{p}</p>
+                ));
+              }
+              if (currentSection.type === 'front' && currentSection.id === 'foreword') {
+                const content = translatedParagraphs || bookData.foreword || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className="text-justify">{p}</p>
+                ));
+              }
+              if (currentSection.type === 'chapter') {
+                const content = translatedParagraphs || currentSection.content || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                ));
+              }
+              if (currentSection.type === 'back' && currentSection.id === 'appendices') {
+                const content = translatedParagraphs || bookData.appendices || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold mt-8 mb-2' : 'text-justify'}>{p}</p>
+                ));
+              }
+              if (currentSection.type === 'back' && currentSection.id === 'epilogue') {
+                const content = translatedParagraphs || bookData.epilogue || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                ));
+              }
+              return null;
+            })()}
           </div>
 
           {/* Letter to Queen (chapters only) */}
@@ -462,11 +575,16 @@ export default function ReaderPage() {
             </div>
           )}
 
-          {/* Section End Decoration */}
-          <div className="text-center mt-16">
-            <span className={`text-2xl ${isDarkMode ? 'text-gold/40' : 'text-gold/50'}`}>
-              ♛
-            </span>
+          {/* Section End Decoration - Crown Logo */}
+          <div className="text-center mt-16 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/images/THRONELIGHT-CROWN.png" 
+              alt="" 
+              width={40} 
+              height={40} 
+              className={`w-10 h-10 ${isDarkMode ? 'opacity-50' : 'opacity-60'}`}
+            />
           </div>
         </motion.article>
       </main>
@@ -477,7 +595,7 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={prevChapter}
             disabled={isFirstChapter}
