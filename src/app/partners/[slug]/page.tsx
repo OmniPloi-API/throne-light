@@ -36,6 +36,7 @@ const translations: Record<Language, {
   moneyBack: string;
   reviews: string;
   off: string;
+  learnMore: string;
 }> = {
   en: {
     specialOffer: 'Special Offer',
@@ -54,6 +55,7 @@ const translations: Record<Language, {
     moneyBack: 'Money Back',
     reviews: 'reviews',
     off: 'OFF',
+    learnMore: 'Learn more about the book →',
   },
   yo: {
     specialOffer: 'Ìpèsè Pàtàkì',
@@ -72,6 +74,7 @@ const translations: Record<Language, {
     moneyBack: 'Owó Padà',
     reviews: 'àwọn àyẹ̀wò',
     off: 'DÍNWÓ',
+    learnMore: 'Kọ́ síi nípa ìwé náà →',
   },
   ha: {
     specialOffer: 'Tayin Na Musamman',
@@ -90,6 +93,7 @@ const translations: Record<Language, {
     moneyBack: 'Dawo da Kuɗi',
     reviews: 'sharhi',
     off: 'RANGWAME',
+    learnMore: 'Ƙara koyo game da littafin →',
   },
   fr: {
     specialOffer: 'Offre Spéciale',
@@ -108,6 +112,7 @@ const translations: Record<Language, {
     moneyBack: 'Remboursement',
     reviews: 'avis',
     off: 'DE RÉDUCTION',
+    learnMore: 'En savoir plus sur le livre →',
   },
   es: {
     specialOffer: 'Oferta Especial',
@@ -126,6 +131,7 @@ const translations: Record<Language, {
     moneyBack: 'Devolución',
     reviews: 'reseñas',
     off: 'DE DESCUENTO',
+    learnMore: 'Más información sobre el libro →',
   },
   pt: {
     specialOffer: 'Oferta Especial',
@@ -144,6 +150,7 @@ const translations: Record<Language, {
     moneyBack: 'Reembolso',
     reviews: 'avaliações',
     off: 'DE DESCONTO',
+    learnMore: 'Saiba mais sobre o livro →',
   },
 };
 
@@ -372,25 +379,32 @@ export default function BridgePage() {
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Book Cover */}
+          {/* Book Cover - Links to book page */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative aspect-[3/4] bg-charcoal rounded-lg overflow-hidden shadow-2xl border border-gold/20">
+            <a 
+              href="/book" 
+              className="block relative aspect-[3/4] bg-charcoal rounded-lg overflow-hidden shadow-2xl border border-gold/20 hover:border-gold/50 transition-all duration-300 hover:shadow-gold/20 hover:scale-[1.02] cursor-pointer group"
+            >
               <Image
                 src="/images/book-cover.jpg"
                 alt="The Crowded Bed & The Empty Throne by Eolles"
                 fill
-                className="object-cover"
+                className="object-cover group-hover:brightness-110 transition-all duration-300"
                 priority
                 unoptimized
               />
-            </div>
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-onyx/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                <span className="text-gold text-sm font-medium">{t.learnMore}</span>
+              </div>
+            </a>
             {/* Discount Badge */}
-            <div className="absolute -top-4 -right-4 bg-gold text-onyx font-bold px-4 py-2 rounded-full shadow-lg">
+            <div className="absolute -top-4 -right-4 bg-gold text-onyx font-bold px-4 py-2 rounded-full shadow-lg z-10">
               {partner.discountPercent}% {t.off}
             </div>
           </motion.div>
