@@ -4,6 +4,7 @@ import MirrorSection from '@/components/book/MirrorSection';
 import ConfrontationSection from '@/components/book/ConfrontationSection';
 import ScrollSection from '@/components/book/ScrollSection';
 import WitnessesSection from '@/components/book/WitnessesSection';
+import VowSection from '@/components/book/VowSection';
 import AltarSection from '@/components/book/AltarSection';
 import { Navigation, Footer } from '@/components/shared';
 
@@ -37,7 +38,10 @@ export default function BookPage() {
       {/* Section 5: The Witnesses (Testimonials) */}
       <WitnessesSection />
       
-      {/* Section 6: The Altar (Footer/Final CTA) */}
+      {/* Section 6: The Vow (Interactive Covenant) */}
+      <VowSection />
+      
+      {/* Section 7: The Altar (Footer/Final CTA) */}
       <AltarSection />
       
       <Footer variant="book" />
