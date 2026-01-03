@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+._*
+**/._*
 
 # debug
 npm-debug.log*
@@ -40,3 +42,6 @@ next-env.d.ts
 
 # Local database
 db.json
+
+# tauri (native app)
+/src-tauri/target/

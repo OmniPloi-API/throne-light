@@ -1,7 +1,0 @@
-/Volumes/T7 Shield/AMPLE-DEVELOPMENT/CBET-EOLLES WEBSITE/throne-light/src-tauri/target/release/deps/ident_case-0e8afcac715d3038.d: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ident_case-1.0.1/src/lib.rs
-
-/Volumes/T7 Shield/AMPLE-DEVELOPMENT/CBET-EOLLES WEBSITE/throne-light/src-tauri/target/release/deps/libident_case-0e8afcac715d3038.rlib: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ident_case-1.0.1/src/lib.rs
-
-/Volumes/T7 Shield/AMPLE-DEVELOPMENT/CBET-EOLLES WEBSITE/throne-light/src-tauri/target/release/deps/libident_case-0e8afcac715d3038.rmeta: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ident_case-1.0.1/src/lib.rs
-
-/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ident_case-1.0.1/src/lib.rs:
