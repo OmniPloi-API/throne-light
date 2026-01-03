@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Instagram, Youtube, Twitter, Facebook, Download, X, Apple, Monitor } from 'lucide-react';
+import { Instagram, Youtube, Twitter, Facebook, Download, X, Apple, Monitor, Smartphone } from 'lucide-react';
 import { getCopyrightYear } from '@/lib/copyright';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
@@ -13,10 +13,10 @@ interface FooterProps {
   variant?: 'book' | 'author' | 'publisher';
 }
 
-// Native app download URLs - update these when hosting is set up
+// Native app download URLs
 const DOWNLOAD_URLS = {
-  mac: '/downloads/ThroneLight-Reader.dmg', // Will be hosted on CDN or GitHub Releases
-  windows: '/downloads/ThroneLight-Reader.exe',
+  mac: '/downloads/ThroneLight-Reader-macOS.dmg',
+  windows: '/downloads/ThroneLight-Reader-Windows.exe', // Coming soon
 };
 
 const socialLinks = [
@@ -219,6 +219,9 @@ export default function Footer({ variant = 'book' }: FooterProps) {
               </div>
 
               <div className="mt-6 space-y-3">
+                {/* Desktop Section */}
+                <p className="text-xs text-parchment/40 uppercase tracking-wider mb-2">Desktop</p>
+                
                 {/* macOS Download */}
                 <button
                   onClick={() => handleDownload('mac')}
@@ -262,6 +265,39 @@ export default function Footer({ variant = 'book' }: FooterProps) {
                   )}
                   <Download className="w-5 h-5 text-parchment/40" />
                 </button>
+
+                {/* Mobile Section */}
+                <p className="text-xs text-parchment/40 uppercase tracking-wider mt-4 mb-2">Mobile</p>
+                
+                {/* iOS App Store */}
+                <a
+                  href="#"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5 transition-all opacity-60"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                    <Apple className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-parchment font-medium">iOS (iPhone/iPad)</div>
+                    <div className="text-xs text-parchment/50">Coming soon to App Store</div>
+                  </div>
+                  <span className="text-xs text-parchment/40 bg-parchment/10 px-2 py-1 rounded-full">Soon</span>
+                </a>
+
+                {/* Android Play Store */}
+                <a
+                  href="#"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5 transition-all opacity-60"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+                    <Smartphone className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-parchment font-medium">Android</div>
+                    <div className="text-xs text-parchment/50">Coming soon to Play Store</div>
+                  </div>
+                  <span className="text-xs text-parchment/40 bg-parchment/10 px-2 py-1 rounded-full">Soon</span>
+                </a>
               </div>
 
               <div className="mt-6 pt-4 border-t border-parchment/10">
