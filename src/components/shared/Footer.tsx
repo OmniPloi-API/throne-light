@@ -142,14 +142,14 @@ export default function Footer({ variant = 'book' }: FooterProps) {
             </p>
             <div className="flex items-center gap-3">
               <Link 
-                href="/privacy" 
+                href="https://thronelightpublishing.com/privacy" 
                 className="text-parchment/30 text-xs font-sans hover:text-gold transition-colors"
               >
                 Privacy Policy
               </Link>
               <span className="text-parchment/20">•</span>
               <Link 
-                href="/terms" 
+                href="https://thronelightpublishing.com/terms" 
                 className="text-parchment/30 text-xs font-sans hover:text-gold transition-colors"
               >
                 Terms of Service
