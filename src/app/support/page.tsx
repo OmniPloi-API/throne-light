@@ -180,7 +180,7 @@ export default function SupportPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all text-charcoal"
                       placeholder="Jane Doe"
                     />
                   </div>
@@ -195,7 +195,7 @@ export default function SupportPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all text-charcoal"
                       placeholder="jane@example.com"
                     />
                   </div>
@@ -216,7 +216,7 @@ export default function SupportPage() {
                       name="orderNumber"
                       value={formData.orderNumber}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all text-charcoal"
                       placeholder="e.g., ORD-12345"
                     />
                   </motion.div>
@@ -234,7 +234,7 @@ export default function SupportPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all text-charcoal"
                     placeholder="Brief description of your issue"
                   />
                 </div>
@@ -251,7 +251,7 @@ export default function SupportPage() {
                     onChange={handleChange}
                     required
                     rows={6}
-                    className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-charcoal/20 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all resize-none text-charcoal"
                     placeholder="Please describe your issue in detail..."
                   />
                 </div>

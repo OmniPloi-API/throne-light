@@ -385,8 +385,8 @@ const dictionaries: Record<Language, Dictionary> = {
       pendingStatus: 'Pending sufficient votes',
     },
     remnant: {
-      headlinePart1: 'Join The ',
-      headlinePart2: 'Throne Room',
+      headlinePart1: 'Receive The ',
+      headlinePart2: 'Message',
       description: 'The goal of this creation is not about selling, it is about summoning. Enter your email to receive revelations that free you from the traps you\'ve been captured in and call you to the throne you were born to occupy.',
       emailPlaceholder: 'Your best email address...',
       button: 'Enter The Gates',
