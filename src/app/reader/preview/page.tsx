@@ -52,7 +52,7 @@ This reader is designed for those ready to receive the full transmission.`
 
 The full book awaits those who are ready to step into their sovereignty.
 
-Purchase the digital edition for $9.99 and begin your journey immediately.
+Purchase the digital edition for $29.99 and begin your journey immediately.
 
 Or choose the premium physical edition to hold this prophetic gift in your hands.
 

@@ -221,7 +221,7 @@ function BookModal({
   const [description, setDescription] = useState(book?.description || '');
   const [coverImage, setCoverImage] = useState(book?.coverImage || '');
   const [fileUrl, setFileUrl] = useState('');
-  const [price, setPrice] = useState(book?.price?.toString() || '9.99');
+  const [price, setPrice] = useState(book?.price?.toString() || '29.99');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

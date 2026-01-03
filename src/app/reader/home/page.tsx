@@ -91,7 +91,7 @@ export default function ReaderHomePage() {
       coverImage: '/images/book-cover.jpg',
       readUrl: '/reader',
       isPurchased: purchasedBookIds.includes('crowded-bed-empty-throne'),
-      price: 9.99,
+      price: 29.99,
     },
   ];
 
