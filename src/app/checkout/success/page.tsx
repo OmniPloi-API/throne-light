@@ -42,14 +42,14 @@ function SuccessContent() {
             
             {/* Desktop App Download */}
             <a 
-              href="https://github.com/OmniPloi-API/throne-light/releases/latest/download/ThroneLight-Reader-macOS-AppleSilicon.dmg"
+              href="https://github.com/OmniPloi-API/throne-light/releases/latest/download/ThroneLight-Reader-macOS-AppleSilicon.zip"
               className="block w-full bg-charcoal hover:bg-charcoal/80 border border-gold/30 hover:border-gold/50 text-parchment font-bold py-4 px-6 rounded-lg transition-all"
             >
               <span className="flex items-center justify-center gap-2">
                 <Download className="w-5 h-5" />
                 Download Desktop Reader
               </span>
-              <span className="text-sm font-normal text-parchment/60">macOS App (.dmg)</span>
+              <span className="text-sm font-normal text-parchment/60">macOS App (.zip)</span>
             </a>
           </div>
         </div>
