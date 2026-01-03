@@ -5,6 +5,7 @@ import { AudioToggle } from "@/components/shared";
 import { LanguageProvider } from "@/components/shared/LanguageProvider";
 import { ModalProvider } from "@/components/shared/GlobalModal";
 import ServiceWorkerRegistration from "@/components/reader/ServiceWorkerRegistration";
+import FeedbackWidget from "@/components/shared/FeedbackWidget";
 
 // Sharp, high-end Serif for headers
 const playfair = Playfair_Display({
@@ -71,6 +72,8 @@ export default function RootLayout({
             {children}
             {/* Global audio control so soundtrack persists across pages */}
             <AudioToggle />
+            {/* Partner feedback widget for testing */}
+            <FeedbackWidget />
           </LanguageProvider>
         </ModalProvider>
       </body>

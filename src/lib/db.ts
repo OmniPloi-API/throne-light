@@ -235,6 +235,32 @@ export interface LibraryAccess {
   grantedAt: string;
 }
 
+// Partner Feedback System - for testing partners to submit change requests
+export type FeedbackStatus = 'NEW' | 'REVIEWED' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED';
+
+export interface PartnerFeedback {
+  id: string;
+  feedbackNumber: string; // e.g., "FB-2026-0001"
+  partnerName: string;
+  partnerEmail?: string;
+  pageUrl: string; // URL where feedback was submitted
+  sectionName?: string; // Optional section identifier
+  screenshotBase64?: string; // Base64 encoded screenshot
+  rawFeedback: string; // Original unprocessed feedback (voice or text)
+  aiProcessedInstructions?: string; // AI-transformed IDE-ready instructions
+  status: FeedbackStatus;
+  adminNotes?: string;
+  createdAt: string;
+  reviewedAt?: string;
+  completedAt?: string;
+}
+
+// Site Settings - for admin toggles
+export interface SiteSettings {
+  feedbackWidgetEnabled: boolean; // Toggle to show/hide feedback widget
+  feedbackWidgetUpdatedAt?: string;
+}
+
 export interface Database {
   partners: Partner[];
   events: TrackingEvent[];
@@ -247,11 +273,13 @@ export interface Database {
   reviews: Review[];
   supportTickets: SupportTicket[];
   subscribers: Subscriber[];
+  partnerFeedback: PartnerFeedback[];
+  siteSettings: SiteSettings;
 }
 
 export function readDb(): Database {
   if (!fs.existsSync(DB_PATH)) {
-    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [], subscribers: [] };
+    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [], subscribers: [], partnerFeedback: [], siteSettings: { feedbackWidgetEnabled: true } };
   }
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
   const data = JSON.parse(raw);
@@ -267,6 +295,8 @@ export function readDb(): Database {
     reviews: data.reviews || [],
     supportTickets: data.supportTickets || [],
     subscribers: data.subscribers || [],
+    partnerFeedback: data.partnerFeedback || [],
+    siteSettings: data.siteSettings || { feedbackWidgetEnabled: true },
   };
 }
 
