@@ -6,7 +6,7 @@ import AnimatedSection from '@/components/shared/AnimatedSection';
 import { Scroll, Heart, Check } from 'lucide-react';
 
 const vowContent = `I vow to stop laying in beds where thrones are empty.
-If he can climb into my body but won't rise into his purpose — I'm gone.
+If he can climb into my body but won't rise into his purpose I'm gone.
 
 I vow to stop mistaking rotation for revelation.
 If I'm on the schedule, I'm not in the scroll.
@@ -22,7 +22,7 @@ He just rotated me softer. Lied smoother. Used me slower.
 
 I vow to bury the lie of being chosen.
 If I'm not crowned in daylight, don't call me at night.
-I'm not the one he vents to. I'm the one he builds with — or he gets none.
+I'm not the one he vents to. I'm the one he builds with or he gets none.
 
 I vow to stop confusing chemistry for covenant.
 If all we share is heat, I'm turning the thermostat off.
@@ -31,11 +31,11 @@ Clarity is the new climax.
 
 I vow to stop begging for vision in a bed built on vibes.
 I don't want to be loved loudly and led nowhere.
-I want presence with purpose — or silence with dignity.
+I want presence with purpose or silence with dignity.
 
 I vow to remember: the throne is not climbed through seduction.
 It is approached through revelation.
-So if he won't rise — I won't fall.
+So if he won't rise I won't fall.
 
 I vow to sit where heaven seats me.
 Not where his ego likes me.
@@ -43,9 +43,9 @@ Not where his lust places me.
 Not where his indecision keeps me.
 
 I vow to become allergic to emotional slavery.
-If I have to earn it, beg for it, or decode it — it's beneath me.
+If I have to earn it, beg for it or decode it it's beneath me.
 
-I vow to rise as the woman who doesn't need to be picked — because I already got the memo: I was sent.
+I vow to rise as the woman who doesn't need to be picked because I already got the memo: I was sent.
 
 This is not self-love.
 This is throne memory.
@@ -86,15 +86,14 @@ export default function VowSection() {
       <div className="relative z-10 max-w-4xl mx-auto px-6">
         {/* Section Header */}
         <AnimatedSection animation="fadeInUp" className="text-center mb-12">
-          <span className="text-gold/60 text-xs uppercase tracking-[0.3em] font-sans block mb-4">
+          <span className="text-charcoal text-xs uppercase tracking-[0.3em] font-sans block mb-4">
             THE COVENANT
           </span>
           <h2 className="font-serif text-3xl md:text-5xl text-charcoal mb-4">
             A Sacred <span className="text-gold">Declaration</span>
           </h2>
           <p className="text-charcoal/70 font-sans text-lg max-w-2xl mx-auto">
-            Before you turn another page, there is a vow waiting for you.
-            A promise you make with yourself, for yourself, because you love yourself.
+            This vow is a promise you make with yourself, for yourself because you love yourself.
           </p>
         </AnimatedSection>
 
