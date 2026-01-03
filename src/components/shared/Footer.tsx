@@ -100,7 +100,7 @@ export default function Footer({ variant = 'book' }: FooterProps) {
                 {dict.nav.taglinePublisher}
               </Link>
               <Link 
-                href="/support" 
+                href="https://thronelightpublishing.com/support" 
                 className="block text-parchment/70 hover:text-gold transition-colors duration-300 text-sm"
               >
                 Customer Support
