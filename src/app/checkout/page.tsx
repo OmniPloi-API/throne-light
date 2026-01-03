@@ -28,7 +28,7 @@ function CheckoutContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const BOOK_PRICE = 9.99; // Digital book price
+  const BOOK_PRICE = 29.99; // Digital book price
   const discountPercent = couponCode ? 20 : 0; // Default 20% for partner codes
   const finalPrice = BOOK_PRICE * (1 - discountPercent / 100);
 
