@@ -19,9 +19,20 @@ export default function RemnantSection() {
     if (!email) return;
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitted(true);
+    try {
+      await fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'AUTHOR_MAILING_LIST',
+          sourceDetail: 'Receive The Message signup',
+        }),
+      });
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Failed to subscribe:', error);
+    }
     setIsLoading(false);
   };
 

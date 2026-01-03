@@ -170,6 +170,36 @@ export interface SupportTicket {
   updatedAt: string;
 }
 
+// Subscriber/Contact System - tracks all email/phone signups by source
+export type SubscriberSource = 
+  | 'AUTHOR_MAILING_LIST'      // "Receive The Message" on author page
+  | 'MUSIC_UPDATES'            // Music release notifications
+  | 'BOOK_UPDATES'             // New book notifications
+  | 'DAILY_ENCOURAGEMENT'      // Daily text/email encouragement
+  | 'WEEKLY_ENCOURAGEMENT'     // Weekly text/email encouragement
+  | 'PUBLISHER_INQUIRY'        // Publisher page inquiries
+  | 'GENERAL_NEWSLETTER'       // General newsletter signup
+  | 'OTHER';
+
+export interface Subscriber {
+  id: string;
+  email: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  source: SubscriberSource;
+  sourceDetail?: string; // Additional context (e.g., which page, campaign)
+  country?: string;
+  countryFlag?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  isVerified: boolean; // Email/phone verified
+  verifiedAt?: string;
+  unsubscribedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Phase 2: User (Customer) model
 export interface User {
   id: string;
@@ -216,11 +246,12 @@ export interface Database {
   libraryAccess: LibraryAccess[];
   reviews: Review[];
   supportTickets: SupportTicket[];
+  subscribers: Subscriber[];
 }
 
 export function readDb(): Database {
   if (!fs.existsSync(DB_PATH)) {
-    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [] };
+    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [], subscribers: [] };
   }
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
   const data = JSON.parse(raw);
@@ -235,6 +266,7 @@ export function readDb(): Database {
     libraryAccess: data.libraryAccess || [],
     reviews: data.reviews || [],
     supportTickets: data.supportTickets || [],
+    subscribers: data.subscribers || [],
   };
 }
 
