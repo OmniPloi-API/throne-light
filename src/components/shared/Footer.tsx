@@ -68,16 +68,7 @@ export default function Footer({ variant = 'book' }: FooterProps) {
         <div className="grid md:grid-cols-3 gap-12 mb-12">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Image
-                src="/images/CROWN-LOGO-500PX.png"
-                alt="Throne Light"
-                width={32}
-                height={32}
-                className="object-contain"
-              />
-              <h4 className="font-serif text-xl text-gold">Throne Light Publishing</h4>
-            </div>
+            <h4 className="font-serif text-xl text-gold mb-4">Throne Light Publishing</h4>
             <p className="text-parchment/50 text-sm font-sans leading-relaxed">
               {dict.footer.taglinePart1}<br />
               {dict.footer.taglinePart2}
