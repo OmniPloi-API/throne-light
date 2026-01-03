@@ -1,20 +1,53 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll } from 'framer-motion';
+import Link from 'next/link';
 import AnimatedSection from '@/components/shared/AnimatedSection';
 import { CrownRating } from '@/components/shared/CrownIcon';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
 
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  content: string;
+  country: string;
+  countryFlag: string;
+}
+
 export default function WitnessesSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
   const dict = getDictionary(language);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const { scrollXProgress } = useScroll({
     container: containerRef,
   });
+
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        const res = await fetch('/api/reviews?limit=5');
+        const data = await res.json();
+        if (data.reviews && data.reviews.length > 0) {
+          setReviews(data.reviews.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      }
+      setLoading(false);
+    }
+    fetchReviews();
+  }, []);
+
+  // Use real reviews if available, otherwise fall back to dictionary testimonials
+  const testimonials = reviews.length > 0 
+    ? reviews.map(r => ({ quote: r.content, author: r.name }))
+    : dict.witnesses.testimonials;
 
   return (
     <section className="relative bg-onyx py-24 md:py-32 overflow-hidden">
@@ -42,7 +75,7 @@ export default function WitnessesSection() {
             {/* Leading spacer */}
             <div className="flex-shrink-0 w-4 md:w-24" />
 
-            {dict.witnesses.testimonials.map((testimonial, index) => (
+            {testimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
@@ -52,24 +85,26 @@ export default function WitnessesSection() {
                 className="flex-shrink-0 w-[85vw] md:w-[500px] scroll-snap-align-center"
                 style={{ scrollSnapAlign: 'center' }}
               >
-                <div className="bg-charcoal/50 border border-gold/10 rounded-lg p-8 md:p-10 h-full flex flex-col">
-                  {/* Crown Rating instead of stars */}
-                  <CrownRating count={5} className="mb-6" />
+                <Link href="/reviews" className="block h-full">
+                  <div className="bg-charcoal/50 border border-gold/10 rounded-lg p-8 md:p-10 h-full flex flex-col hover:border-gold/30 transition-colors cursor-pointer">
+                    {/* Crown Rating instead of stars */}
+                    <CrownRating count={5} className="mb-6" />
 
-                  {/* Quote */}
-                  <blockquote className="flex-grow">
-                    <p className="text-parchment/90 text-lg md:text-xl leading-relaxed font-serif italic">
-                      &ldquo;{testimonial.quote}&rdquo;
-                    </p>
-                  </blockquote>
+                    {/* Quote */}
+                    <blockquote className="flex-grow">
+                      <p className="text-parchment/90 text-lg md:text-xl leading-relaxed font-serif italic">
+                        &ldquo;{testimonial.quote}&rdquo;
+                      </p>
+                    </blockquote>
 
-                  {/* Author */}
-                  <footer className="mt-6 pt-6 border-t border-gold/10">
-                    <p className="text-gold text-sm font-sans">
-                      {testimonial.author}
-                    </p>
-                  </footer>
-                </div>
+                    {/* Author */}
+                    <footer className="mt-6 pt-6 border-t border-gold/10">
+                      <p className="text-gold text-sm font-sans">
+                        {testimonial.author}
+                      </p>
+                    </footer>
+                  </div>
+                </Link>
               </motion.div>
             ))}
 
@@ -80,7 +115,7 @@ export default function WitnessesSection() {
 
         {/* Scroll indicator dots */}
         <div className="flex justify-center gap-2 mt-8">
-          {dict.witnesses.testimonials.map((_, index) => (
+          {testimonials.map((_, index) => (
             <motion.div
               key={index}
               className="w-2 h-2 rounded-full bg-gold/30"

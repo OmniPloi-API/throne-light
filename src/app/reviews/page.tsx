@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ArrowLeft, Send, CheckCircle, Clock, User } from 'lucide-react';
 
@@ -131,7 +132,8 @@ function ReviewForm({ onSubmit, pendingReview }: {
   onSubmit: (review: any) => Promise<void>;
   pendingReview: Review | null;
 }) {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
@@ -144,14 +146,16 @@ function ReviewForm({ onSubmit, pendingReview }: {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name || !email || !content) return;
+    if (!firstName || !lastName || !email || !content) return;
+    
+    const fullName = `${firstName} ${lastName}`;
     
     setIsSubmitting(true);
     setError('');
     
     try {
       await onSubmit({
-        name,
+        name: fullName,
         email,
         rating,
         content,
@@ -200,20 +204,33 @@ function ReviewForm({ onSubmit, pendingReview }: {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm text-parchment/60 mb-2">Your Name *</label>
+          <label className="block text-sm text-parchment/60 mb-2">First Name *</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First name"
             required
             className="w-full px-4 py-3 rounded-lg bg-onyx border border-gold/20 text-parchment placeholder:text-parchment/30 focus:border-gold/50 outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm text-parchment/60 mb-2">Email *</label>
+          <label className="block text-sm text-parchment/60 mb-2">Last Name *</label>
+          <input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Last name"
+            required
+            className="w-full px-4 py-3 rounded-lg bg-onyx border border-gold/20 text-parchment placeholder:text-parchment/30 focus:border-gold/50 outline-none"
+          />
+        </div>
+      </div>
+      
+      <div className="mb-4">
+        <label className="block text-sm text-parchment/60 mb-2">Email *</label>
           <input
             type="email"
             value={email}
@@ -222,8 +239,7 @@ function ReviewForm({ onSubmit, pendingReview }: {
             required
             className="w-full px-4 py-3 rounded-lg bg-onyx border border-gold/20 text-parchment placeholder:text-parchment/30 focus:border-gold/50 outline-none"
           />
-          <p className="text-xs text-parchment/40 mt-1">Used to verify your purchase</p>
-        </div>
+        <p className="text-xs text-parchment/40 mt-1">Used to verify your purchase</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -274,7 +290,7 @@ function ReviewForm({ onSubmit, pendingReview }: {
       
       <button
         type="submit"
-        disabled={isSubmitting || !name || !email || !content}
+        disabled={isSubmitting || !firstName || !lastName || !email || !content}
         className="w-full py-4 rounded-xl bg-gold text-onyx font-medium hover:bg-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
@@ -342,7 +358,7 @@ export default function ReviewsPage() {
     <div className="min-h-screen bg-onyx text-parchment">
       {/* Header */}
       <header className="border-b border-gold/20 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link 
             href="/book"
             className="flex items-center gap-2 text-parchment/60 hover:text-gold transition-colors"
@@ -350,6 +366,16 @@ export default function ReviewsPage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to Book</span>
           </Link>
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+            <Image
+              src="/images/CROWN-LOGO-500PX.png"
+              alt="Throne Light"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          </Link>
+          <div className="w-24" /> {/* Spacer for balance */}
         </div>
       </header>
 
