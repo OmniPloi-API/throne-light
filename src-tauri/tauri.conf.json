@@ -2,7 +2,7 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "./tauri-build.sh",
-    "devPath": "https://thronelight.com/reader/home",
+    "devPath": "https://sincere-eagerness-production-0210.up.railway.app/reader/home",
     "distDir": "../out"
   },
   "package": {
