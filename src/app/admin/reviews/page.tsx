@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, Star, CheckCircle, XCircle, Mail, Clock, 
-  Shield, AlertTriangle, Trash2, Eye, User
+  Shield, AlertTriangle, Trash2, Eye, User, Loader2
 } from 'lucide-react';
 
 interface Review {
@@ -187,10 +188,30 @@ function ReviewCard({
 }
 
 export default function AdminReviewsPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+
+  // Check authentication on mount
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/auth');
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+        } else {
+          router.push('/admin/login');
+        }
+      } catch {
+        router.push('/admin/login');
+      }
+    }
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     fetchReviews();
@@ -267,6 +288,15 @@ export default function AdminReviewsPage() {
   const pendingCount = reviews.filter(r => r.status === 'PENDING').length;
   const approvedCount = reviews.filter(r => r.status === 'APPROVED').length;
   const rejectedCount = reviews.filter(r => r.status === 'REJECTED').length;
+
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">

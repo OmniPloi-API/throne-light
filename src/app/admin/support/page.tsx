@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, RefreshCw, Search, Filter, Clock, CheckCircle, 
   XCircle, AlertCircle, MessageSquare, Mail, Package, CreditCard,
-  Settings, HelpCircle, Trash2, ChevronDown, User
+  Settings, HelpCircle, Trash2, ChevronDown, User, Loader2
 } from 'lucide-react';
 
 interface SupportTicket {
@@ -60,6 +61,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminSupportPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +72,24 @@ export default function AdminSupportPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/auth');
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+        } else {
+          router.push('/admin/login');
+        }
+      } catch {
+        router.push('/admin/login');
+      }
+    }
+    checkAuth();
+  }, [router]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -156,6 +177,15 @@ export default function AdminSupportPage() {
   const formatCategory = (category: string) => {
     return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
+
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">

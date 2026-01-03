@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Users, DollarSign, TrendingUp, ExternalLink, 
   Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
-  ArrowUpRight, ArrowDownRight, Link2
+  ArrowUpRight, ArrowDownRight, Link2, Loader2, LogOut
 } from 'lucide-react';
 
 interface Partner {
@@ -56,6 +57,8 @@ interface Stats {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [events, setEvents] = useState<TrackingEvent[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -64,6 +67,29 @@ export default function AdminPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [showAccessCode, setShowAccessCode] = useState(false);
   const [createdPartner, setCreatedPartner] = useState<any>(null);
+
+  // Check authentication on mount
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/auth');
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+        } else {
+          router.push('/admin/login');
+        }
+      } catch {
+        router.push('/admin/login');
+      }
+    }
+    checkAuth();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    router.push('/admin/login');
+  };
 
   async function fetchAll() {
     try {
@@ -117,6 +143,15 @@ export default function AdminPage() {
     return sum + ((partnerAmazonClicks + partnerBookBabyClicks) * p.clickBounty);
   }, 0);
 
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
   if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading…</div>;
 
   return (
@@ -138,6 +173,13 @@ export default function AdminPage() {
             <Link href="/partner" className="px-4 py-2 bg-[#222] hover:bg-[#333] rounded-lg text-sm transition">
               Partner View →
             </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg text-sm transition flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
           </div>
         </div>
       </header>

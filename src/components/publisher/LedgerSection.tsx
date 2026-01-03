@@ -110,6 +110,13 @@ export default function LedgerSection() {
           >
             {dict.ledger.links.amazon}
           </button>
+          <span className="hidden md:block text-parchment/20">•</span>
+          <Link 
+            href="/partner/login"
+            className="text-parchment/50 hover:text-gold transition-colors duration-300"
+          >
+            Partners
+          </Link>
         </motion.div>
 
         {/* Social Links */}
