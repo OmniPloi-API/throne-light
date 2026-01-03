@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -17,13 +17,13 @@
     "tauri:build:win": "./node_modules/.bin/tauri build --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
-    "@prisma/client": "^7.1.0",
+    "@prisma/client": "^6.2.0",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.23.24",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.555.0",
     "next": "^14.2.35",
-    "prisma": "^7.1.0",
+    "prisma": "^6.2.0",
     "react": "^18",
     "react-dom": "^18",
     "react-reader": "^2.0.15",
