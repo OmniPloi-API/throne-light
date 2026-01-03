@@ -188,7 +188,7 @@ export default function TermsOfServicePage() {
             </p>
             <p className="mt-4">
               <strong className="text-gold">Throne Light Publishing LLC</strong><br />
-              Email: legal@thronelight.com
+              Email: legal@thronelightpublishing.com
             </p>
           </section>
 

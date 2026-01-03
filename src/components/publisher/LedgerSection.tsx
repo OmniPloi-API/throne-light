@@ -91,14 +91,14 @@ export default function LedgerSection() {
           className="flex flex-col md:flex-row items-center justify-center gap-8 mb-16"
         >
           <Link 
-            href="/book"
+            href="https://thecrowdedbedandtheemptythrone.com"
             className="text-parchment/50 hover:text-gold transition-colors duration-300"
           >
             {dict.ledger.links.book}
           </Link>
           <span className="hidden md:block text-parchment/20">•</span>
           <Link 
-            href="/author"
+            href="https://lightofeolles.com"
             className="text-parchment/50 hover:text-gold transition-colors duration-300"
           >
             {dict.ledger.links.author}

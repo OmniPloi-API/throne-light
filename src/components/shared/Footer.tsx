@@ -15,7 +15,7 @@ interface FooterProps {
 
 // Native app download URLs
 const DOWNLOAD_URLS = {
-  mac: '/downloads/ThroneLight-Reader-macOS.dmg',
+  mac: 'https://github.com/OmniPloi-API/throne-light/releases/latest/download/ThroneLight-Reader-macOS-AppleSilicon.dmg',
   windows: '/downloads/ThroneLight-Reader-Windows.exe', // Coming soon
 };
 
@@ -82,19 +82,19 @@ export default function Footer({ variant = 'book' }: FooterProps) {
             </h5>
             <nav className="space-y-3">
               <Link 
-                href="/book" 
+                href="https://thecrowdedbedandtheemptythrone.com" 
                 className="block text-parchment/70 hover:text-gold transition-colors duration-300 text-sm"
               >
                 {dict.nav.taglineBook}
               </Link>
               <Link 
-                href="/author" 
+                href="https://lightofeolles.com" 
                 className="block text-parchment/70 hover:text-gold transition-colors duration-300 text-sm"
               >
                 {dict.nav.taglineAuthor}
               </Link>
               <Link 
-                href="/publisher" 
+                href="https://thronelightpublishing.com" 
                 className="block text-parchment/70 hover:text-gold transition-colors duration-300 text-sm"
               >
                 {dict.nav.taglinePublisher}

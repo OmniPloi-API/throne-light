@@ -1,6 +1,6 @@
 [package]
 name = "throne-light-reader"
-version = "1.0.0"
+version = "1.0.1"
 description = "Throne Light Reader - Your Royal Library"
 authors = ["Throne Light Publishing"]
 edition = "2021"

@@ -140,9 +140,25 @@ cat > out/index.html << 'EOF'
   <script>
     (function () {
       var DEFAULT_URL = '__TL_READER_URL__';
+      var STORAGE_KEY = 'tl_reader_url_v2';
+      var LEGACY_KEY = 'tl_reader_url';
       var stored = null;
-      try { stored = localStorage.getItem('tl_reader_url'); } catch (e) {}
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      try {
+        var legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy && /thronelight\.com/i.test(legacy)) {
+          localStorage.removeItem(LEGACY_KEY);
+        }
+      } catch (e) {}
+      if (stored && /thronelight\.com/i.test(stored)) {
+        stored = null;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      }
       var readerUrl = stored || DEFAULT_URL;
+      if (/thronelight\.com/i.test(readerUrl)) {
+        readerUrl = DEFAULT_URL;
+        try { localStorage.setItem(STORAGE_KEY, readerUrl); } catch (e) {}
+      }
 
       var titleEl = document.getElementById('statusTitle');
       var bodyEl = document.getElementById('statusBody');
@@ -217,7 +233,7 @@ cat > out/index.html << 'EOF'
         var nextUrl = (serverInput.value || '').trim();
         if (!nextUrl) return;
         readerUrl = nextUrl;
-        try { localStorage.setItem('tl_reader_url', readerUrl); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEY, readerUrl); } catch (e) {}
         serverPanel.style.display = 'none';
         checkConnectivity();
       };
@@ -232,7 +248,7 @@ cat > out/index.html << 'EOF'
 </html>
 EOF
 
-READER_URL_DEFAULT="${TL_READER_URL:-https://thronelight.com/reader/home}"
+READER_URL_DEFAULT="${TL_READER_URL:-https://thronelightpublishing.com/reader/home}"
 perl -0777 -i -pe "s#__TL_READER_URL__#${READER_URL_DEFAULT}#g" out/index.html
 
 echo "✓ Static build complete in ./out"

@@ -2,12 +2,12 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "./tauri-build.sh",
-    "devPath": "https://sincere-eagerness-production-0210.up.railway.app/reader/home",
+    "devPath": "https://thronelightpublishing.com/reader/home",
     "distDir": "../out"
   },
   "package": {
     "productName": "Throne Light Reader",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {

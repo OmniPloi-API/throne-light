@@ -144,14 +144,14 @@ export default function AltarSection() {
         <div className="relative z-0">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm">
             <Link
-              href="/publisher"
+              href="https://thronelightpublishing.com"
               className="text-charcoal/60 hover:text-gold-700 transition-colors duration-300"
             >
               {dict.altar.linkPublisher}
             </Link>
             <span className="hidden sm:block text-charcoal/30">|</span>
             <Link
-              href="/author"
+              href="https://lightofeolles.com"
               className="text-charcoal/60 hover:text-gold-700 transition-colors duration-300"
             >
               {dict.altar.linkAuthor}

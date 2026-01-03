@@ -35,6 +35,9 @@ export const metadata: Metadata = {
   description: "The Crowded Bed & The Empty Throne by Eolles. A prophetic scroll for women who are done competing for a man's attention and ready to reclaim their crown.",
   keywords: ["Eolles", "The Crowded Bed", "The Empty Throne", "Throne Light Publishing", "women empowerment", "sovereignty", "prophetic", "spiritual awakening"],
   authors: [{ name: "Eolles" }],
+  icons: {
+    icon: '/images/favicon.ico',
+  },
   openGraph: {
     title: "Throne Light Publishing",
     description: "We don't distribute books. We deliver divine revelation",
