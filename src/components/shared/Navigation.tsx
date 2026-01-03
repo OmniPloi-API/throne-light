@@ -21,9 +21,9 @@ export default function Navigation({ currentSite }: NavigationProps) {
   const langMenuRef = useRef<HTMLDivElement>(null);
 
   const sites = [
-    { id: 'book', name: dict.nav.book, href: '/book', tagline: dict.nav.taglineBook },
-    { id: 'author', name: dict.nav.author, href: '/author', tagline: dict.nav.taglineAuthor },
-    { id: 'publisher', name: dict.nav.publisher, href: '/publisher', tagline: dict.nav.taglinePublisher },
+    { id: 'book', name: dict.nav.book, href: 'https://thecrowdedbedandtheemptythrone.com', tagline: dict.nav.taglineBook },
+    { id: 'author', name: dict.nav.author, href: 'https://lightofeolles.com', tagline: dict.nav.taglineAuthor },
+    { id: 'publisher', name: dict.nav.publisher, href: 'https://thronelightpublishing.com', tagline: dict.nav.taglinePublisher },
   ];
 
   useEffect(() => {

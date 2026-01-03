@@ -61,7 +61,7 @@ export default function ReaderHomePage() {
   }
 
   const handleShare = async () => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://thronelight.com';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://thecrowdedbedandtheemptythrone.com';
     const shareData = {
       title: bookData.title,
       text: `Check out "${bookData.title}" by ${bookData.author}`,
@@ -370,7 +370,7 @@ export default function ReaderHomePage() {
           className="mt-8 flex flex-wrap items-center justify-center gap-6"
         >
           <a
-            href="https://thronelight.com"
+            href="https://thronelightpublishing.com"
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center gap-2 text-sm transition-colors ${
@@ -384,7 +384,7 @@ export default function ReaderHomePage() {
           </a>
           <span className={`${isDarkMode ? 'text-parchment/20' : 'text-charcoal/20'}`}>•</span>
           <a
-            href="https://eolles.com"
+            href="https://lightofeolles.com"
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center gap-2 text-sm transition-colors ${
