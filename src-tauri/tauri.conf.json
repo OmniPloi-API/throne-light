@@ -34,11 +34,11 @@
       "identifier": "com.thronelight.reader",
       "longDescription": "Throne Light Reader - Your Royal Library. Read your purchased books from Throne Light Publishing in a beautiful, distraction-free native application.",
       "macOS": {
-        "entitlements": null,
+        "entitlements": "entitlements.plist",
         "exceptionDomain": "",
         "frameworks": [],
         "providerShortName": null,
-        "signingIdentity": "-"
+        "signingIdentity": null
       },
       "resources": [],
       "shortDescription": "Your Royal Library",
