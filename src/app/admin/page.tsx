@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { 
   Users, DollarSign, TrendingUp, ExternalLink, 
   Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
-  ArrowUpRight, ArrowDownRight, Link2, Loader2, LogOut
+  ArrowUpRight, ArrowDownRight, Link2, Loader2, LogOut,
+  Power, Trash2, RotateCcw, AlertTriangle
 } from 'lucide-react';
+import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 
 interface Partner {
   id: string;
@@ -21,6 +23,8 @@ interface Partner {
   commissionPercent: number;
   clickBounty: number;
   discountPercent: number;
+  isActive: boolean;
+  deactivatedAt?: string;
   createdAt: string;
 }
 
@@ -68,6 +72,11 @@ export default function AdminPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [showAccessCode, setShowAccessCode] = useState(false);
   const [createdPartner, setCreatedPartner] = useState<any>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'deactivate' | 'reactivate' | 'delete';
+    partner: Partner;
+  } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -96,6 +105,54 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
     router.push('/admin/login');
+  };
+
+  const handleDeactivate = async (partner: Partner) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/partners/${partner.id}/deactivate`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        await fetchAll();
+        setConfirmAction(null);
+      }
+    } catch (err) {
+      console.error('Deactivation error:', err);
+    }
+    setActionLoading(false);
+  };
+
+  const handleReactivate = async (partner: Partner) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/partners/${partner.id}/reactivate`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        await fetchAll();
+        setConfirmAction(null);
+      }
+    } catch (err) {
+      console.error('Reactivation error:', err);
+    }
+    setActionLoading(false);
+  };
+
+  const handleDelete = async (partner: Partner) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/partners/${partner.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        await fetchAll();
+        setConfirmAction(null);
+      }
+    } catch (err) {
+      console.error('Deletion error:', err);
+    }
+    setActionLoading(false);
   };
 
   async function fetchAll() {
@@ -306,6 +363,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3">Commission %</th>
                   <th className="px-4 py-3">Click Bounty</th>
                   <th className="px-4 py-3">Total Owed</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -342,12 +400,52 @@ export default function AdminPage() {
                       <td className="px-4 py-3 font-semibold text-gold">
                         ${(pCommission + pClickBounty).toFixed(2)}
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {p.isActive ? (
+                            <>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'deactivate', partner: p })}
+                                className="p-1.5 rounded bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 transition"
+                                title="Deactivate Partner"
+                              >
+                                <Power className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'delete', partner: p })}
+                                className="p-1.5 rounded bg-red-900/30 hover:bg-red-900/50 text-red-400 transition"
+                                title="Delete Partner"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'reactivate', partner: p })}
+                                className="p-1.5 rounded bg-green-900/30 hover:bg-green-900/50 text-green-400 transition"
+                                title="Reactivate Partner"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'delete', partner: p })}
+                                className="p-1.5 rounded bg-red-900/30 hover:bg-red-900/50 text-red-400 transition"
+                                title="Delete Partner"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                              <span className="text-xs text-yellow-400 ml-2">Inactive</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
                 {partners.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                       No partners yet. Create one above.
                     </td>
                   </tr>
@@ -398,6 +496,24 @@ export default function AdminPage() {
           </div>
         </section>
       </main>
+
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <ConfirmActionModal
+          action={confirmAction}
+          loading={actionLoading}
+          onConfirm={() => {
+            if (confirmAction.type === 'deactivate') {
+              handleDeactivate(confirmAction.partner);
+            } else if (confirmAction.type === 'reactivate') {
+              handleReactivate(confirmAction.partner);
+            } else if (confirmAction.type === 'delete') {
+              handleDelete(confirmAction.partner);
+            }
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
     </div>
   );
 }

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     
     if (partnerId) {
       const partner = getPartnerById(partnerId);
-      if (partner) {
+      if (partner && partner.isActive) {
         partnerData = partner;
         discountPercent = partner.discountPercent;
       }

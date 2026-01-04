@@ -31,15 +31,15 @@ export async function POST(req: NextRequest) {
   
   const db = readDb();
   
-  // Check for duplicates
+  // Check for duplicates (only among active partners for coupon codes)
   if (db.partners.find((p) => p.email === email)) {
     return NextResponse.json({ error: 'Partner email already exists' }, { status: 409 });
   }
   if (db.partners.find((p) => p.slug === slug)) {
     return NextResponse.json({ error: 'Partner slug already exists' }, { status: 409 });
   }
-  if (db.partners.find((p) => p.couponCode === couponCode)) {
-    return NextResponse.json({ error: 'Coupon code already exists' }, { status: 409 });
+  if (db.partners.find((p) => p.couponCode === couponCode && p.isActive)) {
+    return NextResponse.json({ error: 'Coupon code already exists for an active partner' }, { status: 409 });
   }
 
   // Generate unique access code
@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
     // Location & Payout
     country: country.toUpperCase(),
     payoutMethod: 'STRIPE',
+    isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

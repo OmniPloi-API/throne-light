@@ -32,6 +32,8 @@ export interface Partner {
   wiseEmail?: string; // For international fail-safe
   cryptoWallet?: string; // For crypto payout option
   lastPayoutMonth?: string; // Track for monthly fee (e.g., '2025-01')
+  isActive: boolean; // Whether this partner campaign is active
+  deactivatedAt?: string; // When the partner was deactivated
   createdAt: string;
   updatedAt: string;
 }
