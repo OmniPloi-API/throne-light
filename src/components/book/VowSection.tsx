@@ -137,7 +137,7 @@ export default function VowSection() {
                 <div className="text-center mb-10 pb-6 border-b border-charcoal/10">
                   <Scroll className="w-10 h-10 text-gold mx-auto mb-4" />
                   <h3 className="font-serif text-2xl md:text-3xl text-charcoal italic">
-                    The Vow of the Unrotated
+                    Read the following aloud & declare this day as the day you reclaim your right to rule.
                   </h3>
                 </div>
 
