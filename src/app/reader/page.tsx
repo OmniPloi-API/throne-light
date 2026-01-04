@@ -13,13 +13,16 @@ import {
   Bookmark,
   BookmarkCheck,
   Home,
-  List
+  List,
+  Volume2
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { bookData, Chapter } from '@/data/books/crowded-bed-empty-throne';
 import LanguageSelector from '@/components/reader/LanguageSelector';
 import { translateParagraphs } from '@/lib/translate';
+import ReaderAudioPlayer from '@/components/reader/ReaderAudioPlayer';
+import { ParagraphData } from '@/hooks/useAudioSync';
 
 export default function ReaderPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -33,6 +36,10 @@ export default function ReaderPage() {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<Record<string, string[]>>({});
+  
+  // Audio player state
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [audioParagraphs, setAudioParagraphs] = useState<ParagraphData[]>([]);
 
   // Load saved preferences
   useEffect(() => {
@@ -124,6 +131,40 @@ export default function ReaderPage() {
     const progress = ((currentChapterIndex + 1) / totalSections) * 100;
     setReadingProgress(progress);
   }, [currentChapterIndex]);
+
+  // Build audio paragraphs when section or translation changes
+  useEffect(() => {
+    const section = allSections[currentChapterIndex];
+    if (!section) return;
+
+    const contentKey = `${section.id}_${selectedLanguage}`;
+    const translatedParagraphs = translatedContent[contentKey];
+    
+    let content: string[] = [];
+    
+    if (section.type === 'front' && section.id === 'dedication') {
+      content = translatedParagraphs || bookData.dedication || [];
+    } else if (section.type === 'front' && section.id === 'manifesto') {
+      content = translatedParagraphs || bookData.manifesto || [];
+    } else if (section.type === 'front' && section.id === 'foreword') {
+      content = translatedParagraphs || bookData.foreword || [];
+    } else if (section.type === 'chapter' && section.content) {
+      content = translatedParagraphs || section.content;
+    } else if (section.type === 'back' && section.id === 'appendices') {
+      content = translatedParagraphs || bookData.appendices || [];
+    } else if (section.type === 'back' && section.id === 'epilogue') {
+      content = translatedParagraphs || bookData.epilogue || [];
+    }
+
+    // Build paragraph data for audio sync
+    const paragraphs: ParagraphData[] = content.map((text, index) => ({
+      index,
+      text,
+      elementId: `para-${section.id}-${index}`,
+    }));
+
+    setAudioParagraphs(paragraphs);
+  }, [currentChapterIndex, selectedLanguage, translatedContent]);
 
   // Create sections array: front matter + chapters + back matter
   type Section = {
@@ -504,37 +545,37 @@ export default function ReaderPage() {
               if (currentSection.type === 'front' && currentSection.id === 'dedication') {
                 const content = translatedParagraphs || bookData.dedication || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className="text-center italic">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center italic">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'manifesto') {
                 const content = translatedParagraphs || bookData.manifesto || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'foreword') {
                 const content = translatedParagraphs || bookData.foreword || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
                 ));
               }
               if (currentSection.type === 'chapter') {
                 const content = translatedParagraphs || currentSection.content || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'appendices') {
                 const content = translatedParagraphs || bookData.appendices || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold mt-8 mb-2' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold mt-8 mb-2' : 'text-justify'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'epilogue') {
                 const content = translatedParagraphs || bookData.epilogue || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
                 ));
               }
               return null;
@@ -594,7 +635,7 @@ export default function ReaderPage() {
         isDarkMode 
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
-      }`}>
+      } ${showAudioPlayer ? 'pb-20' : ''}`}>
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={prevChapter}
@@ -609,7 +650,22 @@ export default function ReaderPage() {
             <span className="text-sm hidden sm:inline">Previous</span>
           </button>
 
-          <div className="text-center">
+          <div className="flex items-center gap-4">
+            {/* Audio Toggle Button */}
+            <button
+              onClick={() => setShowAudioPlayer(!showAudioPlayer)}
+              className={`p-2 rounded-lg transition-colors ${
+                showAudioPlayer
+                  ? 'bg-gold/20 text-gold'
+                  : isDarkMode
+                    ? 'hover:bg-charcoal/50 text-parchment/60'
+                    : 'hover:bg-manuscript text-charcoal/60'
+              }`}
+              title={showAudioPlayer ? 'Hide Audio Player' : 'Listen to Audio'}
+            >
+              <Volume2 className="w-5 h-5" />
+            </button>
+            
             <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
               {currentChapterIndex + 1} / {allSections.length}
             </p>
@@ -629,6 +685,17 @@ export default function ReaderPage() {
           </button>
         </div>
       </footer>
+
+      {/* Audio Player */}
+      {showAudioPlayer && audioParagraphs.length > 0 && (
+        <ReaderAudioPlayer
+          paragraphs={audioParagraphs}
+          bookId="crowded-bed-empty-throne"
+          languageCode={selectedLanguage}
+          voiceId="shimmer"
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }
