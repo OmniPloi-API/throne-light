@@ -128,21 +128,18 @@ export default function ReaderHomePage() {
       const data = await res.json();
       
       if (data.valid) {
-        // Valid code - unlock the book
-        const newPurchased = [...purchasedBookIds, selectedBook!.id];
-        setPurchasedBookIds(newPurchased);
-        localStorage.setItem('reader-purchased-books', JSON.stringify(newPurchased));
-        
-        // Store the discount info if it's a coupon code
-        if (data.type === 'coupon' && data.discountPercent) {
-          localStorage.setItem('reader-discount', JSON.stringify({
-            partnerId: data.partnerId,
-            discountPercent: data.discountPercent,
-          }));
+        if (data.type === 'coupon') {
+          // Coupon code - redirect to checkout with discount applied
+          const checkoutUrl = `/checkout?book=${selectedBook?.id}&source=reader&partnerId=${data.partnerId}&discount=${data.discountPercent}`;
+          window.location.href = checkoutUrl;
+        } else {
+          // Direct unlock code (THRONE- prefix or partner access) - unlock the book
+          const newPurchased = [...purchasedBookIds, selectedBook!.id];
+          setPurchasedBookIds(newPurchased);
+          localStorage.setItem('reader-purchased-books', JSON.stringify(newPurchased));
+          setShowUnlockModal(false);
+          setSelectedBook(null);
         }
-        
-        setShowUnlockModal(false);
-        setSelectedBook(null);
       } else {
         setCodeError(data.error || 'Invalid redemption code. Please check and try again.');
       }
