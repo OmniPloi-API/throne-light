@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, IssueType } from '@/lib/supabase';
+import { getSupabaseAdmin, IssueType } from '@/lib/supabase';
 
 interface ReportIssueRequest {
   audio_segment_id: string;
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the audio segment exists
-    const { data: segment, error: segmentError } = await supabaseAdmin
+    const { data: segment, error: segmentError } = await getSupabaseAdmin()
       .from('audio_segments')
       .select('id, version_number, book_id, content_hash, language_code, voice_id')
       .eq('id', audio_segment_id)
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert feedback record
-    const { data: feedback, error: insertError } = await supabaseAdmin
+    const { data: feedback, error: insertError } = await getSupabaseAdmin()
       .from('audio_feedback')
       .insert({
         audio_segment_id,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Count total unresolved reports for this segment
-    const { count: reportCount, error: countError } = await supabaseAdmin
+    const { count: reportCount, error: countError } = await getSupabaseAdmin()
       .from('audio_feedback')
       .select('*', { count: 'exact', head: true })
       .eq('audio_segment_id', audio_segment_id)
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     if (currentVersion < 3) {
       // Check if next version already exists
-      const { data: existingNext } = await supabaseAdmin
+      const { data: existingNext } = await getSupabaseAdmin()
         .from('audio_segments')
         .select('id')
         .eq('book_id', segment.book_id)
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const { data: segment, error: segmentError } = await supabaseAdmin
+  const { data: segment, error: segmentError } = await getSupabaseAdmin()
     .from('audio_segments')
     .select('flagged_for_review, version_number')
     .eq('id', segment_id)
@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const { count: reportCount } = await supabaseAdmin
+  const { count: reportCount } = await getSupabaseAdmin()
     .from('audio_feedback')
     .select('*', { count: 'exact', head: true })
     .eq('audio_segment_id', segment_id)

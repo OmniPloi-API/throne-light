@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 // GET: Fetch all flagged audio segments with their reports
 export async function GET(req: NextRequest) {
   try {
     // Get flagged segments with aggregated report info
-    const { data: flaggedSegments, error } = await supabaseAdmin
+    const { data: flaggedSegments, error } = await getSupabaseAdmin()
       .from('audio_segments')
       .select(`
         id,
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     // Get feedback counts for each segment
     const segmentsWithReports = await Promise.all(
       (flaggedSegments || []).map(async (segment) => {
-        const { data: feedback, error: feedbackError } = await supabaseAdmin
+        const { data: feedback, error: feedbackError } = await getSupabaseAdmin()
           .from('audio_feedback')
           .select('id, issue_type, comment, resolved, created_at')
           .eq('audio_segment_id', segment.id)
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'unflag') {
       // Unflag the segment
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('audio_segments')
         .update({ flagged_for_review: false })
         .eq('id', segment_id);
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'resolve_all') {
       // Resolve all feedback for this segment
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('audio_feedback')
         .update({ resolved: true, resolved_at: new Date().toISOString() })
         .eq('audio_segment_id', segment_id);
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Also unflag the segment
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('audio_segments')
         .update({ flagged_for_review: false })
         .eq('id', segment_id);
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'resolve_selected' && feedback_ids?.length > 0) {
       // Resolve selected feedback
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('audio_feedback')
         .update({ resolved: true, resolved_at: new Date().toISOString() })
         .in('id', feedback_ids);
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'delete_segment') {
       // Delete the segment (this will cascade delete feedback due to FK constraint)
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('audio_segments')
         .delete()
         .eq('id', segment_id);

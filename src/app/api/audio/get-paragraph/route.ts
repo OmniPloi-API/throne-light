@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import OpenAI from 'openai';
-import { supabaseAdmin, AudioSegment } from '@/lib/supabase';
+import { getSupabaseAdmin, AudioSegment } from '@/lib/supabase';
 
-// OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy OpenAI client initialization
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY environment variable not configured');
+    }
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 // Voice speed variants for different versions
 const VERSION_SPEEDS: Record<number, number> = {
@@ -55,7 +62,7 @@ export async function POST(req: NextRequest) {
     const contentHash = createHash('md5').update(text).digest('hex');
 
     // Step 2: Check cache for existing audio
-    const { data: existingSegment, error: lookupError } = await supabaseAdmin
+    const { data: existingSegment, error: lookupError } = await getSupabaseAdmin()
       .from('audio_segments')
       .select('*')
       .eq('book_id', book_id)
@@ -73,14 +80,14 @@ export async function POST(req: NextRequest) {
     // Step 3: Cache HIT - Return signed URL
     if (existingSegment) {
       // Increment play count asynchronously
-      supabaseAdmin
+      getSupabaseAdmin()
         .from('audio_segments')
         .update({ play_count: (existingSegment as AudioSegment).play_count + 1 })
         .eq('id', existingSegment.id)
         .then(() => {});
 
       // Generate signed URL for the audio file
-      const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin
+      const { data: signedUrlData, error: signedUrlError } = await getSupabaseAdmin()
         .storage
         .from('audio-cache')
         .createSignedUrl(existingSegment.storage_path, 3600); // 1 hour expiry
@@ -107,7 +114,7 @@ export async function POST(req: NextRequest) {
     const speed = VERSION_SPEEDS[version] || 1.0;
 
     // Generate audio using OpenAI TTS
-    const mp3Response = await openai.audio.speech.create({
+    const mp3Response = await getOpenAI().audio.speech.create({
       model: 'tts-1',
       voice: voice_id,
       input: text,
@@ -125,7 +132,7 @@ export async function POST(req: NextRequest) {
     const storagePath = `${book_id}/${language_code}/${voice_id}/v${version}/${contentHash}.mp3`;
 
     // Upload to Supabase Storage
-    const { error: uploadError } = await supabaseAdmin
+    const { error: uploadError } = await getSupabaseAdmin()
       .storage
       .from('audio-cache')
       .upload(storagePath, audioBuffer, {
@@ -142,7 +149,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert record into database
-    const { data: newSegment, error: insertError } = await supabaseAdmin
+    const { data: newSegment, error: insertError } = await getSupabaseAdmin()
       .from('audio_segments')
       .insert({
         book_id,
@@ -164,7 +171,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate signed URL for the new audio
-    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin
+    const { data: signedUrlData, error: signedUrlError } = await getSupabaseAdmin()
       .storage
       .from('audio-cache')
       .createSignedUrl(storagePath, 3600);
@@ -211,7 +218,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Check all versions
-  const { data: segments, error } = await supabaseAdmin
+  const { data: segments, error } = await getSupabaseAdmin()
     .from('audio_segments')
     .select('version_number, flagged_for_review')
     .eq('book_id', book_id)

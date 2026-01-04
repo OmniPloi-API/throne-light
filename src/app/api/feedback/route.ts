@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readDb, writeDb, generateId, PartnerFeedback } from '@/lib/db';
 import OpenAI from 'openai';
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+// Lazy OpenAI client initialization
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI | null {
+  if (_openai === null && process.env.OPENAI_API_KEY) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 function generateFeedbackNumber(): string {
   const db = readDb();
@@ -12,12 +19,13 @@ function generateFeedbackNumber(): string {
 }
 
 async function processWithAI(rawFeedback: string, pageUrl: string, sectionName?: string): Promise<string> {
-  if (!openai) {
+  const openaiClient = getOpenAI();
+  if (!openaiClient) {
     return `[AI Processing Unavailable]\n\nRaw Feedback:\n${rawFeedback}\n\nPage: ${pageUrl}${sectionName ? `\nSection: ${sectionName}` : ''}`;
   }
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {

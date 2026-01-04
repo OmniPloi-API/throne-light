@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb, Partner } from '@/lib/db';
+import { readDb, writeDb, Partner, getPartnerBySlug, getPartnerById } from '@/lib/db';
 
-// GET - Get a single partner
+// GET - Get a single partner by ID or slug
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const db = readDb();
-  const partner = db.partners.find(p => p.id === id);
+  
+  // Try to find by ID first, then by slug (for public partner page compatibility)
+  let partner = getPartnerById(id);
+  if (!partner) {
+    partner = getPartnerBySlug(id);
+  }
   
   if (!partner) {
     return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
   }
   
+  // Return full partner data
   return NextResponse.json(partner);
 }
 

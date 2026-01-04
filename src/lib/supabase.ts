@@ -1,15 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Supabase client for server-side operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+// Lazy initialization to avoid build-time errors when env vars aren't available
+let _supabase: SupabaseClient | null = null;
+let _supabaseAdmin: SupabaseClient | null = null;
 
-// Public client (respects RLS)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Public client (respects RLS) - lazily initialized
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase environment variables not configured');
+    }
+    
+    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabase;
+}
 
-// Service client (bypasses RLS - use only on server)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Service client (bypasses RLS - use only on server) - lazily initialized
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!_supabaseAdmin) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase service role environment variables not configured');
+    }
+    
+    _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return _supabaseAdmin;
+}
+
+// Legacy exports for backwards compatibility (will throw if called without env vars)
+export const supabase = { get client() { return getSupabase(); } };
+export const supabaseAdmin = { get client() { return getSupabaseAdmin(); } };
 
 // Types for audio system
 export interface AudioSegment {
