@@ -115,19 +115,36 @@ export default function ReaderHomePage() {
     setCodeError('');
 
     try {
-      // TODO: Validate code against server
-      // For now, simulate validation (accept codes starting with 'THRONE-')
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Validate code against server API
+      const res = await fetch('/api/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          code: redemptionCode.trim(),
+          bookId: selectedBook?.id 
+        }),
+      });
       
-      if (redemptionCode.toUpperCase().startsWith('THRONE-')) {
+      const data = await res.json();
+      
+      if (data.valid) {
         // Valid code - unlock the book
         const newPurchased = [...purchasedBookIds, selectedBook!.id];
         setPurchasedBookIds(newPurchased);
         localStorage.setItem('reader-purchased-books', JSON.stringify(newPurchased));
+        
+        // Store the discount info if it's a coupon code
+        if (data.type === 'coupon' && data.discountPercent) {
+          localStorage.setItem('reader-discount', JSON.stringify({
+            partnerId: data.partnerId,
+            discountPercent: data.discountPercent,
+          }));
+        }
+        
         setShowUnlockModal(false);
         setSelectedBook(null);
       } else {
-        setCodeError('Invalid redemption code. Please check and try again.');
+        setCodeError(data.error || 'Invalid redemption code. Please check and try again.');
       }
     } catch {
       setCodeError('Failed to validate code. Please try again.');
