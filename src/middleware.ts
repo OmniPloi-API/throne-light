@@ -16,8 +16,21 @@ export function middleware(request: NextRequest) {
   
   // Handle book domain
   if (hostname.includes('thecrowdedbedandtheemptythrone.com')) {
-    // If not already on /book path, redirect
-    if (!request.nextUrl.pathname.startsWith('/book')) {
+    const pathname = request.nextUrl.pathname;
+    
+    // Allow these paths on the book domain (no redirect)
+    const allowedPaths = ['/book', '/reader', '/checkout', '/login', '/register', '/library', '/read'];
+    const isAllowedPath = allowedPaths.some(path => pathname.startsWith(path));
+    
+    // If not on an allowed path, redirect to /book
+    if (!isAllowedPath && pathname !== '/') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/book';
+      return NextResponse.redirect(url);
+    }
+    
+    // Root path goes to /book
+    if (pathname === '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/book';
       return NextResponse.redirect(url);
