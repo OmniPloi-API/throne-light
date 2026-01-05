@@ -143,18 +143,18 @@ export default function RemnantSection() {
                 key="success"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/80 border border-gold/40 rounded-2xl p-8 shadow-lg"
+                className="bg-white/80 border border-gold/40 rounded-2xl p-8 shadow-lg text-center"
               >
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', delay: 0.2 }}
-                  className="text-gold text-4xl mb-4"
+                  className="flex justify-center mb-4"
                 >
                   <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12" />
                 </motion.div>
                 <h3 className="font-serif text-2xl text-gold-600 mb-2">
-                  {dict.remnant.successTitle}
+                  Prepared to Reign
                 </h3>
                 <p className="text-charcoal/70">
                   {dict.remnant.successDesc}

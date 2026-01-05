@@ -133,13 +133,10 @@ export default function GateSection() {
                 <X className="w-5 h-5" />
               </button>
               
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                className="text-gold text-4xl mb-4"
-              >
+              {/* Crown - centered above title, no animation */}
+              <div className="flex justify-center mb-4">
                 <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12" />
-              </motion.div>
+              </div>
               
               <h2 className="font-serif text-2xl md:text-3xl text-parchment mb-2">
                 Submit Your Manuscript

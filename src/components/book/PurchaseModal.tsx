@@ -177,21 +177,26 @@ export default function PurchaseModal({ isOpen, onClose }: PurchaseModalProps) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handlePhysicalPurchase('amazon')}
-                    className="group relative flex items-start gap-4 p-5 bg-white border-2 border-charcoal/10 rounded-xl hover:border-gold/40 transition-all duration-300 text-left"
+                    className="group relative flex items-start gap-4 p-5 bg-white border-2 border-charcoal/10 rounded-xl hover:border-[#FF9900]/40 transition-all duration-300 text-left"
                   >
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-charcoal/5 flex items-center justify-center group-hover:bg-gold/10 transition-colors">
-                      <Package className="w-6 h-6 text-charcoal/60 group-hover:text-gold transition-colors" />
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#FF9900]/10 flex items-center justify-center group-hover:bg-[#FF9900]/20 transition-colors">
+                      <Package className="w-6 h-6 text-[#FF9900] transition-colors" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-serif text-lg text-charcoal mb-1">
-                        {dict.purchase?.physicalTitle || 'Physical Book'}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-serif text-lg text-charcoal">
+                          {dict.purchase?.physicalTitle || 'Physical Book'}
+                        </h3>
+                        <span className="px-2 py-0.5 bg-[#FF9900]/10 text-[#FF9900] text-xs rounded-full font-sans uppercase tracking-wider font-semibold">
+                          Amazon
+                        </span>
+                      </div>
                       <p className="text-charcoal/60 text-sm mb-2">
                         {dict.purchase?.physicalDesc || 'Premium paperback delivered to your throne. Perfect for your royal library.'}
                       </p>
-                      <p className="text-gold font-semibold">$34.99</p>
+                      <p className="text-[#FF9900] font-semibold">$34.99</p>
                     </div>
-                    <svg className="w-5 h-5 text-charcoal/20 group-hover:text-gold group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-charcoal/20 group-hover:text-[#FF9900] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </motion.button>

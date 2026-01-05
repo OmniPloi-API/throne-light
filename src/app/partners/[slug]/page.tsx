@@ -460,14 +460,19 @@ export default function BridgePage() {
                     {partner.amazonUrl && (
                       <button
                         onClick={handleAmazonClick}
-                        className="bg-transparent border border-gray-600 hover:border-gray-400 
-                                 text-gray-300 hover:text-white py-3 px-4 rounded-lg
-                                 flex items-center justify-center gap-2 transition-all duration-300 w-full max-w-[160px]"
+                        className="bg-[#FF9900] hover:bg-[#FF9900]/90 border-none
+                                 text-black font-semibold py-3 px-5 rounded-lg
+                                 flex items-center justify-center gap-2 transition-all duration-300 w-full max-w-[180px]
+                                 shadow-md hover:shadow-lg hover:scale-[1.02]"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M15.93 17.09c-.18.16-.43.17-.63.06-.89-.74-1.05-1.08-1.54-1.79-1.47 1.5-2.51 1.95-4.42 1.95-2.25 0-4.01-1.39-4.01-4.17 0-2.18 1.17-3.64 2.86-4.38 1.46-.64 3.49-.76 5.04-.93v-.35c0-.64.05-1.41-.33-1.96-.32-.49-.95-.7-1.5-.7-1.02 0-1.93.53-2.15 1.61-.05.24-.23.47-.47.48l-2.6-.28c-.22-.05-.46-.22-.4-.56.59-3.15 3.45-4.1 6-4.1 1.3 0 3 .35 4.03 1.33 1.3 1.22 1.17 2.83 1.17 4.6v4.17c0 1.25.52 1.8 1.01 2.48.17.24.21.54 0 .71-.54.45-1.51 1.29-2.04 1.76l-.02-.02z"/>
+                          <path d="M21.73 20.03c-2.02 1.49-4.95 2.29-7.47 2.29-3.53 0-6.71-1.31-9.11-3.48-.19-.17-.02-.41.21-.27 2.6 1.51 5.81 2.41 9.12 2.41 2.24 0 4.69-.46 6.95-1.42.34-.14.63.23.3.47z"/>
+                          <path d="M22.54 19.01c-.26-.33-1.71-.16-2.36-.08-.2.02-.23-.15-.05-.27 1.15-.81 3.05-.58 3.27-.31.22.28-.06 2.2-1.14 3.11-.17.14-.33.07-.25-.12.25-.61.79-1.99.53-2.33z"/>
+                        </svg>
                         <div className="text-left">
-                          <span className="text-sm block">Amazon</span>
-                          <span className="text-xs text-gray-500">{t.physical}</span>
+                          <span className="text-sm block font-bold">Amazon</span>
+                          <span className="text-xs opacity-75">{t.physical}</span>
                         </div>
                       </button>
                     )}
