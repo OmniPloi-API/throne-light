@@ -421,7 +421,7 @@ export default function ReaderHomePage() {
           <p className={`text-xs ${
             isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'
           }`}>
-            Throne Light Reader • Where Queens Find Crowns
+            Throne Light Reader • Where Books Bring Light
           </p>
           <p className={`text-xs mt-2 ${
             isDarkMode ? 'text-parchment/30' : 'text-charcoal/30'

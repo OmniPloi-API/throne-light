@@ -14,7 +14,12 @@ import {
   BookmarkCheck,
   Home,
   List,
-  Volume2
+  Volume2,
+  HelpCircle,
+  Send,
+  ChevronDown,
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -40,6 +45,15 @@ export default function ReaderPage() {
   // Audio player state
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioParagraphs, setAudioParagraphs] = useState<ParagraphData[]>([]);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [showSupportForm, setShowSupportForm] = useState(false);
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+  const [supportSuccess, setSupportSuccess] = useState(false);
 
   // Reader session tracking
   const sessionIdRef = useRef<string | null>(null);
@@ -307,8 +321,19 @@ export default function ReaderPage() {
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
         <div className="relative max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          {/* Left: Menu & Home - ml-auto pushes closer to center title */}
-          <div className="flex items-center gap-1 z-10 ml-16">
+          {/* Left: Help, Menu & Home */}
+          <div className="flex items-center gap-1 z-10 ml-12">
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'hover:bg-charcoal/50 text-parchment/70' 
+                  : 'hover:bg-manuscript text-charcoal/70'
+              }`}
+              title="Help & FAQ"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setShowToc(true)}
               className={`p-2 rounded-lg transition-colors ${
@@ -683,33 +708,8 @@ export default function ReaderPage() {
           </motion.article>
         </div>
 
-        {/* Fixed Crown Logo - Above Footer - Clickable for Audio */}
-        <div className={`flex-shrink-0 text-center py-4 ${isDarkMode ? 'bg-onyx' : 'bg-ivory'} ${showAudioPlayer ? 'pb-24' : 'pb-16'}`}>
-          <button
-            onClick={() => setShowAudioPlayer(!showAudioPlayer)}
-            className="group relative mx-auto block cursor-pointer transition-all hover:scale-110"
-            title="Click to activate Throne Light audiobook"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/images/THRONELIGHT-CROWN.png" 
-              alt="Activate Audiobook" 
-              width={40} 
-              height={40} 
-              className={`w-10 h-10 transition-opacity ${
-                showAudioPlayer 
-                  ? 'opacity-100' 
-                  : isDarkMode ? 'opacity-50 group-hover:opacity-80' : 'opacity-60 group-hover:opacity-90'
-              }`}
-            />
-            {/* Tooltip */}
-            <span className={`absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${
-              isDarkMode ? 'bg-charcoal text-gold border border-gold/30' : 'bg-white text-gold-700 border border-gold/40 shadow-lg'
-            }`}>
-              {showAudioPlayer ? 'Audiobook Active' : 'Activate Throne Light Audiobook'}
-            </span>
-          </button>
-        </div>
+        {/* Spacer for fixed footer */}
+        <div className={`flex-shrink-0 ${showAudioPlayer ? 'pb-32' : 'pb-20'}`} />
       </main>
 
       {/* Navigation Footer */}
@@ -718,11 +718,12 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       } ${showAudioPlayer ? 'pb-20' : ''}`}>
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          {/* Previous Button - fixed width for balance */}
           <button
             onClick={prevChapter}
             disabled={isFirstChapter}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed w-28 ${
               isDarkMode
                 ? 'text-parchment hover:bg-charcoal/50'
                 : 'text-charcoal hover:bg-manuscript'
@@ -732,14 +733,42 @@ export default function ReaderPage() {
             <span className="text-sm hidden sm:inline">Previous</span>
           </button>
 
-          <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
-            {currentChapterIndex + 1} / {allSections.length}
-          </p>
+          {/* Center: Crown + Page Number - absolutely centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+            <button
+              onClick={() => setShowAudioPlayer(!showAudioPlayer)}
+              className="group relative cursor-pointer transition-all hover:scale-110 mb-1"
+              title="Click to activate Throne Light audiobook"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/images/THRONELIGHT-CROWN.png" 
+                alt="Activate Audiobook" 
+                width={32} 
+                height={32} 
+                className={`w-8 h-8 transition-opacity ${
+                  showAudioPlayer 
+                    ? 'opacity-100' 
+                    : isDarkMode ? 'opacity-50 group-hover:opacity-80' : 'opacity-60 group-hover:opacity-90'
+                }`}
+              />
+              {/* Tooltip */}
+              <span className={`absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${
+                isDarkMode ? 'bg-charcoal text-gold border border-gold/30' : 'bg-white text-gold-700 border border-gold/40 shadow-lg'
+              }`}>
+                {showAudioPlayer ? 'Audiobook Active' : 'Activate Throne Light Audiobook'}
+              </span>
+            </button>
+            <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
+              {currentChapterIndex + 1} / {allSections.length}
+            </p>
+          </div>
 
+          {/* Next Button - fixed width for balance */}
           <button
             onClick={nextChapter}
             disabled={isLastChapter}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed w-28 justify-end ${
               isDarkMode
                 ? 'text-parchment hover:bg-charcoal/50'
                 : 'text-charcoal hover:bg-manuscript'
@@ -762,6 +791,314 @@ export default function ReaderPage() {
           onClose={() => setShowAudioPlayer(false)}
         />
       )}
+
+      {/* Help Modal */}
+      <AnimatePresence>
+        {showHelpModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => {
+              setShowHelpModal(false);
+              setShowSupportForm(false);
+              setSupportSuccess(false);
+            }}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className={`w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border ${
+                isDarkMode 
+                  ? 'bg-onyx border-gold/20' 
+                  : 'bg-white border-gold/30'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={`sticky top-0 p-6 border-b ${
+                isDarkMode ? 'bg-onyx border-gold/20' : 'bg-white border-gold/30'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <HelpCircle className={`w-6 h-6 ${isDarkMode ? 'text-gold' : 'text-gold-700'}`} />
+                    <h2 className={`font-serif text-xl ${isDarkMode ? 'text-gold' : 'text-gold-700'}`}>
+                      Help & FAQ
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowHelpModal(false);
+                      setShowSupportForm(false);
+                      setSupportSuccess(false);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'hover:bg-charcoal/50 text-parchment/70' 
+                        : 'hover:bg-manuscript text-charcoal/70'
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {!showSupportForm && !supportSuccess ? (
+                  <>
+                    {/* FAQ Section */}
+                    <div className="space-y-3">
+                      {[
+                        {
+                          q: "How do I navigate between pages?",
+                          a: "Use the Previous and Next buttons at the bottom of the screen, or swipe left/right on mobile devices. You can also use the Table of Contents (☰ icon) to jump to any chapter."
+                        },
+                        {
+                          q: "How do I activate the audiobook feature?",
+                          a: "Click the golden crown icon at the bottom center of the screen. This will open the audio playback controls. Click the play button to start listening."
+                        },
+                        {
+                          q: "Can I change the language?",
+                          a: "Yes! Click the language selector (globe icon with flag) in the top right corner to translate the book into your preferred language."
+                        },
+                        {
+                          q: "How do I bookmark a page?",
+                          a: "Click the bookmark icon in the top right corner to save your current page. Bookmarked pages can be accessed from the Table of Contents menu."
+                        },
+                        {
+                          q: "How do I switch between light and dark mode?",
+                          a: "Click the sun/moon icon in the top right corner to toggle between light and dark reading modes."
+                        },
+                        {
+                          q: "Where is my reading progress saved?",
+                          a: "Your reading progress, bookmarks, and preferences are automatically saved to your device. You'll return to where you left off when you come back."
+                        },
+                        {
+                          q: "Why isn't the audio working?",
+                          a: "Ensure your device volume is turned up and not muted. The audio feature requires an internet connection to stream. Try refreshing the page if issues persist."
+                        }
+                      ].map((faq, index) => (
+                        <div
+                          key={index}
+                          className={`rounded-xl border overflow-hidden ${
+                            isDarkMode ? 'border-gold/10 bg-charcoal/30' : 'border-gold/20 bg-manuscript/50'
+                          }`}
+                        >
+                          <button
+                            onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                            className={`w-full px-4 py-3 flex items-center justify-between text-left ${
+                              isDarkMode ? 'text-parchment' : 'text-charcoal'
+                            }`}
+                          >
+                            <span className="text-sm font-medium pr-4">{faq.q}</span>
+                            {expandedFaq === index ? (
+                              <ChevronUp className="w-4 h-4 flex-shrink-0 text-gold" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 flex-shrink-0 text-gold" />
+                            )}
+                          </button>
+                          <AnimatePresence>
+                            {expandedFaq === index && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <p className={`px-4 pb-4 text-sm ${
+                                  isDarkMode ? 'text-parchment/70' : 'text-charcoal/70'
+                                }`}>
+                                  {faq.a}
+                                </p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Support Request Button */}
+                    <div className={`mt-6 pt-6 border-t ${isDarkMode ? 'border-gold/10' : 'border-gold/20'}`}>
+                      <p className={`text-sm mb-4 ${isDarkMode ? 'text-parchment/60' : 'text-charcoal/60'}`}>
+                        Still need help? Our support team is here for you.
+                      </p>
+                      <button
+                        onClick={() => setShowSupportForm(true)}
+                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
+                          isDarkMode 
+                            ? 'bg-gold/20 hover:bg-gold/30 text-gold border border-gold/30' 
+                            : 'bg-gold/20 hover:bg-gold/30 text-gold-700 border border-gold/40'
+                        }`}
+                      >
+                        <Send className="w-4 h-4" />
+                        <span className="font-medium">Contact Support</span>
+                      </button>
+                    </div>
+                  </>
+                ) : supportSuccess ? (
+                  /* Success Message */
+                  <div className="text-center py-8">
+                    <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                      isDarkMode ? 'bg-green-500/20' : 'bg-green-500/10'
+                    }`}>
+                      <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className={`font-serif text-lg mb-2 ${isDarkMode ? 'text-gold' : 'text-gold-700'}`}>
+                      Request Submitted!
+                    </h3>
+                    <p className={`text-sm ${isDarkMode ? 'text-parchment/60' : 'text-charcoal/60'}`}>
+                      We&apos;ve received your support request and will get back to you within 24-48 hours.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSupportSuccess(false);
+                        setShowSupportForm(false);
+                      }}
+                      className={`mt-6 px-6 py-2 rounded-lg transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gold/20 hover:bg-gold/30 text-gold' 
+                          : 'bg-gold/20 hover:bg-gold/30 text-gold-700'
+                      }`}
+                    >
+                      Back to FAQ
+                    </button>
+                  </div>
+                ) : (
+                  /* Support Form */
+                  <div>
+                    <button
+                      onClick={() => setShowSupportForm(false)}
+                      className={`flex items-center gap-2 mb-4 text-sm ${
+                        isDarkMode ? 'text-gold hover:text-gold/80' : 'text-gold-700 hover:text-gold-700/80'
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back to FAQ
+                    </button>
+
+                    <h3 className={`font-serif text-lg mb-4 ${isDarkMode ? 'text-parchment' : 'text-charcoal'}`}>
+                      Contact Support
+                    </h3>
+
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setIsSubmittingSupport(true);
+                        
+                        try {
+                          // Collect device info
+                          const deviceInfo = {
+                            userAgent: navigator.userAgent,
+                            platform: navigator.platform,
+                            language: navigator.language,
+                            screenWidth: window.screen.width,
+                            screenHeight: window.screen.height,
+                            viewportWidth: window.innerWidth,
+                            viewportHeight: window.innerHeight,
+                            isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                            currentPage: currentChapterIndex + 1,
+                            totalPages: allSections.length,
+                            currentSection: currentSection?.title || currentSection?.id,
+                            isDarkMode,
+                            selectedLanguage,
+                            audioEnabled: showAudioPlayer,
+                          };
+
+                          await fetch('/api/reader/support', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              email: supportEmail,
+                              message: supportMessage,
+                              deviceInfo,
+                            }),
+                          });
+
+                          setSupportSuccess(true);
+                          setSupportEmail('');
+                          setSupportMessage('');
+                        } catch (error) {
+                          console.error('Support request failed:', error);
+                        } finally {
+                          setIsSubmittingSupport(false);
+                        }
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className={`block text-sm mb-2 ${isDarkMode ? 'text-parchment/70' : 'text-charcoal/70'}`}>
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={supportEmail}
+                          onChange={(e) => setSupportEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
+                            isDarkMode 
+                              ? 'bg-charcoal/50 border-gold/20 text-parchment placeholder:text-parchment/30 focus:border-gold/50' 
+                              : 'bg-manuscript border-gold/30 text-charcoal placeholder:text-charcoal/30 focus:border-gold/60'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm mb-2 ${isDarkMode ? 'text-parchment/70' : 'text-charcoal/70'}`}>
+                          How can we help?
+                        </label>
+                        <textarea
+                          required
+                          value={supportMessage}
+                          onChange={(e) => setSupportMessage(e.target.value)}
+                          placeholder="Describe your issue or question..."
+                          rows={4}
+                          className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors resize-none ${
+                            isDarkMode 
+                              ? 'bg-charcoal/50 border-gold/20 text-parchment placeholder:text-parchment/30 focus:border-gold/50' 
+                              : 'bg-manuscript border-gold/30 text-charcoal placeholder:text-charcoal/30 focus:border-gold/60'
+                          }`}
+                        />
+                      </div>
+
+                      <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
+                        Device information will be automatically included to help us assist you better.
+                      </p>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingSupport}
+                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all disabled:opacity-50 ${
+                          isDarkMode 
+                            ? 'bg-gold text-onyx hover:bg-gold/90' 
+                            : 'bg-gold text-white hover:bg-gold/90'
+                        }`}
+                      >
+                        {isSubmittingSupport ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            <span>Submit Request</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

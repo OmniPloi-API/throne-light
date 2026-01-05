@@ -266,6 +266,9 @@ export default function AdminPage() {
             <Link href="/admin/subscribers" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
               Subscribers
             </Link>
+            <Link href="/admin/reader-support" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
+              Reader Support
+            </Link>
             <Link href="/partner" className="px-4 py-2 bg-[#222] hover:bg-[#333] rounded-lg text-sm transition">
               Partner View →
             </Link>
