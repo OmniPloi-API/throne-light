@@ -134,12 +134,16 @@ export default function LibraryPage() {
 
       {/* Header */}
       <header className="border-b border-[#222] px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={32} height={32} className="w-8 h-8" />
-            <span className="font-bold text-lg hidden sm:inline">Throne Light</span>
-          </Link>
+        <div className="max-w-4xl mx-auto flex items-center justify-between relative">
+          {/* Left: Title */}
+          <span className="font-bold text-lg">Throne Light Reader</span>
 
+          {/* Center: Crown */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={32} height={32} className="w-8 h-8" />
+          </div>
+
+          {/* Right: User info and logout */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <User className="w-4 h-4" />
@@ -168,16 +172,38 @@ export default function LibraryPage() {
         )}
 
         {books.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-400 mb-2">Your library is empty</h2>
-            <p className="text-gray-500 mb-6">Purchase a book to start reading</p>
-            <Link
-              href="/book"
-              className="inline-block bg-gold hover:bg-gold/90 text-black font-semibold px-6 py-3 rounded-lg transition"
-            >
-              Browse Books
-            </Link>
+          <div className="py-8">
+            <p className="text-gray-400 text-center mb-8">You haven&apos;t purchased any books yet. Unlock your first book below:</p>
+            
+            {/* Available Books for Purchase */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+              <Link href="/checkout?book=crowded-bed-empty-throne&source=library" className="group">
+                <div className="aspect-[3/4] relative bg-[#1a1a1a] rounded-lg overflow-hidden shadow-lg group-hover:shadow-gold/20 transition-all duration-300 group-hover:scale-[1.02]">
+                  <Image
+                    src="/images/book-cover.jpg"
+                    alt="The Crowded Bed & The Empty Throne"
+                    fill
+                    className="object-cover"
+                  />
+                  {/* Lock Badge */}
+                  <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center border border-gold/30">
+                    <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                    <span className="text-gold font-semibold">Unlock Book</span>
+                    <span className="text-white/70 text-sm mt-1">$29.99</span>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-semibold text-sm truncate">The Crowded Bed & The Empty Throne</h3>
+                  <p className="text-gray-500 text-xs">C.B. Etienne-Tate</p>
+                  <p className="text-gold text-sm font-medium mt-1">$29.99</p>
+                </div>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">

@@ -50,7 +50,7 @@ export default function LoginPage() {
           <Link href="/">
             <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12 mx-auto mb-4" />
           </Link>
-          <h1 className="text-2xl font-bold text-parchment">Welcome Back</h1>
+          <h1 className="text-2xl font-bold text-parchment">Welcome</h1>
           <p className="text-gray-400 text-sm mt-1">Sign in to access your library</p>
         </div>
 
@@ -124,12 +124,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Back to Home */}
-        <p className="mt-4 text-center">
-          <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">
-            ← Back to home
-          </Link>
-        </p>
       </div>
     </div>
   );

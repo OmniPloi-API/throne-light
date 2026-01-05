@@ -163,12 +163,6 @@ export default function RegisterPage() {
           </Link>
         </p>
 
-        {/* Back to Home */}
-        <p className="mt-4 text-center">
-          <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">
-            ← Back to home
-          </Link>
-        </p>
       </div>
     </div>
   );
