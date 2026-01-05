@@ -67,10 +67,10 @@ export default function FoundationSection() {
           transition={{ delay: 0.5, duration: 1 }}
         >
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-parchment leading-tight mb-4">
-            We Don&apos;t Just Publish The Book.
+            {dict.publisherHero.headlinePart1}
           </h1>
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-gold leading-tight">
-            We Deliver Purpose.
+            {dict.publisherHero.headlinePart2}
           </h1>
         </motion.div>
 
@@ -82,11 +82,11 @@ export default function FoundationSection() {
           className="mt-8"
         >
           <p className="font-serif text-xl md:text-2xl text-parchment/70 mb-2">
-            Throne Light Publishing
+            {dict.publisherHero.subheadlineName}
           </p>
           <p className="text-parchment/60 max-w-lg mx-auto leading-relaxed">
-            Exists to enthrone voices, not just print them.<br />
-            Awakening royalty through revelation.
+            {dict.publisherHero.subheadlineText1}<br />
+            {dict.publisherHero.subheadlineText2}
           </p>
         </motion.div>
 
@@ -98,7 +98,7 @@ export default function FoundationSection() {
             }}
             className="btn-royal"
           >
-            Enter The Light
+            {dict.publisherHero.cta}
           </button>
         </div>
 
