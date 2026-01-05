@@ -477,16 +477,15 @@ export default function ReaderPage() {
         </button>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-6 py-12 pb-32">
-        <motion.article
-          key={currentSection.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+      {/* Main Content - Fixed header and crown, scrollable content */}
+      <main className="flex flex-col h-[calc(100vh-60px)]">
+        {/* Fixed Section Header */}
+        <motion.header
+          key={`header-${currentSection.id}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`flex-shrink-0 text-center py-8 px-6 ${isDarkMode ? 'bg-onyx' : 'bg-ivory'}`}
         >
-          {/* Section Header */}
-          <header className="text-center mb-12">
             {currentSection.type === 'chapter' && (
               <p className={`text-xs uppercase tracking-[0.3em] mb-4 ${
                 isDarkMode ? 'text-gold/60' : 'text-gold-700/60'
@@ -506,13 +505,22 @@ export default function ReaderPage() {
                 {currentSection.epigraph}
               </p>
             )}
-            <div className={`w-16 h-px mx-auto mt-8 ${
+            <div className={`w-16 h-px mx-auto mt-6 ${
               isDarkMode ? 'bg-gold/30' : 'bg-gold/40'
             }`} />
-          </header>
+        </motion.header>
 
-          {/* Section Content */}
-          <div 
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-6">
+          <motion.article
+            key={currentSection.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-3xl mx-auto py-8"
+          >
+            {/* Section Content */}
+            <div 
             className={`font-serif leading-relaxed space-y-6 reader-content ${
               isDarkMode ? 'text-parchment/90' : 'text-charcoal/90'
             }`}
@@ -616,18 +624,20 @@ export default function ReaderPage() {
             </div>
           )}
 
-          {/* Section End Decoration - Crown Logo */}
-          <div className="text-center mt-16 mb-32 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/images/THRONELIGHT-CROWN.png" 
-              alt="" 
-              width={40} 
-              height={40} 
-              className={`w-10 h-10 ${isDarkMode ? 'opacity-50' : 'opacity-60'}`}
-            />
-          </div>
-        </motion.article>
+          </motion.article>
+        </div>
+
+        {/* Fixed Crown Logo - Above Footer */}
+        <div className={`flex-shrink-0 text-center py-4 ${isDarkMode ? 'bg-onyx' : 'bg-ivory'} ${showAudioPlayer ? 'pb-24' : 'pb-16'}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/images/THRONELIGHT-CROWN.png" 
+            alt="" 
+            width={40} 
+            height={40} 
+            className={`w-10 h-10 mx-auto ${isDarkMode ? 'opacity-50' : 'opacity-60'}`}
+          />
+        </div>
       </main>
 
       {/* Navigation Footer */}

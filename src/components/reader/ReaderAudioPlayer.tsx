@@ -166,60 +166,13 @@ export default function ReaderAudioPlayer({
 
   return (
     <>
-      {/* Floating Audio Player - positioned just below footer nav, centered */}
+      {/* Floating Audio Player - positioned below footer nav, centered */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 ${bgColor} backdrop-blur-lg border ${borderColor} rounded-2xl shadow-2xl`}
+        className={`fixed bottom-2 left-1/2 -translate-x-1/2 z-40 ${bgColor} backdrop-blur-lg border ${borderColor} rounded-2xl shadow-2xl`}
       >
-        {/* Expanded Controls */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-b border-gold/10"
-            >
-              <div className="p-4 space-y-3">
-                {/* Progress Info */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className={`${textColor} opacity-60`}>
-                    Paragraph {activeParagraphIndex + 1} of {totalParagraphs}
-                  </span>
-                  <span className="text-gold text-xs">
-                    v{currentVersion}
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="h-1 bg-gold/20 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gold"
-                    initial={{ width: 0 }}
-                    animate={{
-                      width: `${((activeParagraphIndex + 1) / totalParagraphs) * 100}%`,
-                    }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-
-                {/* Auto-scroll Toggle */}
-                <button
-                  onClick={toggleAutoScroll}
-                  className={`flex items-center gap-2 text-sm transition-colors ${
-                    autoScrollEnabled ? 'text-gold' : `${textColor} opacity-50`
-                  }`}
-                >
-                  <ListMusic className="w-4 h-4" />
-                  <span>Auto-scroll {autoScrollEnabled ? 'On' : 'Off'}</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main Controls */}
+        {/* Main Controls - Always visible at top */}
         <div className="flex items-center gap-2 p-3">
           {/* Expand/Collapse */}
           <button
@@ -227,9 +180,9 @@ export default function ReaderAudioPlayer({
             className={`p-2 rounded-lg hover:bg-gold/10 transition-colors ${textColor}`}
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
               <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
             )}
           </button>
 
@@ -294,6 +247,53 @@ export default function ReaderAudioPlayer({
             )}
           </AnimatePresence>
         </div>
+
+        {/* Expanded Controls - Opens BELOW the main controls */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-gold/10"
+            >
+              <div className="p-4 space-y-3">
+                {/* Progress Info */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className={`${textColor} opacity-60`}>
+                    Section {activeParagraphIndex + 1} of {totalParagraphs}
+                  </span>
+                  <span className="text-gold text-xs">
+                    v{currentVersion}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-1 bg-gold/20 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gold"
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${((activeParagraphIndex + 1) / totalParagraphs) * 100}%`,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+
+                {/* Auto-scroll Toggle */}
+                <button
+                  onClick={toggleAutoScroll}
+                  className={`flex items-center gap-2 text-sm transition-colors ${
+                    autoScrollEnabled ? 'text-gold' : `${textColor} opacity-50`
+                  }`}
+                >
+                  <ListMusic className="w-4 h-4" />
+                  <span>Auto-scroll {autoScrollEnabled ? 'On' : 'Off'}</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Error Display */}
         <AnimatePresence>
