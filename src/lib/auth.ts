@@ -1,10 +1,11 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { readDb, writeDb, User, generateId } from './db';
+import { readDb, writeDb, User, SessionToken, generateId } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'throne-light-secret-key-change-in-production';
 const SESSION_EXPIRY = '7d';
+const MAX_ACTIVE_SESSIONS = 2; // 2-device limit
 
 export interface JWTPayload {
   userId: string;
@@ -22,7 +23,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-// Generate session token (for "One Device" enforcement)
+// Generate session token (for device enforcement)
 export function generateSessionToken(): string {
   return uuidv4();
 }
@@ -46,7 +47,7 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 // Register new user
-export async function registerUser(email: string, password: string, name?: string): Promise<{ user: User; token: string } | { error: string }> {
+export async function registerUser(email: string, password: string, name?: string, deviceInfo?: string): Promise<{ user: User; token: string } | { error: string }> {
   const db = readDb();
   
   // Check if user already exists
@@ -59,12 +60,18 @@ export async function registerUser(email: string, password: string, name?: strin
   const sessionToken = generateSessionToken();
   const now = new Date().toISOString();
   
+  const newSession: SessionToken = {
+    token: sessionToken,
+    deviceInfo,
+    createdAt: now,
+  };
+  
   const newUser: User = {
     id: generateId(),
     email: email.toLowerCase(),
     password: hashedPassword,
     name,
-    activeSessionToken: sessionToken,
+    activeSessions: [newSession], // Start with first session
     createdAt: now,
     updatedAt: now,
   };
@@ -79,8 +86,8 @@ export async function registerUser(email: string, password: string, name?: strin
   return { user: safeUser as User, token };
 }
 
-// Login user (generates new session, invalidates old devices)
-export async function loginUser(email: string, password: string): Promise<{ user: User; token: string } | { error: string }> {
+// Login user (2-device limit: if 3rd device, revoke oldest session)
+export async function loginUser(email: string, password: string, deviceInfo?: string): Promise<{ user: User; token: string; revokedSession?: boolean } | { error: string }> {
   const db = readDb();
   
   const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -93,10 +100,35 @@ export async function loginUser(email: string, password: string): Promise<{ user
     return { error: 'Invalid email or password' };
   }
   
-  // Generate NEW session token (this invalidates any other device)
+  const now = new Date().toISOString();
   const newSessionToken = generateSessionToken();
-  user.activeSessionToken = newSessionToken;
-  user.updatedAt = new Date().toISOString();
+  
+  const newSession: SessionToken = {
+    token: newSessionToken,
+    deviceInfo,
+    createdAt: now,
+  };
+  
+  // Initialize activeSessions if it doesn't exist (migration from old schema)
+  if (!user.activeSessions) {
+    user.activeSessions = [];
+  }
+  
+  let revokedSession = false;
+  
+  // 2-DEVICE LIMIT: If already at max, remove the oldest session
+  if (user.activeSessions.length >= MAX_ACTIVE_SESSIONS) {
+    // Sort by createdAt (oldest first) and remove the oldest
+    user.activeSessions.sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    user.activeSessions.shift(); // Remove oldest session
+    revokedSession = true;
+  }
+  
+  // Add new session
+  user.activeSessions.push(newSession);
+  user.updatedAt = now;
   
   writeDb(db);
   
@@ -104,10 +136,10 @@ export async function loginUser(email: string, password: string): Promise<{ user
   
   // Return user without password
   const { password: _, ...safeUser } = user;
-  return { user: safeUser as User, token };
+  return { user: safeUser as User, token, revokedSession };
 }
 
-// Validate session (the "One Device" check)
+// Validate session (2-device limit check)
 export function validateSession(token: string): { valid: true; user: User } | { valid: false; error: string } {
   const payload = verifyToken(token);
   if (!payload) {
@@ -121,9 +153,15 @@ export function validateSession(token: string): { valid: true; user: User } | { 
     return { valid: false, error: 'User not found' };
   }
   
-  // THE KEY CHECK: Does the token's session match the user's active session?
-  if (user.activeSessionToken !== payload.sessionToken) {
-    return { valid: false, error: 'Session active on another device. Please log in again.' };
+  // Initialize activeSessions if missing (migration support)
+  if (!user.activeSessions) {
+    user.activeSessions = [];
+  }
+  
+  // THE KEY CHECK: Is this session token in the user's active sessions?
+  const isValidSession = user.activeSessions.some(s => s.token === payload.sessionToken);
+  if (!isValidSession) {
+    return { valid: false, error: 'Session expired or revoked. You may have logged in on another device. Please log in again.' };
   }
   
   // Return user without password
@@ -151,16 +189,35 @@ export function getUserByEmail(email: string): User | null {
   return safeUser as User;
 }
 
-// Logout (clear session token)
-export function logoutUser(userId: string): boolean {
+// Logout (remove specific session token, or all if no token provided)
+export function logoutUser(userId: string, sessionToken?: string): boolean {
   const db = readDb();
   const user = db.users.find(u => u.id === userId);
   
   if (!user) return false;
   
-  user.activeSessionToken = undefined;
+  if (!user.activeSessions) {
+    user.activeSessions = [];
+  }
+  
+  if (sessionToken) {
+    // Remove specific session
+    user.activeSessions = user.activeSessions.filter(s => s.token !== sessionToken);
+  } else {
+    // Clear all sessions (full logout from all devices)
+    user.activeSessions = [];
+  }
+  
   user.updatedAt = new Date().toISOString();
   writeDb(db);
   
   return true;
+}
+
+// Get active session count for a user
+export function getActiveSessionCount(userId: string): number {
+  const db = readDb();
+  const user = db.users.find(u => u.id === userId);
+  if (!user || !user.activeSessions) return 0;
+  return user.activeSessions.length;
 }

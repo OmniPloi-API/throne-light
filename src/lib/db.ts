@@ -203,12 +203,18 @@ export interface Subscriber {
 }
 
 // Phase 2: User (Customer) model
+export interface SessionToken {
+  token: string;
+  deviceInfo?: string;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   email: string;
   password: string; // Hashed
   name?: string;
-  activeSessionToken?: string; // "One Device" enforcement
+  activeSessions: SessionToken[]; // 2-device limit enforcement (max 2 sessions)
   createdAt: string;
   updatedAt: string;
 }
