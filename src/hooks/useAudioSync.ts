@@ -136,6 +136,28 @@ export function useAudioSync(
     }
   }, [paragraphs, bookId, languageCode, voiceId, onError]);
 
+  // Update paragraph highlight - keeps highlight on current paragraph while playing
+  const updateParagraphHighlight = useCallback((index: number, isPlaying: boolean) => {
+    // Remove highlight from all paragraphs first
+    paragraphs.forEach((p) => {
+      const el = document.getElementById(p.elementId);
+      if (el) {
+        el.classList.remove('audio-active-paragraph', 'audio-playing-now');
+      }
+    });
+
+    // Add highlight to current paragraph if playing
+    if (isPlaying) {
+      const paragraph = paragraphs[index];
+      if (paragraph) {
+        const element = document.getElementById(paragraph.elementId);
+        if (element) {
+          element.classList.add('audio-active-paragraph', 'audio-playing-now');
+        }
+      }
+    }
+  }, [paragraphs]);
+
   // Scroll to paragraph
   const scrollToParagraph = useCallback((index: number) => {
     if (!state.autoScrollEnabled) return;
@@ -149,12 +171,6 @@ export function useAudioSync(
         behavior: 'smooth',
         block: 'center',
       });
-
-      // Add highlight effect
-      element.classList.add('audio-active-paragraph');
-      setTimeout(() => {
-        element.classList.remove('audio-active-paragraph');
-      }, 500);
     }
   }, [paragraphs, state.autoScrollEnabled]);
 
@@ -184,6 +200,8 @@ export function useAudioSync(
       currentVersion: audioData.version,
     }));
 
+    // Update highlight and scroll
+    updateParagraphHighlight(index, true);
     scrollToParagraph(index);
     onParagraphChange?.(index);
 
@@ -193,7 +211,7 @@ export function useAudioSync(
       console.error('Playback error:', error);
       setState(prev => ({ ...prev, isPlaying: false }));
     }
-  }, [fetchAudio, scrollToParagraph, onParagraphChange]);
+  }, [fetchAudio, scrollToParagraph, onParagraphChange, updateParagraphHighlight]);
 
   // Handle audio ended - auto-advance to next paragraph
   useEffect(() => {
@@ -237,22 +255,26 @@ export function useAudioSync(
     if (state.isPlaying) {
       audioRef.current.pause();
       setState(prev => ({ ...prev, isPlaying: false }));
+      updateParagraphHighlight(state.activeParagraphIndex, false);
     } else if (state.currentAudioUrl) {
       audioRef.current.play();
       setState(prev => ({ ...prev, isPlaying: true }));
+      updateParagraphHighlight(state.activeParagraphIndex, true);
     } else {
       // Start from current or first paragraph
       playParagraph(state.activeParagraphIndex, 1);
     }
-  }, [state.isPlaying, state.currentAudioUrl, state.activeParagraphIndex, playParagraph]);
+  }, [state.isPlaying, state.currentAudioUrl, state.activeParagraphIndex, playParagraph, updateParagraphHighlight]);
 
   // Pause
   const pause = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       setState(prev => ({ ...prev, isPlaying: false }));
+      // Remove highlight when paused
+      updateParagraphHighlight(state.activeParagraphIndex, false);
     }
-  }, []);
+  }, [state.activeParagraphIndex, updateParagraphHighlight]);
 
   // Stop and reset
   const stop = useCallback(() => {
@@ -260,6 +282,8 @@ export function useAudioSync(
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    // Remove all highlights
+    updateParagraphHighlight(0, false);
     setState(prev => ({
       ...prev,
       isPlaying: false,
@@ -267,7 +291,7 @@ export function useAudioSync(
       currentAudioUrl: null,
       currentSegmentId: null,
     }));
-  }, []);
+  }, [updateParagraphHighlight]);
 
   // Skip to specific paragraph
   const skipTo = useCallback((index: number) => {

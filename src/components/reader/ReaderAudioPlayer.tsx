@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -12,12 +12,24 @@ import {
   ThumbsDown,
   X,
   Loader2,
-  Settings,
   ListMusic,
   ChevronUp,
   ChevronDown,
 } from 'lucide-react';
+
 import { useAudioSync, ParagraphData } from '@/hooks/useAudioSync';
+
+// Custom "person speaking" icon - profile with sound waves from mouth
+const SpeakingIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* Head profile */}
+    <path d="M12 2C9.5 2 7 4 7 7c0 2 1 3.5 2 4.5L7 14v3c0 1 1 2 2 2h2c1 0 2-1 2-2v-2" />
+    <circle cx="10" cy="7" r="3" />
+    {/* Sound waves from mouth area */}
+    <path d="M15 10c1 0.5 1.5 1.5 1.5 2.5s-0.5 2-1.5 2.5" />
+    <path d="M18 8c1.5 1 2.5 3 2.5 4.5s-1 3.5-2.5 4.5" />
+  </svg>
+);
 
 interface ReaderAudioPlayerProps {
   paragraphs: ParagraphData[];
@@ -25,6 +37,7 @@ interface ReaderAudioPlayerProps {
   languageCode?: string;
   voiceId?: string;
   isDarkMode?: boolean;
+  onReady?: (controls: { skipTo: (index: number) => void }) => void;
 }
 
 const ISSUE_TYPES = [
@@ -42,6 +55,7 @@ export default function ReaderAudioPlayer({
   languageCode = 'en',
   voiceId = 'shimmer',
   isDarkMode = true,
+  onReady,
 }: ReaderAudioPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -63,6 +77,7 @@ export default function ReaderAudioPlayer({
     pause,
     skipForward,
     skipBackward,
+    skipTo,
     toggleAutoScroll,
     reportIssue,
     audioRef,
@@ -71,6 +86,46 @@ export default function ReaderAudioPlayer({
     languageCode,
     voiceId,
   });
+
+  // Expose controls to parent component and set up click handlers
+  useEffect(() => {
+    // Call onReady with skipTo function
+    onReady?.({ skipTo });
+
+    // Add click handlers to all paragraph elements
+    const handleParagraphClick = (e: Event) => {
+      const target = e.currentTarget as HTMLElement;
+      const id = target.id;
+      if (id && id.startsWith('para-')) {
+        // Extract index from element ID (format: para-{sectionId}-{index})
+        const parts = id.split('-');
+        const index = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(index)) {
+          skipTo(index);
+        }
+      }
+    };
+
+    // Add click handlers to all paragraphs
+    paragraphs.forEach((p) => {
+      const element = document.getElementById(p.elementId);
+      if (element) {
+        element.classList.add('audio-clickable-paragraph');
+        element.addEventListener('click', handleParagraphClick);
+      }
+    });
+
+    // Cleanup
+    return () => {
+      paragraphs.forEach((p) => {
+        const element = document.getElementById(p.elementId);
+        if (element) {
+          element.classList.remove('audio-clickable-paragraph');
+          element.removeEventListener('click', handleParagraphClick);
+        }
+      });
+    };
+  }, [paragraphs, skipTo, onReady]);
 
   // Handle mute toggle
   const handleMuteToggle = useCallback(() => {
@@ -360,9 +415,16 @@ export default function ReaderAudioPlayer({
       {/* CSS for active paragraph highlight */}
       <style jsx global>{`
         .audio-active-paragraph {
-          background-color: rgba(212, 175, 55, 0.1);
+          background-color: rgba(212, 175, 55, 0.15) !important;
+          border-left: 3px solid rgba(212, 175, 55, 0.8);
+          padding-left: 12px;
+          margin-left: -15px;
           border-radius: 4px;
-          transition: background-color 0.3s ease;
+          transition: all 0.3s ease;
+        }
+        
+        .audio-playing-now {
+          background-color: rgba(212, 175, 55, 0.2) !important;
         }
         
         @keyframes pulse-gold {
@@ -372,6 +434,16 @@ export default function ReaderAudioPlayer({
         
         .audio-playing-indicator {
           animation: pulse-gold 2s infinite;
+        }
+        
+        /* Make paragraphs clickable when audio player is active */
+        .audio-clickable-paragraph {
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+        
+        .audio-clickable-paragraph:hover {
+          background-color: rgba(212, 175, 55, 0.08);
         }
       `}</style>
     </>
