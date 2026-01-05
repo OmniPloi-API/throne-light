@@ -250,7 +250,7 @@ export default function AdminPage() {
             className="h-12 w-auto opacity-80 mb-2"
           />
           <h1 className="text-3xl font-bold text-gold">Throne Light Command Center</h1>
-          <p className="text-gray-400 text-sm mt-1">Hybrid Tracking Dashboard</p>
+          <p className="text-gray-400 text-sm mt-1">Hybrid Tracking and Deployment Dashboard</p>
         </div>
         <div className="flex justify-center">
           <div className="flex gap-3">
@@ -347,8 +347,8 @@ export default function AdminPage() {
             <StatCard 
               icon={<DollarSign className="text-gray-400" />} 
               label="Est. External Revenue" 
-              value={`$${(amazonClicks * 15.99 * 0.3).toFixed(2)}`}
-              sublabel="30% est. conversion"
+              value={`$${Math.max(0, (Math.floor(amazonClicks * 0.10) * 21) - totalClickBounty).toFixed(2)}`}
+              sublabel="10% conv. @ $35 - fees"
               color="gray"
             />
           </div>
@@ -546,6 +546,13 @@ export default function AdminPage() {
           onCancel={() => setConfirmAction(null)}
         />
       )}
+
+      {/* Footer */}
+      <footer className="border-t border-[#222] py-6 mt-8">
+        <p className="text-center text-gray-500 text-sm">
+          Powered by <span className="text-gold font-semibold">AMPLE</span>
+        </p>
+      </footer>
     </div>
   );
 }
