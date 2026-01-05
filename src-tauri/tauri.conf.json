@@ -38,7 +38,8 @@
         "exceptionDomain": "",
         "frameworks": [],
         "providerShortName": null,
-        "signingIdentity": null
+        "signingIdentity": "Developer ID Application: YOUR_TEAM_NAME (TEAM_ID)",
+        "minimumSystemVersion": "10.13"
       },
       "resources": [],
       "shortDescription": "Your Royal Library",
