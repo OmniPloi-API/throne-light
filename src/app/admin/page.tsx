@@ -243,21 +243,14 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Header */}
       <header className="border-b border-[#222] px-8 py-6">
-        <div className="flex items-center justify-center gap-6 mb-4">
+        <div className="flex flex-col items-center mb-4">
           <img 
             src="/images/CROWN-LOGO-500PX.png" 
             alt="Crown" 
-            className="h-16 w-auto opacity-80"
+            className="h-12 w-auto opacity-80 mb-2"
           />
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gold">Throne Light Command Center</h1>
-            <p className="text-gray-400 text-sm mt-1">Hybrid Tracking Dashboard</p>
-          </div>
-          <img 
-            src="/images/CROWN-LOGO-500PX.png" 
-            alt="Crown" 
-            className="h-16 w-auto opacity-80"
-          />
+          <h1 className="text-3xl font-bold text-gold">Throne Light Command Center</h1>
+          <p className="text-gray-400 text-sm mt-1">Hybrid Tracking Dashboard</p>
         </div>
         <div className="flex justify-center">
           <div className="flex gap-3">

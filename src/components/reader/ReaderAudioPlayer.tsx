@@ -38,6 +38,7 @@ interface ReaderAudioPlayerProps {
   voiceId?: string;
   isDarkMode?: boolean;
   onReady?: (controls: { skipTo: (index: number) => void }) => void;
+  onClose?: () => void;
 }
 
 const ISSUE_TYPES = [
@@ -56,6 +57,7 @@ export default function ReaderAudioPlayer({
   voiceId = 'shimmer',
   isDarkMode = true,
   onReady,
+  onClose,
 }: ReaderAudioPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -230,6 +232,20 @@ export default function ReaderAudioPlayer({
               <Volume2 className="w-5 h-5" />
             )}
           </button>
+
+          {/* Close Button */}
+          {onClose && (
+            <button
+              onClick={() => {
+                pause();
+                onClose();
+              }}
+              className={`p-2 rounded-lg hover:bg-red-500/20 transition-colors ${textColor} hover:text-red-400`}
+              title="Close Audio Player"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
 
           {/* Thumbs Down (only visible when playing) */}
           <AnimatePresence>

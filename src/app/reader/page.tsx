@@ -683,16 +683,32 @@ export default function ReaderPage() {
           </motion.article>
         </div>
 
-        {/* Fixed Crown Logo - Above Footer */}
+        {/* Fixed Crown Logo - Above Footer - Clickable for Audio */}
         <div className={`flex-shrink-0 text-center py-4 ${isDarkMode ? 'bg-onyx' : 'bg-ivory'} ${showAudioPlayer ? 'pb-24' : 'pb-16'}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src="/images/THRONELIGHT-CROWN.png" 
-            alt="" 
-            width={40} 
-            height={40} 
-            className={`w-10 h-10 mx-auto ${isDarkMode ? 'opacity-50' : 'opacity-60'}`}
-          />
+          <button
+            onClick={() => setShowAudioPlayer(!showAudioPlayer)}
+            className="group relative mx-auto block cursor-pointer transition-all hover:scale-110"
+            title="Click to activate Throne Light audiobook"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/images/THRONELIGHT-CROWN.png" 
+              alt="Activate Audiobook" 
+              width={40} 
+              height={40} 
+              className={`w-10 h-10 transition-opacity ${
+                showAudioPlayer 
+                  ? 'opacity-100' 
+                  : isDarkMode ? 'opacity-50 group-hover:opacity-80' : 'opacity-60 group-hover:opacity-90'
+              }`}
+            />
+            {/* Tooltip */}
+            <span className={`absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${
+              isDarkMode ? 'bg-charcoal text-gold border border-gold/30' : 'bg-white text-gold-700 border border-gold/40 shadow-lg'
+            }`}>
+              {showAudioPlayer ? 'Audiobook Active' : 'Activate Throne Light Audiobook'}
+            </span>
+          </button>
         </div>
       </main>
 
@@ -716,26 +732,9 @@ export default function ReaderPage() {
             <span className="text-sm hidden sm:inline">Previous</span>
           </button>
 
-          <div className="flex items-center gap-4">
-            {/* Audio Toggle Button */}
-            <button
-              onClick={() => setShowAudioPlayer(!showAudioPlayer)}
-              className={`p-2 rounded-lg transition-colors ${
-                showAudioPlayer
-                  ? 'bg-gold/20 text-gold'
-                  : isDarkMode
-                    ? 'hover:bg-charcoal/50 text-parchment/60'
-                    : 'hover:bg-manuscript text-charcoal/60'
-              }`}
-              title={showAudioPlayer ? 'Hide Audio Player' : 'Listen to Audio'}
-            >
-              <Volume2 className="w-5 h-5" />
-            </button>
-            
-            <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
-              {currentChapterIndex + 1} / {allSections.length}
-            </p>
-          </div>
+          <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>
+            {currentChapterIndex + 1} / {allSections.length}
+          </p>
 
           <button
             onClick={nextChapter}
@@ -760,6 +759,7 @@ export default function ReaderPage() {
           languageCode={selectedLanguage}
           voiceId="shimmer"
           isDarkMode={isDarkMode}
+          onClose={() => setShowAudioPlayer(false)}
         />
       )}
     </div>
