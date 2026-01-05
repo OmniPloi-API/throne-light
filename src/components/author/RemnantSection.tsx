@@ -154,7 +154,7 @@ export default function RemnantSection() {
                   <Image src="/images/THRONELIGHT-CROWN.png" alt="Crown" width={48} height={48} className="w-12 h-12" />
                 </motion.div>
                 <h3 className="font-serif text-2xl text-gold-600 mb-2">
-                  Prepared to Reign
+                  Prepare to Reign
                 </h3>
                 <p className="text-charcoal/70">
                   {dict.remnant.successDesc}

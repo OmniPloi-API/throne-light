@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createTrackingEvent, getPartnerById } from '@/lib/db';
+import { createEvent, getPartnerById } from '@/lib/db-supabase';
 
 // Simple geo-location lookup (can be enhanced with IP-API, MaxMind, etc.)
 async function getGeoLocation(ip: string): Promise<{ country?: string; city?: string }> {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
     }
     
-    const partner = getPartnerById(partnerId);
+    const partner = await getPartnerById(partnerId);
     if (!partner) {
       return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
     }
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       else if (/Mobile/i.test(userAgent)) device = 'Mobile';
     }
     
-    const event = createTrackingEvent({
+    const event = await createEvent({
       partnerId,
       type,
       ipAddress,

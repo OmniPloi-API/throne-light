@@ -1,79 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb, generateId, generateAccessCode, Partner } from '@/lib/db';
+import { 
+  getPartners, 
+  getPartnerByEmail, 
+  getPartnerBySlug, 
+  createPartner,
+  generateId,
+  Partner 
+} from '@/lib/db-supabase';
+
+// Generate a random access code
+function generateAccessCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
 
 export async function GET() {
-  const db = readDb();
-  return NextResponse.json(db.partners);
+  try {
+    const partners = await getPartners();
+    return NextResponse.json(partners);
+  } catch (error) {
+    console.error('Error fetching partners:', error);
+    return NextResponse.json({ error: 'Failed to fetch partners' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { 
-    name, 
-    email, 
-    slug, 
-    couponCode,
-    amazonUrl,
-    bookBabyUrl,
-    commissionPercent = 20,
-    clickBounty = 0.10,
-    discountPercent = 20,
-    partnerType = 'REV_SHARE',
-    autoWithdrawEnabled = false,
-    country = 'US',
-  } = body;
-  
-  if (!name || !email || !slug || !couponCode) {
-    return NextResponse.json({ 
-      error: 'Missing required fields: name, email, slug, couponCode' 
-    }, { status: 400 });
-  }
-  
-  const db = readDb();
-  
-  // Check for duplicates (only among active partners for coupon codes)
-  if (db.partners.find((p) => p.email === email)) {
-    return NextResponse.json({ error: 'Partner email already exists' }, { status: 409 });
-  }
-  if (db.partners.find((p) => p.slug === slug)) {
-    return NextResponse.json({ error: 'Partner slug already exists' }, { status: 409 });
-  }
-  if (db.partners.find((p) => p.couponCode === couponCode && p.isActive)) {
-    return NextResponse.json({ error: 'Coupon code already exists for an active partner' }, { status: 409 });
-  }
+  try {
+    const body = await req.json();
+    const { 
+      name, 
+      email, 
+      slug, 
+      couponCode,
+      amazonUrl,
+      bookBabyUrl,
+      commissionPercent = 20,
+      clickBounty = 0.10,
+      discountPercent = 20,
+      partnerType = 'REV_SHARE',
+      autoWithdrawEnabled = false,
+      country = 'US',
+    } = body;
+    
+    if (!name || !email || !slug || !couponCode) {
+      return NextResponse.json({ 
+        error: 'Missing required fields: name, email, slug, couponCode' 
+      }, { status: 400 });
+    }
+    
+    // Check for duplicates
+    const existingEmail = await getPartnerByEmail(email);
+    if (existingEmail) {
+      return NextResponse.json({ error: 'Partner email already exists' }, { status: 409 });
+    }
+    
+    const existingSlug = await getPartnerBySlug(slug);
+    if (existingSlug) {
+      return NextResponse.json({ error: 'Partner slug already exists' }, { status: 409 });
+    }
 
-  // Generate unique access code
-  let accessCode = generateAccessCode();
-  while (db.partners.find((p) => p.accessCode === accessCode)) {
-    accessCode = generateAccessCode();
-  }
+    // Generate unique access code
+    const accessCode = generateAccessCode();
 
-  const partner: Partner = {
-    id: generateId(),
-    name,
-    email,
-    slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, ''),
-    couponCode: couponCode.toUpperCase(),
-    accessCode,
-    amazonUrl: amazonUrl || null,
-    bookBabyUrl: bookBabyUrl || null,
-    commissionPercent,
-    clickBounty,
-    discountPercent,
-    partnerType: partnerType as 'REV_SHARE' | 'FLAT_FEE',
-    autoWithdrawEnabled,
-    // Stripe Connect fields (pending onboarding)
-    stripeOnboardingComplete: false,
-    taxFormVerified: false,
-    // Location & Payout
-    country: country.toUpperCase(),
-    payoutMethod: 'STRIPE',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  
-  db.partners.push(partner);
-  writeDb(db);
-  return NextResponse.json(partner, { status: 201 });
+    const partner = await createPartner({
+      name,
+      email: email.toLowerCase(),
+      slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+      couponCode: couponCode.toUpperCase(),
+      accessCode,
+      amazonUrl: amazonUrl || undefined,
+      bookBabyUrl: bookBabyUrl || undefined,
+      commissionPercent,
+      clickBounty,
+      discountPercent,
+      partnerType: partnerType as 'REV_SHARE' | 'FLAT_FEE',
+      autoWithdrawEnabled,
+      stripeOnboardingComplete: false,
+      taxFormVerified: false,
+      country: country.toUpperCase(),
+      payoutMethod: 'STRIPE',
+      isActive: true,
+    });
+    
+    return NextResponse.json(partner, { status: 201 });
+  } catch (error) {
+    console.error('Error creating partner:', error);
+    return NextResponse.json({ error: 'Failed to create partner' }, { status: 500 });
+  }
 }
