@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readDb, writeDb, generateId, Subscriber, SubscriberSource } from '@/lib/db';
+import { sendNewsletterConfirmation } from '@/lib/email';
 
 // GET - Fetch all subscribers (admin only)
 export async function GET(request: NextRequest) {
@@ -132,6 +133,11 @@ export async function POST(request: NextRequest) {
     }
     db.subscribers.push(newSubscriber);
     writeDb(db);
+    
+    // Send confirmation email (non-blocking)
+    sendNewsletterConfirmation(email, source).catch(err => {
+      console.error('Failed to send confirmation email:', err);
+    });
     
     return NextResponse.json({ success: true, subscriber: newSubscriber });
   } catch (error) {

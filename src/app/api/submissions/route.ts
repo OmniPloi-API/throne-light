@@ -11,6 +11,8 @@ interface Submission {
   genre: string;
   synopsis: string;
   sampleChapter: string;
+  manuscriptFileName?: string;
+  manuscriptFileSize?: number;
   status: 'pending' | 'reviewing' | 'accepted' | 'rejected';
   submittedAt: string;
   notes?: string;
@@ -56,13 +58,63 @@ function generateId(): string {
 // POST - Create new submission
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, title, genre, synopsis, sampleChapter } = body;
+    // Check if it's FormData (with file) or JSON
+    const contentType = request.headers.get('content-type') || '';
+    
+    let name: string, email: string, title: string, genre: string, synopsis: string, sampleChapter: string;
+    let manuscriptFileName: string | undefined;
+    let manuscriptFileSize: number | undefined;
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData with file upload
+      const formData = await request.formData();
+      name = formData.get('name') as string;
+      email = formData.get('email') as string;
+      title = formData.get('title') as string;
+      genre = formData.get('genre') as string;
+      synopsis = formData.get('synopsis') as string;
+      sampleChapter = formData.get('sampleChapter') as string;
+      
+      const manuscriptFile = formData.get('manuscript') as File | null;
+      if (manuscriptFile && manuscriptFile.size > 0) {
+        manuscriptFileName = manuscriptFile.name;
+        manuscriptFileSize = manuscriptFile.size;
+        
+        // Save the file to disk (in production, upload to cloud storage)
+        const uploadsDir = path.join(process.cwd(), 'data', 'manuscripts');
+        try {
+          await fs.access(uploadsDir);
+        } catch {
+          await fs.mkdir(uploadsDir, { recursive: true });
+        }
+        
+        const fileBuffer = Buffer.from(await manuscriptFile.arrayBuffer());
+        const safeFileName = `${Date.now()}_${manuscriptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        await fs.writeFile(path.join(uploadsDir, safeFileName), fileBuffer);
+        manuscriptFileName = safeFileName;
+      }
+    } else {
+      // Handle JSON (backwards compatibility)
+      const body = await request.json();
+      name = body.name;
+      email = body.email;
+      title = body.title;
+      genre = body.genre;
+      synopsis = body.synopsis;
+      sampleChapter = body.sampleChapter;
+    }
 
-    // Validate required fields
-    if (!name || !email || !title || !genre || !synopsis || !sampleChapter) {
+    // Validate required fields (synopsis OR sample chapter OR file required)
+    if (!name || !email || !title || !genre) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'Name, email, title, and genre are required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!synopsis && !sampleChapter && !manuscriptFileName) {
+      return NextResponse.json(
+        { error: 'Please provide a synopsis, sample chapter, or upload your manuscript' },
         { status: 400 }
       );
     }
@@ -74,8 +126,10 @@ export async function POST(request: NextRequest) {
       email,
       title,
       genre,
-      synopsis,
-      sampleChapter,
+      synopsis: synopsis || '',
+      sampleChapter: sampleChapter || '',
+      manuscriptFileName,
+      manuscriptFileSize,
       status: 'pending',
       submittedAt: new Date().toISOString(),
     };

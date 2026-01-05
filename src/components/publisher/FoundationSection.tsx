@@ -67,7 +67,7 @@ export default function FoundationSection() {
           transition={{ delay: 0.5, duration: 1 }}
         >
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-parchment leading-tight mb-4">
-            We Don&apos;t Distribute Books.
+            We Don&apos;t Just Publish The Book.
           </h1>
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-gold leading-tight">
             We Deliver Purpose.

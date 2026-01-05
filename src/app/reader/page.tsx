@@ -738,12 +738,11 @@ export default function ReaderPage() {
             <button
               onClick={() => setShowAudioPlayer(!showAudioPlayer)}
               className="group relative cursor-pointer transition-all hover:scale-110 mb-1"
-              title="Click to activate Throne Light audiobook"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/images/THRONELIGHT-CROWN.png" 
-                alt="Activate Audiobook" 
+                alt="Activate Audio Reader" 
                 width={32} 
                 height={32} 
                 className={`w-8 h-8 transition-opacity ${
@@ -756,7 +755,7 @@ export default function ReaderPage() {
               <span className={`absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${
                 isDarkMode ? 'bg-charcoal text-gold border border-gold/30' : 'bg-white text-gold-700 border border-gold/40 shadow-lg'
               }`}>
-                {showAudioPlayer ? 'Audiobook Active' : 'Activate Throne Light Audiobook'}
+                {showAudioPlayer ? 'Audio Reader Active' : 'Activate Throne Light Audio Reader'}
               </span>
             </button>
             <p className={`text-xs ${isDarkMode ? 'text-parchment/40' : 'text-charcoal/40'}`}>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Send, X, FileText, User, Mail, MessageSquare } from 'lucide-react';
+import { Send, X, FileText, User, Mail, MessageSquare, Upload, File } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
 
@@ -40,21 +40,58 @@ export default function GateSection() {
     synopsis: '',
     sampleChapter: '',
   });
+  const [manuscriptFile, setManuscriptFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setUploadError('');
+    
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setUploadError('Please upload a PDF or Word document (.pdf, .doc, .docx)');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError('File size must be less than 10MB');
+        return;
+      }
+      
+      setManuscriptFile(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append('name', formData.name);
+      submitData.append('email', formData.email);
+      submitData.append('title', formData.title);
+      submitData.append('genre', formData.genre);
+      submitData.append('synopsis', formData.synopsis);
+      submitData.append('sampleChapter', formData.sampleChapter);
+      
+      if (manuscriptFile) {
+        submitData.append('manuscript', manuscriptFile);
+      }
+      
       const response = await fetch('/api/submissions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: submitData,
       });
       
       if (response.ok) {
         setSubmitSuccess(true);
         setFormData({ name: '', email: '', title: '', genre: '', synopsis: '', sampleChapter: '' });
+        setManuscriptFile(null);
         setTimeout(() => {
           setIsModalOpen(false);
           setSubmitSuccess(false);
@@ -215,13 +252,71 @@ export default function GateSection() {
                 <div>
                   <label className="block text-parchment/60 text-sm mb-2">Sample Chapter (First 1000 words)</label>
                   <textarea
-                    required
                     rows={6}
                     value={formData.sampleChapter}
                     onChange={(e) => setFormData({ ...formData, sampleChapter: e.target.value })}
                     className="w-full bg-charcoal border border-gold/20 rounded-lg px-4 py-3 text-parchment placeholder:text-parchment/30 focus:border-gold/50 focus:outline-none transition-colors resize-none"
                     placeholder="Paste the first chapter or a compelling excerpt..."
                   />
+                </div>
+
+                {/* Manuscript Upload */}
+                <div>
+                  <label className="block text-parchment/60 text-sm mb-2 flex items-center gap-2">
+                    <Upload className="w-4 h-4" /> Upload Manuscript (Optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="manuscript-upload"
+                    />
+                    <label
+                      htmlFor="manuscript-upload"
+                      className={`flex items-center justify-center gap-3 w-full bg-charcoal border-2 border-dashed rounded-lg px-4 py-6 cursor-pointer transition-colors ${
+                        manuscriptFile 
+                          ? 'border-gold/50 bg-gold/5' 
+                          : 'border-gold/20 hover:border-gold/40'
+                      }`}
+                    >
+                      {manuscriptFile ? (
+                        <div className="flex items-center gap-3 text-gold">
+                          <File className="w-6 h-6" />
+                          <div className="text-left">
+                            <p className="text-sm font-medium">{manuscriptFile.name}</p>
+                            <p className="text-xs text-parchment/50">
+                              {(manuscriptFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setManuscriptFile(null);
+                            }}
+                            className="ml-auto text-parchment/40 hover:text-red-400 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Upload className="w-8 h-8 text-gold/40 mx-auto mb-2" />
+                          <p className="text-parchment/60 text-sm">
+                            Drop your manuscript here or click to browse
+                          </p>
+                          <p className="text-parchment/30 text-xs mt-1">
+                            PDF or Word document, max 10MB
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                    {uploadError && (
+                      <p className="text-red-400 text-xs mt-2">{uploadError}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Submit Button */}
