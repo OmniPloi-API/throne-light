@@ -307,8 +307,8 @@ export default function ReaderPage() {
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
         <div className="relative max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          {/* Left: Menu & Home */}
-          <div className="flex items-center gap-2 z-10">
+          {/* Left: Menu & Home - ml-auto pushes closer to center title */}
+          <div className="flex items-center gap-1 z-10 ml-16">
             <button
               onClick={() => setShowToc(true)}
               className={`p-2 rounded-lg transition-colors ${
