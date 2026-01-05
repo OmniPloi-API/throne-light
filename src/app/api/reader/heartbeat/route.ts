@@ -3,6 +3,32 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+// Get location from IP using ip-api.com (free, no key needed)
+async function geolocateIP(ip: string): Promise<{ lat: number; lon: number; city: string; country: string; countryCode: string } | null> {
+  if (!ip || ip === 'unknown' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('::')) {
+    return null;
+  }
+  
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,city,lat,lon`);
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      return {
+        lat: data.lat,
+        lon: data.lon,
+        city: data.city,
+        country: data.country,
+        countryCode: data.countryCode
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('IP geolocation error:', error);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -15,10 +41,13 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
     
     // Get IP and user agent
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                request.headers.get('x-real-ip') || 
                'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
+    
+    // Get geolocation from IP
+    const geoData = await geolocateIP(ip);
 
     // If sessionId provided, update existing session
     if (sessionId) {
@@ -39,19 +68,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ sessionId, status: 'updated' });
     }
 
-    // Create new session
+    // Create new session with geolocation
+    const sessionData: Record<string, unknown> = {
+      user_id: userId,
+      email: email || null,
+      ip_address: ip,
+      user_agent: userAgent,
+      book_id: bookId,
+      current_section: currentSection,
+      current_page: currentPage || 1,
+      is_active: true
+    };
+
+    // Add geolocation if available
+    if (geoData) {
+      sessionData.latitude = geoData.lat;
+      sessionData.longitude = geoData.lon;
+      sessionData.city = geoData.city;
+      sessionData.country = geoData.country;
+      sessionData.country_code = geoData.countryCode;
+    }
+
     const { data, error } = await supabase
       .from('active_reader_sessions')
-      .insert({
-        user_id: userId,
-        email: email || null,
-        ip_address: ip,
-        user_agent: userAgent,
-        book_id: bookId,
-        current_section: currentSection,
-        current_page: currentPage || 1,
-        is_active: true
-      })
+      .insert(sessionData)
       .select('id')
       .single();
 
