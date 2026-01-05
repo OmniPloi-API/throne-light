@@ -158,9 +158,8 @@ const AdminWorldMap = () => {
       <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-onyx via-onyx/90 to-transparent">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-serif text-gold flex items-center gap-3">
-              <span className="text-3xl">👑</span>
-              Throne Light Command Center
+            <h2 className="text-2xl font-serif text-gold">
+              Global View
             </h2>
             <p className="text-parchment/50 text-sm mt-1">Global Reach Visualization</p>
           </div>
