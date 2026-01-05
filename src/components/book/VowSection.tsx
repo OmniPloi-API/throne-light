@@ -227,7 +227,7 @@ export default function VowSection() {
           )}
         </AnimatePresence>
 
-        {/* Success State */}
+        {/* Success State - Congratulations before Order */}
         <AnimatePresence>
           {isSubmitted && (
             <motion.div
@@ -245,15 +245,35 @@ export default function VowSection() {
                 <Heart className="w-10 h-10 text-gold" fill="currentColor" />
               </motion.div>
               <h3 className="font-serif text-2xl md:text-3xl text-parchment mb-4">
-                Your Vow is Sealed, <span className="text-gold">{name}</span>
+                Congratulations, <span className="text-gold">{name}</span>!
               </h3>
+              <p className="text-parchment/90 font-sans text-xl max-w-lg mx-auto mb-2">
+                You just took the first step to loving yourself.
+              </p>
               <p className="text-parchment/70 font-sans text-lg max-w-lg mx-auto">
-                You have made a covenant with your crown. Remember this moment.
+                Your vow has been sealed. You have made a covenant with your crown. 
                 The throne awaits the woman who stopped auditioning.
               </p>
               <div className="mt-8 pt-6 border-t border-parchment/20">
-                <p className="text-gold/80 font-serif italic text-lg">
+                <p className="text-gold/80 font-serif italic text-lg mb-8">
                   "This is my vow. This is my seat. This is my holy no."
+                </p>
+                
+                {/* CTA Button to Order */}
+                <motion.button
+                  onClick={() => {
+                    document.getElementById('altar')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-3 bg-gold hover:bg-gold/90 text-charcoal px-8 py-4 rounded-lg font-serif text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Scroll className="w-5 h-5" />
+                  <span>Order Your Ascension</span>
+                </motion.button>
+                
+                <p className="text-parchment/50 text-sm mt-4">
+                  Continue your journey with the full book
                 </p>
               </div>
             </motion.div>

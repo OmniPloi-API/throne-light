@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const includeAll = searchParams.get('all') === 'true'; // Admin flag
   const pendingOnly = searchParams.get('pending') === 'true';
+  const diverse = searchParams.get('diverse') === 'true'; // Get diverse countries
+  const limit = parseInt(searchParams.get('limit') || '0') || 0;
   
   const db = readDb();
   
@@ -24,10 +26,49 @@ export async function GET(request: NextRequest) {
     reviews = reviews.filter(r => r.status === 'APPROVED');
   }
   
-  // Sort by date, newest first
-  reviews = reviews.sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  // If diverse flag is set, select reviews from different countries
+  if (diverse && !includeAll && !pendingOnly) {
+    const countryMap = new Map<string, typeof reviews[0][]>();
+    
+    // Group reviews by country
+    reviews.forEach(r => {
+      const country = r.country || 'US';
+      if (!countryMap.has(country)) {
+        countryMap.set(country, []);
+      }
+      countryMap.get(country)!.push(r);
+    });
+    
+    // Pick one review from each country, prioritizing variety
+    const diverseReviews: typeof reviews = [];
+    const countries = Array.from(countryMap.keys());
+    
+    // Shuffle countries for randomness
+    for (let i = countries.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [countries[i], countries[j]] = [countries[j], countries[i]];
+    }
+    
+    // Pick reviews from different countries
+    for (const country of countries) {
+      const countryReviews = countryMap.get(country)!;
+      // Pick from middle/bottom of list for variety
+      const idx = Math.floor(countryReviews.length / 2 + Math.random() * (countryReviews.length / 2));
+      diverseReviews.push(countryReviews[Math.min(idx, countryReviews.length - 1)]);
+      if (limit > 0 && diverseReviews.length >= limit) break;
+    }
+    
+    reviews = diverseReviews;
+  } else {
+    // Sort by date, newest first
+    reviews = reviews.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    if (limit > 0) {
+      reviews = reviews.slice(0, limit);
+    }
+  }
   
   // Calculate stats
   const approvedReviews = db.reviews.filter(r => r.status === 'APPROVED');

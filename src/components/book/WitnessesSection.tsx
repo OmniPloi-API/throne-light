@@ -31,10 +31,10 @@ export default function WitnessesSection() {
   useEffect(() => {
     async function fetchReviews() {
       try {
-        const res = await fetch('/api/reviews?limit=5');
+        const res = await fetch('/api/reviews?diverse=true&limit=6');
         const data = await res.json();
         if (data.reviews && data.reviews.length > 0) {
-          setReviews(data.reviews.slice(0, 5));
+          setReviews(data.reviews);
         }
       } catch (error) {
         console.error('Failed to fetch reviews:', error);
@@ -46,8 +46,8 @@ export default function WitnessesSection() {
 
   // Use real reviews if available, otherwise fall back to dictionary testimonials
   const testimonials = reviews.length > 0 
-    ? reviews.map(r => ({ quote: r.content, author: r.name }))
-    : dict.witnesses.testimonials;
+    ? reviews.map(r => ({ quote: r.content, author: r.name, countryFlag: r.countryFlag, country: r.country }))
+    : dict.witnesses.testimonials.map(t => ({ ...t, countryFlag: '🌍', country: '' }));
 
   return (
     <section className="relative bg-onyx py-24 md:py-32 overflow-hidden">
@@ -97,10 +97,13 @@ export default function WitnessesSection() {
                       </p>
                     </blockquote>
 
-                    {/* Author */}
+                    {/* Author with Country Flag */}
                     <footer className="mt-6 pt-6 border-t border-gold/10">
-                      <p className="text-gold text-sm font-sans">
-                        {testimonial.author}
+                      <p className="text-gold text-sm font-sans flex items-center gap-2">
+                        <span>{testimonial.author}</span>
+                        {testimonial.countryFlag && (
+                          <span className="text-lg" title={testimonial.country}>{testimonial.countryFlag}</span>
+                        )}
                       </p>
                     </footer>
                   </div>

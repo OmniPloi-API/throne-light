@@ -54,7 +54,9 @@ export default function GatheringSection() {
     { city: 'Atlanta', status: dict.gathering.upcomingStatus, date: null },
     { city: 'Los Angeles', status: dict.gathering.upcomingStatus, date: null },
     { city: 'London', status: dict.gathering.upcomingStatus, date: null },
-    { city: 'Houston', status: dict.gathering.upcomingStatus, date: null },
+    { city: 'Dallas', status: dict.gathering.upcomingStatus, date: null },
+    { city: 'Miami', status: dict.gathering.upcomingStatus, date: null },
+    { city: 'Lagos', status: dict.gathering.upcomingStatus, date: null },
   ];
   
   // City request state
