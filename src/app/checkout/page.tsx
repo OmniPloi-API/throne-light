@@ -145,12 +145,6 @@ function CheckoutContent() {
           )}
         </button>
         
-        {/* Partner Attribution */}
-        {partnerId && (
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Referred by a Throne Light partner
-          </p>
-        )}
       </div>
     </div>
   );

@@ -455,7 +455,9 @@ export default function BridgePage() {
               {/* Secondary CTAs - External Retailers (only show if URLs provided) */}
               {(partner.amazonUrl || partner.kindleUrl) && (
                 <div className="pt-4 border-t border-gray-700">
-                  <p className="text-center text-sm text-gray-500 mb-3">{t.orPurchaseFrom}</p>
+                  <p className="text-center text-sm text-gray-500 mb-3">
+                    {partner.amazonUrl && partner.kindleUrl ? t.orPurchaseFrom : 'Or purchase from retailer:'}
+                  </p>
                   <div className="flex justify-center gap-4">
                     {partner.amazonUrl && (
                       <button
