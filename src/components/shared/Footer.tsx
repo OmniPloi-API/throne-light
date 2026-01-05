@@ -13,9 +13,9 @@ interface FooterProps {
   variant?: 'book' | 'author' | 'publisher';
 }
 
-// Native app download URLs
+// Native app download URLs (signed builds)
 const DOWNLOAD_URLS = {
-  mac: 'https://github.com/OmniPloi-API/throne-light/releases/latest/download/ThroneLight-Reader-macOS-AppleSilicon.dmg',
+  mac: '/downloads/Throne Light Reader_1.0.1_universal.dmg',
   windows: '/downloads/ThroneLight-Reader-Windows.exe', // Coming soon
 };
 

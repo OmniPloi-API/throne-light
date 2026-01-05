@@ -42,7 +42,7 @@ function SuccessContent() {
             
             {/* Desktop App Download */}
             <a 
-              href="https://github.com/OmniPloi-API/throne-light/releases/latest/download/ThroneLight-Reader-macOS-AppleSilicon.dmg"
+              href="/downloads/Throne Light Reader_1.0.1_universal.dmg"
               className="block w-full bg-charcoal hover:bg-charcoal/80 border border-gold/30 hover:border-gold/50 text-parchment font-bold py-4 px-6 rounded-lg transition-all"
             >
               <span className="flex items-center justify-center gap-2">
