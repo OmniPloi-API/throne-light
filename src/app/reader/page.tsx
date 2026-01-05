@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
@@ -41,6 +41,9 @@ export default function ReaderPage() {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioParagraphs, setAudioParagraphs] = useState<ParagraphData[]>([]);
 
+  // Reader session tracking
+  const sessionIdRef = useRef<string | null>(null);
+
   // Load saved preferences
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('reader-dark-mode');
@@ -64,6 +67,59 @@ export default function ReaderPage() {
     localStorage.setItem('reader-font-size', String(fontSize));
     localStorage.setItem('reader-language', selectedLanguage);
   }, [isDarkMode, currentChapterIndex, bookmarks, fontSize, selectedLanguage]);
+
+  // Reader session heartbeat tracking
+  useEffect(() => {
+    const userId = localStorage.getItem('reader-user-id') || `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('reader-user-id', userId);
+    const userEmail = localStorage.getItem('user-email') || null;
+
+    const sendHeartbeat = async () => {
+      try {
+        const res = await fetch('/api/reader/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            email: userEmail,
+            bookId: 'crowded-bed-empty-throne',
+            currentSection: allSections[currentChapterIndex]?.id,
+            currentPage: currentChapterIndex + 1,
+            sessionId: sessionIdRef.current
+          })
+        });
+        const data = await res.json();
+        if (data.sessionId) {
+          sessionIdRef.current = data.sessionId;
+        }
+      } catch (error) {
+        console.error('Heartbeat error:', error);
+      }
+    };
+
+    // Send initial heartbeat
+    sendHeartbeat();
+
+    // Send heartbeat every 60 seconds
+    const interval = setInterval(sendHeartbeat, 60000);
+
+    // End session on page unload
+    const handleUnload = () => {
+      if (sessionIdRef.current) {
+        navigator.sendBeacon(`/api/reader/heartbeat?sessionId=${sessionIdRef.current}`, '');
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleUnload);
+      // End session on component unmount
+      if (sessionIdRef.current) {
+        fetch(`/api/reader/heartbeat?sessionId=${sessionIdRef.current}`, { method: 'DELETE' });
+      }
+    };
+  }, [currentChapterIndex]);
 
   // Handle language change and translation
   const handleLanguageChange = useCallback(async (langCode: string) => {
@@ -250,9 +306,9 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="relative max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
           {/* Left: Menu & Home */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 z-10">
             <button
               onClick={() => setShowToc(true)}
               className={`p-2 rounded-lg transition-colors ${
@@ -277,9 +333,9 @@ export default function ReaderPage() {
             </Link>
           </div>
 
-          {/* Center: Title */}
-          <div className="text-center">
-            <p className={`text-sm font-serif truncate max-w-[200px] md:max-w-none ${
+          {/* Center: Title - Absolutely positioned for true centering */}
+          <div className="absolute left-1/2 -translate-x-1/2 text-center">
+            <p className={`text-sm font-serif whitespace-nowrap ${
               isDarkMode ? 'text-parchment/80' : 'text-charcoal/80'
             }`}>
               {bookData.title}
@@ -292,7 +348,7 @@ export default function ReaderPage() {
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 z-10">
             <LanguageSelector
               selectedLanguage={selectedLanguage}
               onLanguageChange={handleLanguageChange}
