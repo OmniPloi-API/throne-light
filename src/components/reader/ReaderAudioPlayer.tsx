@@ -166,11 +166,11 @@ export default function ReaderAudioPlayer({
 
   return (
     <>
-      {/* Floating Audio Player */}
+      {/* Floating Audio Player - positioned just below footer nav, centered */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 ${bgColor} backdrop-blur-lg border ${borderColor} rounded-2xl shadow-2xl`}
+        className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 ${bgColor} backdrop-blur-lg border ${borderColor} rounded-2xl shadow-2xl`}
       >
         {/* Expanded Controls */}
         <AnimatePresence>

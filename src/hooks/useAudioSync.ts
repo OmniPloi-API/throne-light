@@ -18,6 +18,7 @@ export interface AudioState {
   currentVersion: number;
   autoScrollEnabled: boolean;
   error: string | null;
+  prefetchedUrls: Map<number, string>; // Pre-fetched audio URLs by paragraph index
 }
 
 interface UseAudioSyncOptions {
@@ -67,7 +68,11 @@ export function useAudioSync(
     currentVersion: 1,
     autoScrollEnabled: true,
     error: null,
+    prefetchedUrls: new Map(),
   });
+
+  // Track which paragraphs are currently being prefetched
+  const prefetchingRef = useRef<Set<number>>(new Set());
 
   // Initialize audio element
   useEffect(() => {
@@ -174,6 +179,38 @@ export function useAudioSync(
     }
   }, [paragraphs, state.autoScrollEnabled]);
 
+  // Prefetch next paragraphs while current is playing
+  const prefetchNext = useCallback((fromIndex: number) => {
+    // Prefetch next 2 paragraphs
+    const prefetchCount = 2;
+    
+    for (let i = 1; i <= prefetchCount; i++) {
+      const nextIndex = fromIndex + i;
+      
+      // Skip if out of bounds or currently prefetching
+      if (nextIndex >= paragraphs.length) continue;
+      if (prefetchingRef.current.has(nextIndex)) continue;
+      
+      // Mark as prefetching
+      prefetchingRef.current.add(nextIndex);
+      
+      // Fetch in background (don't await)
+      fetchAudio(nextIndex, 1).then((audioData) => {
+        prefetchingRef.current.delete(nextIndex);
+        
+        if (audioData) {
+          setState(prev => {
+            const newMap = new Map(prev.prefetchedUrls);
+            newMap.set(nextIndex, audioData.audio_url);
+            return { ...prev, prefetchedUrls: newMap };
+          });
+        }
+      }).catch(() => {
+        prefetchingRef.current.delete(nextIndex);
+      });
+    }
+  }, [paragraphs.length, fetchAudio]);
+
   // Play specific paragraph
   const playParagraph = useCallback(async (index: number, version: number = 1) => {
     if (!audioRef.current) return;
@@ -207,11 +244,13 @@ export function useAudioSync(
 
     try {
       await audioRef.current.play();
+      // Start prefetching next paragraphs as soon as playback begins
+      prefetchNext(index);
     } catch (error) {
       console.error('Playback error:', error);
       setState(prev => ({ ...prev, isPlaying: false }));
     }
-  }, [fetchAudio, scrollToParagraph, onParagraphChange, updateParagraphHighlight]);
+  }, [fetchAudio, scrollToParagraph, onParagraphChange, updateParagraphHighlight, prefetchNext]);
 
   // Handle audio ended - auto-advance to next paragraph
   useEffect(() => {
@@ -222,10 +261,37 @@ export function useAudioSync(
       const nextIndex = state.activeParagraphIndex + 1;
 
       if (nextIndex < paragraphs.length) {
-        // Auto-play next paragraph
-        playParagraph(nextIndex, 1);
+        // Check if we have prefetched audio for next paragraph
+        const prefetchedUrl = state.prefetchedUrls.get(nextIndex);
+        
+        if (prefetchedUrl) {
+          // Use prefetched audio - instant playback!
+          if (audioRef.current) {
+            audioRef.current.src = prefetchedUrl;
+            audioRef.current.load();
+            
+            setState(prev => ({
+              ...prev,
+              activeParagraphIndex: nextIndex,
+              currentAudioUrl: prefetchedUrl,
+            }));
+            
+            updateParagraphHighlight(nextIndex, true);
+            scrollToParagraph(nextIndex);
+            onParagraphChange?.(nextIndex);
+            
+            audioRef.current.play().catch(console.error);
+            
+            // Continue prefetching
+            prefetchNext(nextIndex);
+          }
+        } else {
+          // Fallback: fetch and play normally
+          playParagraph(nextIndex, 1);
+        }
       } else {
         // Reached end of content
+        updateParagraphHighlight(state.activeParagraphIndex, false);
         setState(prev => ({ ...prev, isPlaying: false }));
       }
     };
@@ -246,7 +312,7 @@ export function useAudioSync(
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [state.activeParagraphIndex, paragraphs.length, playParagraph]);
+  }, [state.activeParagraphIndex, paragraphs.length, playParagraph, state.prefetchedUrls, updateParagraphHighlight, scrollToParagraph, onParagraphChange, prefetchNext]);
 
   // Play/Pause toggle
   const togglePlay = useCallback(() => {

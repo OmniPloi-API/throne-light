@@ -617,7 +617,7 @@ export default function ReaderPage() {
           )}
 
           {/* Section End Decoration - Crown Logo */}
-          <div className="text-center mt-16 flex justify-center">
+          <div className="text-center mt-16 mb-32 flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/images/THRONELIGHT-CROWN.png" 
