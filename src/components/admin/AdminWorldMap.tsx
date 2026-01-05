@@ -71,11 +71,25 @@ const GOLD_DARK = '#8B7355';
 
 const AdminWorldMap = () => {
   const [mapData, setMapData] = useState<MapData | null>(null);
-  const [viewMode, setViewMode] = useState<'sales' | 'readers'>('sales');
+  const [viewMode, setViewMode] = useState<'sales' | 'readers' | 'all'>('all');
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([0, 20]);
+
+  // Load saved filter preference from localStorage
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('admin-map-view-mode');
+    if (savedViewMode === 'sales' || savedViewMode === 'readers' || savedViewMode === 'all') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  // Save filter preference when it changes
+  const handleViewModeChange = (mode: 'sales' | 'readers' | 'all') => {
+    setViewMode(mode);
+    localStorage.setItem('admin-map-view-mode', mode);
+  };
 
   // Fetch map data
   const fetchMapData = async () => {
@@ -152,20 +166,30 @@ const AdminWorldMap = () => {
           </div>
           
           {/* Toggle Switch */}
-          <div className="flex items-center gap-2 bg-charcoal/50 rounded-full p-1">
+          <div className="flex items-center gap-1 bg-charcoal/50 rounded-full p-1">
             <button
-              onClick={() => setViewMode('sales')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              onClick={() => handleViewModeChange('all')}
+              className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                viewMode === 'all'
+                  ? 'bg-gold text-onyx'
+                  : 'text-parchment/60 hover:text-parchment'
+              }`}
+            >
+              🌍 All
+            </button>
+            <button
+              onClick={() => handleViewModeChange('sales')}
+              className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
                 viewMode === 'sales'
                   ? 'bg-gold text-onyx'
                   : 'text-parchment/60 hover:text-parchment'
               }`}
             >
-              💰 Total Sales
+              💰 Sales
             </button>
             <button
-              onClick={() => setViewMode('readers')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              onClick={() => handleViewModeChange('readers')}
+              className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
                 viewMode === 'readers'
                   ? 'bg-gold text-onyx'
                   : 'text-parchment/60 hover:text-parchment'
@@ -176,7 +200,7 @@ const AdminWorldMap = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                Live Users
+                Live
               </span>
             </button>
           </div>
@@ -185,22 +209,23 @@ const AdminWorldMap = () => {
 
       {/* Stats Bar */}
       <div className="absolute top-20 left-4 z-20 flex flex-col gap-2">
-        <div className="bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gold/20">
-          <p className="text-parchment/50 text-xs uppercase tracking-wider">
-            {viewMode === 'sales' ? 'Total Sales' : 'Active Readers'}
-          </p>
-          <p className="text-2xl font-bold text-gold">
-            {viewMode === 'sales' 
-              ? mapData?.summary.totalSales || 0
-              : mapData?.summary.totalActiveReaders || 0
-            }
-          </p>
-        </div>
+        {(viewMode === 'all' || viewMode === 'sales') && (
+          <div className="bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gold/20">
+            <p className="text-parchment/50 text-xs uppercase tracking-wider">Total Sales</p>
+            <p className="text-2xl font-bold text-gold">{mapData?.summary.totalSales || 0}</p>
+          </div>
+        )}
+        {(viewMode === 'all' || viewMode === 'readers') && (
+          <div className="bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gold/20">
+            <p className="text-parchment/50 text-xs uppercase tracking-wider">Active Readers</p>
+            <p className="text-2xl font-bold text-green-400">{mapData?.summary.totalActiveReaders || 0}</p>
+          </div>
+        )}
         <div className="bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gold/20">
           <p className="text-parchment/50 text-xs uppercase tracking-wider">Countries</p>
           <p className="text-2xl font-bold text-gold">{mapData?.summary.uniqueCountries || 0}</p>
         </div>
-        {viewMode === 'sales' && (
+        {(viewMode === 'all' || viewMode === 'sales') && (
           <div className="bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gold/20">
             <p className="text-parchment/50 text-xs uppercase tracking-wider">Revenue</p>
             <p className="text-2xl font-bold text-gold">
@@ -271,7 +296,7 @@ const AdminWorldMap = () => {
             </Geographies>
 
             {/* Sale Markers (Static Gold Circles) */}
-            {viewMode === 'sales' && mapData?.sales.map((sale, i) => (
+            {(viewMode === 'sales' || viewMode === 'all') && mapData?.sales.map((sale, i) => (
               <Marker
                 key={`sale-${i}`}
                 coordinates={[sale.longitude, sale.latitude]}
@@ -290,7 +315,7 @@ const AdminWorldMap = () => {
             ))}
 
             {/* Reader Markers (Pulsing Beacons) */}
-            {viewMode === 'readers' && mapData?.readers.map((reader, i) => (
+            {(viewMode === 'readers' || viewMode === 'all') && mapData?.readers.map((reader, i) => (
               <Marker
                 key={`reader-${i}`}
                 coordinates={[reader.longitude, reader.latitude]}

@@ -3,6 +3,23 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for the Command Center map (no SSR)
+const AdminWorldMap = dynamic(
+  () => import('@/components/admin/AdminWorldMap'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[500px] bg-[#111] rounded-xl flex items-center justify-center border border-[#222]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          <p className="text-gold/60">Loading Command Center...</p>
+        </div>
+      </div>
+    )
+  }
+);
 import { 
   Users, DollarSign, TrendingUp, ExternalLink, 
   Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
@@ -259,6 +276,11 @@ export default function AdminPage() {
       </header>
 
       <main className="p-8">
+        {/* Command Center - Global Visualization Map */}
+        <section className="mb-10">
+          <AdminWorldMap />
+        </section>
+
         {/* Traffic Source Analysis - Split Testing View */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -361,6 +383,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3">Direct Sales</th>
                   <th className="px-4 py-3">Amazon Clicks</th>
                   <th className="px-4 py-3">Commission %</th>
+                  <th className="px-4 py-3">Discount %</th>
                   <th className="px-4 py-3">Click Bounty</th>
                   <th className="px-4 py-3">Total Owed</th>
                   <th className="px-4 py-3">Actions</th>
@@ -396,6 +419,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-green-400">{pOrders.length}</td>
                       <td className="px-4 py-3 text-gray-400">{pAmazon}</td>
                       <td className="px-4 py-3">{p.commissionPercent}%</td>
+                      <td className="px-4 py-3 text-purple-400">{p.discountPercent}%</td>
                       <td className="px-4 py-3">${p.clickBounty.toFixed(2)}</td>
                       <td className="px-4 py-3 font-semibold text-gold">
                         ${(pCommission + pClickBounty).toFixed(2)}
@@ -445,7 +469,7 @@ export default function AdminPage() {
                 })}
                 {partners.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={11} className="px-4 py-8 text-center text-gray-500">
                       No partners yet. Create one above.
                     </td>
                   </tr>
