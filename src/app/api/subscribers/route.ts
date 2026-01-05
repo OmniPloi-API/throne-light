@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb, generateId, Subscriber, SubscriberSource } from '@/lib/db';
-import { sendNewsletterConfirmation } from '@/lib/email';
+import { readDb, writeDb, generateId, Subscriber, SubscriberSource, SubscriberCampaignState, EmailSend } from '@/lib/db';
+import { sendLightOfEollesEmail, calculateNextSendDate, getCampaignInfo } from '@/lib/email-campaigns';
 
 // GET - Fetch all subscribers (admin only)
 export async function GET(request: NextRequest) {
@@ -132,12 +132,75 @@ export async function POST(request: NextRequest) {
       db.subscribers = [];
     }
     db.subscribers.push(newSubscriber);
-    writeDb(db);
     
-    // Send confirmation email (non-blocking)
-    sendNewsletterConfirmation(email, source).catch(err => {
-      console.error('Failed to send confirmation email:', err);
-    });
+    // For AUTHOR_MAILING_LIST subscribers, enroll in Light of EOLLES campaign
+    if (source === 'AUTHOR_MAILING_LIST') {
+      const campaignInfo = getCampaignInfo();
+      const now = new Date();
+      
+      // Initialize campaign states array if needed
+      if (!db.subscriberCampaignStates) {
+        db.subscriberCampaignStates = [];
+      }
+      if (!db.emailSends) {
+        db.emailSends = [];
+      }
+      
+      // Create campaign state for this subscriber
+      const campaignState: SubscriberCampaignState = {
+        id: generateId(),
+        subscriberId: newSubscriber.id,
+        campaignSlug: campaignInfo.slug,
+        currentEmailNumber: 0, // Will be updated after sending first email
+        nextSendAt: now.toISOString(), // Send first email now
+        isPaused: false,
+        isCompleted: false,
+        startedAt: now.toISOString(),
+      };
+      db.subscriberCampaignStates.push(campaignState);
+      
+      // Save DB before sending email
+      writeDb(db);
+      
+      // Send the welcome email (Letter #1) immediately
+      sendLightOfEollesEmail(email, 1, firstName, false)
+        .then((result) => {
+          if (result.success) {
+            // Update campaign state and record send
+            const dbUpdate = readDb();
+            const state = dbUpdate.subscriberCampaignStates.find(
+              (s: SubscriberCampaignState) => s.subscriberId === newSubscriber.id && s.campaignSlug === campaignInfo.slug
+            );
+            if (state) {
+              state.currentEmailNumber = 1;
+              state.nextSendAt = calculateNextSendDate(now).toISOString();
+            }
+            
+            // Record the email send
+            const emailSend: EmailSend = {
+              id: generateId(),
+              subscriberId: newSubscriber.id,
+              campaignSlug: campaignInfo.slug,
+              emailNumber: 1,
+              resendId: result.resendId,
+              status: 'SENT',
+              sentAt: now.toISOString(),
+            };
+            dbUpdate.emailSends.push(emailSend);
+            writeDb(dbUpdate);
+            
+            console.log(`Sent Light of EOLLES welcome email to ${email}`);
+          } else {
+            console.error(`Failed to send Light of EOLLES welcome email to ${email}:`, result.error);
+          }
+        })
+        .catch((err: Error) => {
+          console.error('Failed to send Light of EOLLES welcome email:', err);
+        });
+    } else {
+      // For other sources, just save
+      writeDb(db);
+    }
     
     return NextResponse.json({ success: true, subscriber: newSubscriber });
   } catch (error) {

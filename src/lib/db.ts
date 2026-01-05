@@ -269,6 +269,33 @@ export interface SiteSettings {
   feedbackWidgetUpdatedAt?: string;
 }
 
+// Email Campaign System - Light of EOLLES bi-weekly emails
+export interface SubscriberCampaignState {
+  id: string;
+  subscriberId: string;
+  campaignSlug: string;
+  currentEmailNumber: number; // Last sent email number (0 = none sent)
+  nextSendAt: string; // When to send the next email
+  isPaused: boolean;
+  isCompleted: boolean; // Has received all emails
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface EmailSend {
+  id: string;
+  subscriberId: string;
+  campaignSlug: string;
+  emailNumber: number;
+  resendId?: string; // Resend API message ID
+  status: 'SENT' | 'DELIVERED' | 'OPENED' | 'CLICKED' | 'BOUNCED' | 'FAILED';
+  openedAt?: string;
+  clickedAt?: string;
+  bouncedAt?: string;
+  failedReason?: string;
+  sentAt: string;
+}
+
 export interface Database {
   partners: Partner[];
   events: TrackingEvent[];
@@ -283,11 +310,14 @@ export interface Database {
   subscribers: Subscriber[];
   partnerFeedback: PartnerFeedback[];
   siteSettings: SiteSettings;
+  // Email campaigns
+  subscriberCampaignStates: SubscriberCampaignState[];
+  emailSends: EmailSend[];
 }
 
 export function readDb(): Database {
   if (!fs.existsSync(DB_PATH)) {
-    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [], subscribers: [], partnerFeedback: [], siteSettings: { feedbackWidgetEnabled: true } };
+    return { partners: [], events: [], orders: [], payouts: [], withdrawalRequests: [], users: [], books: [], libraryAccess: [], reviews: [], supportTickets: [], subscribers: [], partnerFeedback: [], siteSettings: { feedbackWidgetEnabled: true }, subscriberCampaignStates: [], emailSends: [] };
   }
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
   const data = JSON.parse(raw);
@@ -305,6 +335,8 @@ export function readDb(): Database {
     subscribers: data.subscribers || [],
     partnerFeedback: data.partnerFeedback || [],
     siteSettings: data.siteSettings || { feedbackWidgetEnabled: true },
+    subscriberCampaignStates: data.subscriberCampaignStates || [],
+    emailSends: data.emailSends || [],
   };
 }
 
