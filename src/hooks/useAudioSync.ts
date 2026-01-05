@@ -73,6 +73,46 @@ export function useAudioSync(
 
   // Track which paragraphs are currently being prefetched
   const prefetchingRef = useRef<Set<number>>(new Set());
+  
+  // Track previous language to detect changes
+  const prevLanguageRef = useRef(languageCode);
+
+  // Reset audio state when language changes
+  useEffect(() => {
+    if (prevLanguageRef.current !== languageCode) {
+      console.log(`Language changed from ${prevLanguageRef.current} to ${languageCode} - resetting audio`);
+      
+      // Stop current playback
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+      
+      // Clear paragraph highlights
+      paragraphs.forEach((p) => {
+        const el = document.getElementById(p.elementId);
+        if (el) {
+          el.classList.remove('audio-active-paragraph', 'audio-playing-now');
+        }
+      });
+      
+      // Clear all prefetched URLs and reset state
+      prefetchingRef.current.clear();
+      setState(prev => ({
+        ...prev,
+        isPlaying: false,
+        isLoading: false,
+        activeParagraphIndex: 0,
+        currentAudioUrl: null,
+        currentSegmentId: null,
+        currentVersion: 1,
+        prefetchedUrls: new Map(),
+        error: null,
+      }));
+      
+      prevLanguageRef.current = languageCode;
+    }
+  }, [languageCode, paragraphs]);
 
   // Initialize audio element
   useEffect(() => {
