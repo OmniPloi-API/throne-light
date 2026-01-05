@@ -109,12 +109,16 @@ export async function POST(req: NextRequest) {
           const tempPassword = crypto.randomUUID().slice(0, 12);
           const hashedPassword = await hashPassword(tempPassword);
           const now = new Date().toISOString();
+          const sessionToken = generateSessionToken();
           
           user = {
             id: generateId(),
             email: customerEmail.toLowerCase(),
             password: hashedPassword,
-            activeSessionToken: generateSessionToken(),
+            activeSessions: [{
+              token: sessionToken,
+              createdAt: now,
+            }],
             createdAt: now,
             updatedAt: now,
           };
