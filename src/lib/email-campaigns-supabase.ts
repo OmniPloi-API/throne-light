@@ -6,13 +6,11 @@ import { sendLightOfEollesEmail, calculateNextSendDate, isCampaignComplete } fro
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-let supabase: ReturnType<typeof createClient> | null = null;
-
 function getSupabase() {
-  if (!supabase && supabaseUrl && supabaseServiceKey) {
-    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  if (supabaseUrl && supabaseServiceKey) {
+    return createClient(supabaseUrl, supabaseServiceKey);
   }
-  return supabase;
+  return null;
 }
 
 const CAMPAIGN_SLUG = 'light-of-eolles';
