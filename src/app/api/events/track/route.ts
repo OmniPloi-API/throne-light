@@ -26,7 +26,7 @@ async function getGeoLocation(ip: string): Promise<{ country?: string; city?: st
 
 export async function POST(req: NextRequest) {
   try {
-    const { partnerId, type } = await req.json();
+    const { partnerId, type, metadata } = await req.json();
     
     if (!partnerId || !type) {
       return NextResponse.json({ error: 'Missing partnerId or type' }, { status: 400 });
@@ -37,9 +37,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
     }
     
-    const partner = await getPartnerById(partnerId);
-    if (!partner) {
-      return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
+    // Handle direct traffic (no partner referral)
+    let actualPartnerId = partnerId;
+    if (partnerId === 'direct') {
+      actualPartnerId = null;
+    } else {
+      const partner = await getPartnerById(partnerId);
+      if (!partner) {
+        return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
+      }
     }
     
     // Extract metadata from request
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
     
     const event = await createEvent({
-      partnerId,
+      partnerId: actualPartnerId,
       type,
       ipAddress,
       userAgent,
