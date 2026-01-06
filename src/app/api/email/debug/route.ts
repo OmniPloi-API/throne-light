@@ -1,10 +1,33 @@
 // Debug endpoint to check database state
 import { NextResponse } from 'next/server';
 import { readDb } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET() {
   try {
     const db = readDb();
+    
+    // Also check Supabase directly
+    let supabaseData = null;
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // @ts-ignore
+      const { data: subs } = await supabase.from('subscribers').select('id, email, source').limit(5);
+      // @ts-ignore
+      const { data: states } = await supabase.from('subscriber_campaign_state').select('*').limit(5);
+      // @ts-ignore
+      const { data: sends } = await supabase.from('email_sends').select('*').limit(5);
+      
+      supabaseData = {
+        subscribers: subs || [],
+        campaignStates: states || [],
+        emailSends: sends || [],
+      };
+    }
     
     return NextResponse.json({
       subscribers: {
@@ -27,6 +50,7 @@ export async function GET() {
         supabaseServiceKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         nodeEnv: process.env.NODE_ENV,
       },
+      supabase: supabaseData,
     });
   } catch (error) {
     return NextResponse.json({
