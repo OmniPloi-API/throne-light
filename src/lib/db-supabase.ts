@@ -325,6 +325,7 @@ export async function createEvent(event: Omit<TrackingEvent, 'id' | 'createdAt'>
     country: event.country,
     city: event.city,
     device: event.device,
+    page_path: event.pagePath,
     created_at: now,
   };
   
