@@ -24,6 +24,7 @@ export default function PageViewTracker() {
       body: JSON.stringify({
         partnerId: partnerId || 'direct', // Use 'direct' for non-partner traffic
         type: 'PAGE_VIEW',
+        pagePath: pathname, // Include the page path for domain attribution
       }),
     }).catch(err => console.error('Failed to track page view:', err));
   }, [pathname, searchParams]);

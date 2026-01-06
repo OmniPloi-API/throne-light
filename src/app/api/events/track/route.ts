@@ -26,7 +26,7 @@ async function getGeoLocation(ip: string): Promise<{ country?: string; city?: st
 
 export async function POST(req: NextRequest) {
   try {
-    const { partnerId, type, metadata } = await req.json();
+    const { partnerId, type, pagePath } = await req.json();
     
     if (!partnerId || !type) {
       return NextResponse.json({ error: 'Missing partnerId or type' }, { status: 400 });
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
       device,
       country: geo.country,
       city: geo.city,
+      pagePath: pagePath || undefined,
     });
     
     return NextResponse.json(event, { status: 201 });

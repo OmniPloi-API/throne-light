@@ -49,6 +49,7 @@ export interface TrackingEvent {
   country?: string;
   city?: string;
   device?: string;
+  pagePath?: string;
   createdAt: string;
 }
 

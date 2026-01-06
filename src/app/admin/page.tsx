@@ -979,13 +979,44 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
   totalVisits: number;
   onClose: () => void;
 }) {
-  // Calculate visits by source
+  // Helper function to determine which conceptual domain a path belongs to
+  const getDomainForPath = (path: string): string => {
+    if (!path) return 'thronelightpublishing.com';
+    
+    // Normalize path
+    const normalizedPath = path.toLowerCase();
+    
+    // Path-based domain attribution
+    if (normalizedPath.includes('/author')) return 'lightofeolles.com';
+    if (normalizedPath.includes('/book')) return 'thecrowdedbedandtheemptythrone.com';
+    if (normalizedPath.includes('/publisher')) return 'thronelightpublishing.com';
+    
+    // Default to main publishing site
+    return 'thronelightpublishing.com';
+  };
+  
+  // Calculate visits by conceptual domain (path-based attribution)
+  const pageViewEvents = events.filter(e => e.type === 'PAGE_VIEW');
+  
+  const domainVisits = {
+    'thronelightpublishing.com': 0,
+    'lightofeolles.com': 0,
+    'thecrowdedbedandtheemptythrone.com': 0,
+  };
+  
+  // Count direct visits by their path-based domain
+  pageViewEvents.filter(e => !e.partnerId).forEach(e => {
+    const domain = getDomainForPath(e.pagePath || '');
+    domainVisits[domain as keyof typeof domainVisits]++;
+  });
+  
+  // Calculate partner visits
   const partnerVisits = partners.map(p => ({
     name: p.name,
-    visits: events.filter(e => e.partnerId === p.id && e.type === 'PAGE_VIEW').length,
+    visits: pageViewEvents.filter(e => e.partnerId === p.id).length,
   })).filter(p => p.visits > 0).sort((a, b) => b.visits - a.visits);
   
-  const directVisits = events.filter(e => !e.partnerId && e.type === 'PAGE_VIEW').length;
+  const totalDirectVisits = Object.values(domainVisits).reduce((sum, count) => sum + count, 0);
   
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -1001,35 +1032,50 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
         </div>
         
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">By Source</h4>
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Direct Traffic by Domain</h4>
           
-          {/* Direct visits */}
-          <div className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
-            <div>
-              <p className="font-medium text-white">Direct Traffic</p>
-              <p className="text-xs text-gray-500">thronelightpublishing.com, thecrowdedbedandtheemptythrone.com, lightofeolles.com</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-bold text-gold">{directVisits}</p>
-              <p className="text-xs text-gray-500">{totalVisits > 0 ? ((directVisits / totalVisits) * 100).toFixed(1) : 0}%</p>
-            </div>
-          </div>
-          
-          {/* Partner visits */}
-          {partnerVisits.map(p => (
-            <div key={p.name} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
-              <div>
-                <p className="font-medium text-white">{p.name}</p>
-                <p className="text-xs text-gray-500">Partner referral link</p>
+          {/* Domain-based direct visits */}
+          {Object.entries(domainVisits).map(([domain, count]) => (
+            count > 0 && (
+              <div key={domain} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+                <div>
+                  <p className="font-medium text-white">{domain}</p>
+                  <p className="text-xs text-gray-500">Direct visits (no partner referral)</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-gold">{count}</p>
+                  <p className="text-xs text-gray-500">{totalVisits > 0 ? ((count / totalVisits) * 100).toFixed(1) : 0}%</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-blue-400">{p.visits}</p>
-                <p className="text-xs text-gray-500">{totalVisits > 0 ? ((p.visits / totalVisits) * 100).toFixed(1) : 0}%</p>
-              </div>
-            </div>
+            )
           ))}
           
-          {partnerVisits.length === 0 && directVisits === 0 && (
+          {totalDirectVisits === 0 && (
+            <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+              <p className="text-gray-500 text-sm">No direct traffic recorded yet</p>
+            </div>
+          )}
+          
+          {/* Partner visits */}
+          {partnerVisits.length > 0 && (
+            <>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-3">Partner Referral Traffic</h4>
+              {partnerVisits.map(p => (
+                <div key={p.name} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+                  <div>
+                    <p className="font-medium text-white">{p.name}</p>
+                    <p className="text-xs text-gray-500">Partner referral link</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-blue-400">{p.visits}</p>
+                    <p className="text-xs text-gray-500">{totalVisits > 0 ? ((p.visits / totalVisits) * 100).toFixed(1) : 0}%</p>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+          
+          {partnerVisits.length === 0 && totalDirectVisits === 0 && (
             <p className="text-center text-gray-500 py-4">No visits recorded yet</p>
           )}
         </div>
