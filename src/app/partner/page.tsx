@@ -59,13 +59,13 @@ interface Order {
 function PartnerContent() {
   const searchParams = useSearchParams();
   const modal = useModal();
-  const [partners, setPartners] = useState<Partner[]>([]);
   const [events, setEvents] = useState<TrackingEvent[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   
   // Stripe Connect / Withdrawal state (must be at top with other hooks)
   const [stripeStatus, setStripeStatus] = useState<any>(null);
@@ -77,41 +77,50 @@ function PartnerContent() {
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   const [showMaturityTooltip, setShowMaturityTooltip] = useState(false);
 
-  // Check for logged-in partner from URL params or session
+  // SECURITY: Check authentication on mount - redirect to login if not authenticated
   useEffect(() => {
     const partnerIdFromUrl = searchParams.get('id');
     const partnerIdFromSession = sessionStorage.getItem('partnerId');
+    const partnerId = partnerIdFromUrl || partnerIdFromSession;
     
-    if (partnerIdFromUrl || partnerIdFromSession) {
-      const partnerId = partnerIdFromUrl || partnerIdFromSession;
-      // We'll set this after partners are loaded
-      sessionStorage.setItem('partnerId', partnerId!);
+    if (!partnerId) {
+      // Not authenticated - redirect to login
+      window.location.href = '/partner/login';
+      return;
     }
+    
+    // Store in session for persistence
+    sessionStorage.setItem('partnerId', partnerId);
+    setAuthChecked(true);
   }, [searchParams]);
 
-  async function fetchAll() {
+  // Fetch only the authenticated partner's data (not all partners)
+  async function fetchPartnerData() {
+    const partnerId = sessionStorage.getItem('partnerId');
+    if (!partnerId) return;
+    
     try {
+      // Fetch only this partner's data - not all partners
       const [pRes, eRes, oRes] = await Promise.all([
-        fetch('/api/partners'),
+        fetch(`/api/partners/${partnerId}`),
         fetch('/api/events'),
         fetch('/api/orders'),
       ]);
-      const [p, e, o] = await Promise.all([
-        pRes.json(),
-        eRes.ok ? eRes.json() : [],
-        oRes.ok ? oRes.json() : [],
-      ]);
-      setPartners(Array.isArray(p) ? p : []);
-      setEvents(Array.isArray(e) ? e : []);
-      setOrders(Array.isArray(o) ? o : []);
       
-      // Auto-select logged-in partner
-      const partnerIdFromSession = sessionStorage.getItem('partnerId');
-      if (partnerIdFromSession && Array.isArray(p)) {
-        const loggedInPartner = p.find((partner: any) => partner.id === partnerIdFromSession);
-        if (loggedInPartner) {
-          setSelectedPartner(loggedInPartner);
-        }
+      const partnerData = pRes.ok ? await pRes.json() : null;
+      const eventsData = eRes.ok ? await eRes.json() : [];
+      const ordersData = oRes.ok ? await oRes.json() : [];
+      
+      if (partnerData && !partnerData.error) {
+        setSelectedPartner(partnerData);
+        // Filter events and orders for this partner only
+        setEvents(Array.isArray(eventsData) ? eventsData.filter((e: any) => e.partnerId === partnerId) : []);
+        setOrders(Array.isArray(ordersData) ? ordersData.filter((o: any) => o.partnerId === partnerId) : []);
+      } else {
+        // Invalid partner ID - clear session and redirect to login
+        sessionStorage.removeItem('partnerId');
+        sessionStorage.removeItem('partnerName');
+        window.location.href = '/partner/login';
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -120,10 +129,12 @@ function PartnerContent() {
   }
 
   useEffect(() => {
-    fetchAll();
-    const interval = setInterval(fetchAll, 5000); // Refresh every 5s for "real-time" feel
-    return () => clearInterval(interval);
-  }, []);
+    if (authChecked) {
+      fetchPartnerData();
+      const interval = setInterval(fetchPartnerData, 5000); // Refresh every 5s for "real-time" feel
+      return () => clearInterval(interval);
+    }
+  }, [authChecked]);
 
   // Filter data for selected partner
   const myEvents = events.filter((e) => e.partnerId === selectedPartner?.id);
@@ -157,7 +168,8 @@ function PartnerContent() {
   const maturedCommission = maturedOrders.reduce((sum: number, o: any) => sum + o.commissionEarned, 0);
   const lockedCommission = pendingOrders.reduce((sum: number, o: any) => sum + o.commissionEarned, 0);
   
-  const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.clickBounty || 0.10);
+  // Use nullish coalescing (??) so that 0 is respected as a valid value (flat fee partners)
+const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.clickBounty ?? 0);
   
   // Live Commissions = Total gross earnings
   const liveCommissionsEarned = totalCommission + clickBountyEarned;
@@ -296,39 +308,22 @@ function PartnerContent() {
               <span className="text-gray-300 text-sm mt-1">Welcome, {selectedPartner.name}</span>
             )}
           </div>
-          {selectedPartner ? (
-            <button
-              onClick={logout}
-              className="text-gold hover:text-red-400 transition ml-4 p-2 rounded-lg hover:bg-red-400/10"
-              title="Logout"
-            >
-              <Power className="w-5 h-5" />
-            </button>
-          ) : (
-            <select
-              value=""
-              onChange={(e) => {
-                const p = partners.find((partner) => partner.id === e.target.value) || null;
-                setSelectedPartner(p);
-              }}
-              className="bg-[#1a1a1a] border border-[#333] px-4 py-2 rounded-lg text-white ml-4"
-            >
-              <option value="">Select your profile</option>
-              {partners.map((partner) => (
-                <option key={partner.id} value={partner.id}>
-                  {partner.name}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* Logout button - always show since auth is required */}
+          <button
+            onClick={logout}
+            className="text-gold hover:text-red-400 transition ml-4 p-2 rounded-lg hover:bg-red-400/10"
+            title="Logout"
+          >
+            <Power className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
       {!selectedPartner ? (
         <div className="flex items-center justify-center h-[60vh] text-gray-500">
           <div className="text-center">
-            <Link2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Select your partner profile to view your dashboard</p>
+            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-gold" />
+            <p>Loading your dashboard...</p>
           </div>
         </div>
       ) : (
