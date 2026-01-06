@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createOrder, getPartnerById, readDb, writeDb, generateId } from '@/lib/db';
 import { hashPassword, generateSessionToken } from '@/lib/auth';
+import { createLicenseFromPurchase, sendReaderDownloadEmail } from '@/lib/reader-licensing';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -97,6 +98,32 @@ export async function POST(req: NextRequest) {
         console.log('Order may already exist (duplicate webhook)');
       }
       
+      // READER PURCHASE: Create license and send download email
+      const productType = session.metadata?.product_type;
+      if (productType === 'reader' && customerEmail) {
+        const licenseResult = await createLicenseFromPurchase(
+          customerEmail,
+          session.customer_details?.name || null,
+          session.id,
+          session.payment_intent as string || null,
+          session.customer as string || null,
+          session.amount_total || 0,
+          session.currency || 'usd'
+        );
+
+        if (licenseResult.success && licenseResult.licenseId && licenseResult.licenseCode) {
+          await sendReaderDownloadEmail(
+            licenseResult.licenseId,
+            customerEmail,
+            session.customer_details?.name || null,
+            licenseResult.licenseCode
+          );
+          console.log(`Reader license created and email sent: ${licenseResult.licenseCode}`);
+        } else {
+          console.error('Failed to create Reader license:', licenseResult.error);
+        }
+      }
+
       // PHASE 2: Create user account and grant library access
       if (customerEmail && bookId) {
         const db = readDb();
