@@ -51,6 +51,7 @@ interface TrackingEvent {
   type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_KINDLE' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
+  pagePath?: string;
   createdAt: string;
 }
 
