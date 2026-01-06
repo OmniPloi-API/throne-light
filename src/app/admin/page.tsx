@@ -94,6 +94,9 @@ export default function AdminPage() {
     partner: Partner;
   } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showTrafficBreakdown, setShowTrafficBreakdown] = useState(false);
+  const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
+  const [showCommissionBreakdown, setShowCommissionBreakdown] = useState(false);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -296,7 +299,13 @@ export default function AdminPage() {
             Traffic Source Analysis
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <StatCard icon={<Eye />} label="Total Visits" value={totalVisits} />
+            <StatCard 
+              icon={<Eye />} 
+              label="Total Visits" 
+              value={totalVisits} 
+              onClick={() => setShowTrafficBreakdown(true)}
+              clickable
+            />
             <StatCard 
               icon={<ArrowUpRight className="text-green-400" />} 
               label="Retention Rate" 
@@ -316,11 +325,11 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* Revenue Reconciliation */}
+        {/* Revenue Analysis */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-gold" />
-            Revenue Reconciliation
+            Revenue Analysis
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard 
@@ -329,6 +338,8 @@ export default function AdminPage() {
               value={`$${totalRevenue.toFixed(2)}`}
               sublabel="Verified via Stripe"
               color="green"
+              onClick={() => setShowRevenueBreakdown(true)}
+              clickable
             />
             <StatCard 
               icon={<TrendingUp className="text-blue-400" />} 
@@ -336,6 +347,8 @@ export default function AdminPage() {
               value={`$${totalCommission.toFixed(2)}`}
               sublabel="Partner commission"
               color="blue"
+              onClick={() => setShowCommissionBreakdown(true)}
+              clickable
             />
             <StatCard 
               icon={<MousePointer className="text-purple-400" />} 
@@ -346,7 +359,7 @@ export default function AdminPage() {
             />
             <StatCard 
               icon={<DollarSign className="text-gray-400" />} 
-              label="Est. External Revenue" 
+              label="Estimated Amazon Revenue" 
               value={`$${Math.max(0, (Math.floor(amazonClicks * 0.10) * 21) - totalClickBounty).toFixed(2)}`}
               sublabel="10% conv. @ $35 - fees"
               color="gray"
@@ -547,6 +560,37 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Traffic Breakdown Modal */}
+      {showTrafficBreakdown && (
+        <TrafficBreakdownModal
+          events={events}
+          partners={partners}
+          totalVisits={totalVisits}
+          onClose={() => setShowTrafficBreakdown(false)}
+        />
+      )}
+
+      {/* Revenue Breakdown Modal */}
+      {showRevenueBreakdown && (
+        <RevenueBreakdownModal
+          orders={orders}
+          partners={partners}
+          totalRevenue={totalRevenue}
+          onClose={() => setShowRevenueBreakdown(false)}
+        />
+      )}
+
+      {/* Commission Breakdown Modal */}
+      {showCommissionBreakdown && (
+        <CommissionBreakdownModal
+          orders={orders}
+          events={events}
+          partners={partners}
+          totalCommission={totalCommission}
+          onClose={() => setShowCommissionBreakdown(false)}
+        />
+      )}
+
       {/* Footer */}
       <footer className="border-t border-[#222] py-6 mt-8">
         <p className="text-center text-gray-500 text-sm">
@@ -557,12 +601,14 @@ export default function AdminPage() {
   );
 }
 
-function StatCard({ icon, label, value, sublabel, color = 'gold' }: { 
+function StatCard({ icon, label, value, sublabel, color = 'gold', onClick, clickable }: { 
   icon: React.ReactNode; 
   label: string; 
   value: string | number; 
   sublabel?: string;
   color?: string;
+  onClick?: () => void;
+  clickable?: boolean;
 }) {
   const colorClasses: Record<string, string> = {
     gold: 'text-gold',
@@ -572,15 +618,24 @@ function StatCard({ icon, label, value, sublabel, color = 'gold' }: {
     purple: 'text-purple-400',
     gray: 'text-gray-400',
   };
+  
+  const Component = clickable ? 'button' : 'div';
+  
   return (
-    <div className="bg-[#111] p-5 rounded-xl border border-[#222]">
+    <Component 
+      onClick={onClick}
+      className={`bg-[#111] p-5 rounded-xl border border-[#222] w-full text-left ${
+        clickable ? 'cursor-pointer hover:bg-[#1a1a1a] hover:border-gold/40 transition-all' : ''
+      }`}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className={`w-5 h-5 ${colorClasses[color]}`}>{icon}</span>
         <span className="text-xs text-gray-500">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${colorClasses[color]}`}>{value}</div>
       {sublabel && <div className="text-xs text-gray-500 mt-1">{sublabel}</div>}
-    </div>
+      {clickable && <div className="text-xs text-gold/60 mt-2">Click for details →</div>}
+    </Component>
   );
 }
 
@@ -911,6 +966,235 @@ function AccessCodeModal({ partner, onClose }: { partner: any; onClose: () => vo
           className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
         >
           Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Traffic Breakdown Modal
+function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
+  events: TrackingEvent[];
+  partners: Partner[];
+  totalVisits: number;
+  onClose: () => void;
+}) {
+  // Calculate visits by source
+  const partnerVisits = partners.map(p => ({
+    name: p.name,
+    visits: events.filter(e => e.partnerId === p.id && e.type === 'PAGE_VIEW').length,
+  })).filter(p => p.visits > 0).sort((a, b) => b.visits - a.visits);
+  
+  const directVisits = events.filter(e => !e.partnerId && e.type === 'PAGE_VIEW').length;
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-[#111] border border-gold/30 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-gold">Total Visits Breakdown</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded-lg">
+          <p className="text-3xl font-bold text-gold text-center">{totalVisits}</p>
+          <p className="text-gray-400 text-center text-sm mt-1">Total Visits Across All Sources</p>
+        </div>
+        
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">By Source</h4>
+          
+          {/* Direct visits */}
+          <div className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div>
+              <p className="font-medium text-white">Direct Traffic</p>
+              <p className="text-xs text-gray-500">thronelightpublishing.com, thecrowdedbedandtheemptythrone.com, lightofeolles.com</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-gold">{directVisits}</p>
+              <p className="text-xs text-gray-500">{totalVisits > 0 ? ((directVisits / totalVisits) * 100).toFixed(1) : 0}%</p>
+            </div>
+          </div>
+          
+          {/* Partner visits */}
+          {partnerVisits.map(p => (
+            <div key={p.name} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+              <div>
+                <p className="font-medium text-white">{p.name}</p>
+                <p className="text-xs text-gray-500">Partner referral link</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-blue-400">{p.visits}</p>
+                <p className="text-xs text-gray-500">{totalVisits > 0 ? ((p.visits / totalVisits) * 100).toFixed(1) : 0}%</p>
+              </div>
+            </div>
+          ))}
+          
+          {partnerVisits.length === 0 && directVisits === 0 && (
+            <p className="text-center text-gray-500 py-4">No visits recorded yet</p>
+          )}
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Revenue Breakdown Modal
+function RevenueBreakdownModal({ orders, partners, totalRevenue, onClose }: {
+  orders: Order[];
+  partners: Partner[];
+  totalRevenue: number;
+  onClose: () => void;
+}) {
+  // Calculate revenue by source
+  const partnerRevenue = partners.map(p => ({
+    name: p.name,
+    revenue: orders.filter(o => o.partnerId === p.id).reduce((sum, o) => sum + o.totalAmount, 0),
+    count: orders.filter(o => o.partnerId === p.id).length,
+  })).filter(p => p.revenue > 0).sort((a, b) => b.revenue - a.revenue);
+  
+  const directRevenue = orders.filter(o => !o.partnerId).reduce((sum, o) => sum + o.totalAmount, 0);
+  const directCount = orders.filter(o => !o.partnerId).length;
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-[#111] border border-gold/30 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-gold">Direct Revenue Breakdown</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <p className="text-3xl font-bold text-green-400 text-center">${totalRevenue.toFixed(2)}</p>
+          <p className="text-gray-400 text-center text-sm mt-1">Total Revenue (Verified via Stripe)</p>
+        </div>
+        
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">By Source</h4>
+          
+          {/* Direct sales */}
+          <div className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div>
+              <p className="font-medium text-white">Direct Sales</p>
+              <p className="text-xs text-gray-500">From main book site (no partner referral)</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-green-400">${directRevenue.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{directCount} sale{directCount !== 1 ? 's' : ''} • {totalRevenue > 0 ? ((directRevenue / totalRevenue) * 100).toFixed(1) : 0}%</p>
+            </div>
+          </div>
+          
+          {/* Partner sales */}
+          {partnerRevenue.map(p => (
+            <div key={p.name} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+              <div>
+                <p className="font-medium text-white">{p.name}</p>
+                <p className="text-xs text-gray-500">Partner referral sales</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-blue-400">${p.revenue.toFixed(2)}</p>
+                <p className="text-xs text-gray-500">{p.count} sale{p.count !== 1 ? 's' : ''} • {totalRevenue > 0 ? ((p.revenue / totalRevenue) * 100).toFixed(1) : 0}%</p>
+              </div>
+            </div>
+          ))}
+          
+          {orders.length === 0 && (
+            <p className="text-center text-gray-500 py-4">No sales recorded yet</p>
+          )}
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Commission Breakdown Modal
+function CommissionBreakdownModal({ orders, events, partners, totalCommission, onClose }: {
+  orders: Order[];
+  events: TrackingEvent[];
+  partners: Partner[];
+  totalCommission: number;
+  onClose: () => void;
+}) {
+  // Calculate commission owed per partner
+  const partnerCommissions = partners.map(p => {
+    const pOrders = orders.filter(o => o.partnerId === p.id);
+    const pCommission = pOrders.reduce((sum, o) => sum + o.commissionEarned, 0);
+    const pAmazonClicks = events.filter(e => e.partnerId === p.id && e.type === 'CLICK_AMAZON').length;
+    const pBookBabyClicks = events.filter(e => e.partnerId === p.id && e.type === 'CLICK_BOOKBABY').length;
+    const pClickBounty = (pAmazonClicks + pBookBabyClicks) * (p.clickBounty ?? 0);
+    const totalOwed = pCommission + pClickBounty;
+    
+    return {
+      name: p.name,
+      commission: pCommission,
+      clickBounty: pClickBounty,
+      totalOwed,
+      salesCount: pOrders.length,
+    };
+  }).filter(p => p.totalOwed > 0).sort((a, b) => b.totalOwed - a.totalOwed);
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-[#111] border border-gold/30 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-gold">Partner Commission Breakdown</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <p className="text-3xl font-bold text-blue-400 text-center">${totalCommission.toFixed(2)}</p>
+          <p className="text-gray-400 text-center text-sm mt-1">Total Commission Owed to All Partners</p>
+        </div>
+        
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">By Partner (Highest to Lowest)</h4>
+          
+          {partnerCommissions.map(p => (
+            <div key={p.name} className="p-4 bg-[#1a1a1a] border border-[#222] rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-white text-lg">{p.name}</p>
+                <p className="text-2xl font-bold text-gold">${p.totalOwed.toFixed(2)}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <p className="text-gray-500">Sales Commission</p>
+                  <p className="text-green-400 font-semibold">${p.commission.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Click Bounty</p>
+                  <p className="text-purple-400 font-semibold">${p.clickBounty.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Sales Count</p>
+                  <p className="text-blue-400 font-semibold">{p.salesCount}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {partnerCommissions.length === 0 && (
+            <p className="text-center text-gray-500 py-4">No commissions owed yet</p>
+          )}
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
+        >
+          Close
         </button>
       </div>
     </div>
