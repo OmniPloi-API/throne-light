@@ -1018,6 +1018,8 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
   })).filter(p => p.visits > 0).sort((a, b) => b.visits - a.visits);
   
   const totalDirectVisits = Object.values(domainVisits).reduce((sum, count) => sum + count, 0);
+  const totalPartnerVisits = partnerVisits.reduce((sum, p) => sum + p.visits, 0);
+  const actualTotalVisits = totalDirectVisits + totalPartnerVisits;
   
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -1028,7 +1030,7 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
         </div>
         
         <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded-lg">
-          <p className="text-3xl font-bold text-gold text-center">{totalVisits}</p>
+          <p className="text-3xl font-bold text-gold text-center">{actualTotalVisits}</p>
           <p className="text-gray-400 text-center text-sm mt-1">Total Visits Across All Sources</p>
         </div>
         
@@ -1045,7 +1047,7 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-gold">{count}</p>
-                  <p className="text-xs text-gray-500">{totalVisits > 0 ? ((count / totalVisits) * 100).toFixed(1) : 0}%</p>
+                  <p className="text-xs text-gray-500">{actualTotalVisits > 0 ? ((count / actualTotalVisits) * 100).toFixed(1) : 0}%</p>
                 </div>
               </div>
             )
@@ -1069,7 +1071,7 @@ function TrafficBreakdownModal({ events, partners, totalVisits, onClose }: {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-bold text-blue-400">{p.visits}</p>
-                    <p className="text-xs text-gray-500">{totalVisits > 0 ? ((p.visits / totalVisits) * 100).toFixed(1) : 0}%</p>
+                    <p className="text-xs text-gray-500">{actualTotalVisits > 0 ? ((p.visits / actualTotalVisits) * 100).toFixed(1) : 0}%</p>
                   </div>
                 </div>
               ))}
