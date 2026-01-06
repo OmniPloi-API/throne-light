@@ -189,8 +189,8 @@ export default function Navigation({ currentSite }: NavigationProps) {
                       <span
                         className={`font-serif text-3xl md:text-5xl transition-colors duration-300 ${
                           currentSite === site.id
-                            ? 'text-gold group-hover:text-parchment'
-                            : 'text-gold/70 group-hover:text-parchment'
+                            ? 'text-gold group-hover:text-rose-300'
+                            : 'text-gold/70 group-hover:text-rose-300'
                         }`}
                       >
                         {site.name}
@@ -198,8 +198,8 @@ export default function Navigation({ currentSite }: NavigationProps) {
                       <p
                         className={`mt-2 text-sm font-sans transition-colors duration-300 ${
                           currentSite === site.id
-                            ? 'text-gold/60 group-hover:text-parchment/80'
-                            : 'text-gold/50 group-hover:text-parchment/80'
+                            ? 'text-gold/60 group-hover:text-rose-300/80'
+                            : 'text-gold/50 group-hover:text-rose-300/80'
                         }`}
                       >
                         {site.tagline}

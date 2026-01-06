@@ -23,6 +23,8 @@ export async function GET() {
       environment: {
         resendConfigured: !!process.env.RESEND_API_KEY,
         cronSecretConfigured: !!process.env.CRON_SECRET,
+        supabaseUrlConfigured: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseServiceKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         nodeEnv: process.env.NODE_ENV,
       },
     });
