@@ -57,7 +57,7 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
             <tr>
               <td align="center">
                 <a href="https://thronelightpublishing.com/download" style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fffbf7; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-family: Georgia, 'Times New Roman', serif;">
-                  Download the Reader
+                  Download Now
                 </a>
               </td>
             </tr>
@@ -191,6 +191,40 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
                     <a href="https://lightofeolles.com" style="color: #c9a961; font-size: 13px; text-decoration: none; font-family: Georgia, 'Times New Roman', serif;">
                       Visit EOLLES
                     </a>
+                  </td>
+                </tr>
+                
+                <!-- Social Icons -->
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <table cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <!-- Instagram -->
+                        <td style="padding: 0 8px;">
+                          <a href="https://instagram.com/lightofeolles" style="text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/email-icons/instagram.png" alt="Instagram" width="24" height="24" style="display: block; opacity: 0.7;">
+                          </a>
+                        </td>
+                        <!-- TikTok -->
+                        <td style="padding: 0 8px;">
+                          <a href="https://tiktok.com/@lightofeolles" style="text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/email-icons/tiktok.png" alt="TikTok" width="24" height="24" style="display: block; opacity: 0.7;">
+                          </a>
+                        </td>
+                        <!-- Twitter/X -->
+                        <td style="padding: 0 8px;">
+                          <a href="https://twitter.com/lightofeolles" style="text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/email-icons/twitter.png" alt="Twitter" width="24" height="24" style="display: block; opacity: 0.7;">
+                          </a>
+                        </td>
+                        <!-- Facebook -->
+                        <td style="padding: 0 8px;">
+                          <a href="https://facebook.com/lightofeolles" style="text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/email-icons/facebook.png" alt="Facebook" width="24" height="24" style="display: block; opacity: 0.7;">
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 
