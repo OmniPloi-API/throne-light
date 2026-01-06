@@ -213,7 +213,8 @@ export default function AdminPage() {
   }
 
   // Calculate totals from local data if stats API fails
-  const totalVisits = stats?.totalVisits ?? events.filter(e => e.type === 'PAGE_VIEW').length;
+  // Use real-time calculation instead of potentially stale stats API
+  const totalVisits = events.filter(e => e.type === 'PAGE_VIEW').length;
   const amazonClicks = stats?.totalAmazonClicks ?? events.filter(e => e.type === 'CLICK_AMAZON').length;
   const directClicks = stats?.totalDirectClicks ?? events.filter(e => e.type === 'CLICK_DIRECT').length;
   const totalRevenue = stats?.totalDirectRevenue ?? orders.reduce((s, o) => s + o.totalAmount, 0);
