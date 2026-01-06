@@ -7,6 +7,7 @@ import { ModalProvider } from "@/components/shared/GlobalModal";
 import ServiceWorkerRegistration from "@/components/reader/ServiceWorkerRegistration";
 import FeedbackWidget from "@/components/shared/FeedbackWidget";
 import PageViewTracker from "@/components/shared/PageViewTracker";
+import { Suspense } from "react";
 
 // Sharp, high-end Serif for headers
 const playfair = Playfair_Display({
@@ -70,7 +71,9 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <ModalProvider>
           <LanguageProvider>
-            <PageViewTracker />
+            <Suspense fallback={null}>
+              <PageViewTracker />
+            </Suspense>
             {children}
             {/* Global audio control so soundtrack persists across pages */}
             <AudioToggle />
