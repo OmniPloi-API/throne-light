@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getPartnerById, readDb } from '@/lib/db';
+import { getPartnerById } from '@/lib/db-supabase';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
@@ -11,40 +11,25 @@ export async function POST(req: NextRequest) {
   try {
     const { partnerId, couponCode, bookId } = await req.json();
     
-    // Get book details if bookId provided
-    let bookPrice = DEFAULT_BOOK_PRICE;
-    let bookName = DEFAULT_BOOK_NAME;
-    let actualBookId = bookId;
-    
-    if (bookId) {
-      const db = readDb();
-      const book = db.books.find(b => b.id === bookId && b.isActive);
-      if (book) {
-        bookPrice = book.price;
-        bookName = book.title;
-      }
-    } else {
-      // Default to first active book if no bookId specified
-      const db = readDb();
-      const defaultBook = db.books.find(b => b.isActive);
-      if (defaultBook) {
-        actualBookId = defaultBook.id;
-        bookPrice = defaultBook.price;
-        bookName = defaultBook.title;
-      }
-    }
+    // Use default book details (can be extended to fetch from DB if multiple books)
+    const bookPrice = DEFAULT_BOOK_PRICE;
+    const bookName = DEFAULT_BOOK_NAME;
+    const actualBookId = bookId || 'default-book';
     
     let discountPercent = 0;
     let partnerData = null;
     
     if (partnerId) {
-      const partner = getPartnerById(partnerId);
+      console.log(`Checkout: Looking up partner ${partnerId}`);
+      const partner = await getPartnerById(partnerId);
+      console.log(`Checkout: Partner lookup result:`, partner ? { name: partner.name, discount: partner.discountPercent, active: partner.isActive } : 'not found');
       if (partner && partner.isActive) {
         partnerData = partner;
         discountPercent = partner.discountPercent;
       }
     }
     
+    console.log(`Checkout: Final discount: ${discountPercent}%, Price: $${DEFAULT_BOOK_PRICE} -> $${DEFAULT_BOOK_PRICE * (1 - discountPercent / 100)}`);
     const finalPrice = bookPrice * (1 - discountPercent / 100);
     const priceInCents = Math.round(finalPrice * 100);
     

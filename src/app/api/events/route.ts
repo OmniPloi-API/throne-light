@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
-import { readDb } from '@/lib/db';
+import { getEvents } from '@/lib/db-supabase';
 
 export async function GET() {
-  const db = readDb();
-  return NextResponse.json(db.events || []);
+  try {
+    const events = await getEvents();
+    return NextResponse.json(events);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    return NextResponse.json([]);
+  }
 }
