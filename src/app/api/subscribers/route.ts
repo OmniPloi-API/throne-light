@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readDb, writeDb, generateId, Subscriber, SubscriberSource } from '@/lib/db';
 import { enrollSubscriberInCampaign } from '@/lib/email-campaigns-supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function getSupabase() {
+  if (supabaseUrl && supabaseServiceKey) {
+    return createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return null;
+}
 
 // GET - Fetch all subscribers (admin only)
 export async function GET(request: NextRequest) {
@@ -134,9 +145,39 @@ export async function POST(request: NextRequest) {
     db.subscribers.push(newSubscriber);
     writeDb(db);
     
-    // For AUTHOR_MAILING_LIST subscribers, enroll in Light of EOLLES campaign (async)
-    if (source === 'AUTHOR_MAILING_LIST') {
-      enrollSubscriberInCampaign(newSubscriber.id, email, firstName)
+    // Also save to Supabase for email campaigns
+    const supabase = getSupabase();
+    let supabaseSubscriberId = newSubscriber.id;
+    
+    if (supabase) {
+      // @ts-ignore
+      const { data: supabaseSub, error: supabaseError } = await supabase
+        .from('subscribers')
+        .insert({
+          email: email.toLowerCase(),
+          phone: phone || null,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          source,
+          source_detail: sourceDetail || null,
+          ip_address: ipAddress || null,
+          user_agent: userAgent || null,
+          is_verified: false,
+        })
+        .select('id')
+        .single();
+      
+      if (supabaseError) {
+        console.error('Supabase subscriber insert error:', supabaseError);
+      } else if (supabaseSub) {
+        supabaseSubscriberId = supabaseSub.id;
+        console.log(`Subscriber saved to Supabase with ID: ${supabaseSubscriberId}`);
+      }
+    }
+    
+    // For AUTHOR_MAILING_LIST subscribers, enroll in Light of EOLLES campaign
+    if (source === 'AUTHOR_MAILING_LIST' && supabase) {
+      enrollSubscriberInCampaign(supabaseSubscriberId, email, firstName)
         .then((result) => {
           if (result.success) {
             console.log(`Enrolled ${email} in Light of EOLLES campaign`);
