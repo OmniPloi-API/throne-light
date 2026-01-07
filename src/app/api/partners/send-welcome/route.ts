@@ -11,11 +11,11 @@ function generateWelcomeEmail(partner: {
   commissionPercent: number;
   discountPercent: number;
 }) {
-  const portalUrl = `https://thronelightpublishing.com/partners/${partner.slug}`;
+  const loginUrl = `https://thronelightpublishing.com/partner/login`;
   const partnerLinkUrl = `https://thronelightpublishing.com/partners/${partner.slug}`;
   
   return {
-    subject: `Welcome to the Throne Light Kingdom, ${partner.name}! 👑`,
+    subject: `Welcome to the Throne Light Kingdom, ${partner.name}!`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -30,9 +30,10 @@ function generateWelcomeEmail(partner: {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #111111; border: 1px solid #D4AF37; border-radius: 12px; overflow: hidden;">
           
-          <!-- Header -->
+          <!-- Header with Crown Logo -->
           <tr>
             <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 40px; text-align: center; border-bottom: 2px solid #D4AF37;">
+              <img src="https://thronelightpublishing.com/images/CROWN-LOGO-500PX.png" alt="Crown" width="60" height="60" style="display: block; margin: 0 auto 15px;">
               <h1 style="margin: 0; color: #D4AF37; font-size: 28px; font-weight: normal; letter-spacing: 2px;">
                 THRONE LIGHT PUBLISHING
               </h1>
@@ -45,8 +46,8 @@ function generateWelcomeEmail(partner: {
           <!-- Welcome Message -->
           <tr>
             <td style="padding: 40px;">
-              <h2 style="margin: 0 0 20px; color: #D4AF37; font-size: 24px; font-weight: normal;">
-                Welcome, ${partner.name}! 👑
+              <h2 style="margin: 0 0 20px; color: #D4AF37; font-size: 24px; font-weight: normal; text-align: center;">
+                Welcome, ${partner.name}!
               </h2>
               <p style="margin: 0 0 20px; color: #e0e0e0; font-size: 16px; line-height: 1.6;">
                 You have been selected as a <strong style="color: #D4AF37;">Trusted Partner</strong> of Throne Light Publishing. 
@@ -58,14 +59,15 @@ function generateWelcomeEmail(partner: {
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border: 1px solid #D4AF37; border-radius: 8px; margin: 30px 0;">
                 <tr>
                   <td style="padding: 25px;">
-                    <h3 style="margin: 0 0 15px; color: #D4AF37; font-size: 18px; font-weight: normal;">
-                      🔑 Your Royal Credentials
+                    <h3 style="margin: 0 0 5px; color: #D4AF37; font-size: 18px; font-weight: normal; text-align: center;">
+                      Your Royal Credentials
                     </h3>
+                    <p style="margin: 0 0 15px; color: #666; font-size: 20px; text-align: center;">&#x1F512;</p>
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 8px 0; color: #a0a0a0; font-size: 14px;">Partner Portal:</td>
                         <td style="padding: 8px 0; color: #D4AF37; font-size: 14px;">
-                          <a href="${portalUrl}" style="color: #D4AF37; text-decoration: none;">${portalUrl}</a>
+                          <a href="${loginUrl}" style="color: #D4AF37; text-decoration: none;">${loginUrl}</a>
                         </td>
                       </tr>
                       <tr>
@@ -90,28 +92,31 @@ function generateWelcomeEmail(partner: {
               </table>
               
               <!-- Benefits Section -->
-              <h3 style="margin: 30px 0 15px; color: #D4AF37; font-size: 18px; font-weight: normal;">
-                ✨ Your Partner Benefits
-              </h3>
+              <div style="text-align: center; margin: 30px 0 15px;">
+                <img src="https://thronelightpublishing.com/images/CROWN-LOGO-500PX.png" alt="Crown" width="30" height="30" style="display: inline-block; margin-bottom: 10px;">
+                <h3 style="margin: 0; color: #D4AF37; font-size: 18px; font-weight: normal;">
+                  Your Partner Benefits
+                </h3>
+              </div>
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px;">
-                    💰 <strong>${partner.commissionPercent}% Commission</strong> on every sale through your link
+                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px; text-align: center;">
+                    &#9675; <strong>${partner.commissionPercent}% Commission</strong> on every sale through your link
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px;">
-                    🎁 <strong>${partner.discountPercent}% Discount</strong> for your audience using code <code style="color: #4ade80;">${partner.couponCode}</code>
+                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px; text-align: center;">
+                    &#9675; <strong>${partner.discountPercent}% Discount</strong> for your audience using code <code style="color: #4ade80;">${partner.couponCode}</code>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px;">
-                    📊 <strong>Real-time Analytics</strong> in your personal Partner Portal
+                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px; text-align: center;">
+                    &#9675; <strong>Real-time Analytics</strong> in your personal Partner Portal
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px;">
-                    💳 <strong>Direct Payouts</strong> via Stripe Connect
+                  <td style="padding: 10px 0; color: #e0e0e0; font-size: 14px; text-align: center;">
+                    &#9675; <strong>Direct Payouts</strong> via Stripe Connect
                   </td>
                 </tr>
               </table>
@@ -129,11 +134,11 @@ function generateWelcomeEmail(partner: {
               </table>
               
               <!-- How to Access -->
-              <h3 style="margin: 30px 0 15px; color: #D4AF37; font-size: 18px; font-weight: normal;">
-                📖 How to Access Your Partner Portal
+              <h3 style="margin: 30px 0 15px; color: #D4AF37; font-size: 18px; font-weight: normal; text-align: center;">
+                How to Access Your Partner Portal
               </h3>
               <ol style="margin: 0; padding-left: 20px; color: #e0e0e0; font-size: 14px; line-height: 1.8;">
-                <li>Visit <a href="${portalUrl}" style="color: #D4AF37;">${portalUrl}</a></li>
+                <li>Visit <a href="${loginUrl}" style="color: #D4AF37;">${loginUrl}</a></li>
                 <li>Enter your Access Code: <code style="color: #D4AF37;">${partner.accessCode}</code></li>
                 <li>View your earnings, clicks, and sales in real-time</li>
                 <li>Connect your Stripe account to receive payouts</li>
@@ -141,10 +146,11 @@ function generateWelcomeEmail(partner: {
               </ol>
               
               <!-- Support -->
-              <p style="margin: 30px 0 0; color: #a0a0a0; font-size: 14px; line-height: 1.6;">
+              <p style="margin: 30px 0 0; color: #a0a0a0; font-size: 14px; line-height: 1.6; text-align: center;">
                 Questions? Simply reply to this email and our team will assist you promptly.
-                <br><br>
-                May your reign be prosperous! 👑
+              </p>
+              <p style="margin: 15px 0 0; color: #a0a0a0; font-size: 14px; line-height: 1.6; text-align: center;">
+                May your reign be prosperous!
               </p>
             </td>
           </tr>
@@ -152,6 +158,7 @@ function generateWelcomeEmail(partner: {
           <!-- Footer -->
           <tr>
             <td style="background-color: #0a0a0a; padding: 25px; text-align: center; border-top: 1px solid #333;">
+              <img src="https://thronelightpublishing.com/images/THRONELIGHT-LOGO.png" alt="Throne Light Publishing" width="120" style="display: block; margin: 0 auto 15px;">
               <p style="margin: 0; color: #666; font-size: 12px;">
                 © ${new Date().getFullYear()} Throne Light Publishing
                 <br>
@@ -173,7 +180,7 @@ Welcome to Throne Light Publishing, ${partner.name}!
 You have been selected as a Trusted Partner of Throne Light Publishing.
 
 YOUR CREDENTIALS:
-- Partner Portal: ${portalUrl}
+- Partner Portal: ${loginUrl}
 - Access Code: ${partner.accessCode}
 - Your Coupon Code: ${partner.couponCode}
 

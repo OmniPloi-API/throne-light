@@ -269,10 +269,7 @@ export default function AdminPage() {
             <Link href="/admin/feedback" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
               Partner Feedback
             </Link>
-            <Link href="/admin/support" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
-              Support Tickets
-            </Link>
-            <Link href="/admin/reviews" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
+                        <Link href="/admin/reviews" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
               Review Management
             </Link>
             <Link href="/admin/subscribers" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
