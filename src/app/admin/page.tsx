@@ -596,12 +596,13 @@ export default function AdminPage() {
 
       {/* Footer */}
       <footer className="border-t border-[#222] py-6 mt-8">
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center gap-2">
+          <span className="text-gray-500 text-sm">Powered by</span>
           <Image 
             src="/images/AMPLE LOGO.png" 
-            alt="Powered by AMPLE" 
-            width={120}
-            height={40}
+            alt="AMPLE" 
+            width={60}
+            height={20}
             className="opacity-50 hover:opacity-70 transition-opacity"
           />
         </div>
