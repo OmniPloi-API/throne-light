@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -52,6 +52,8 @@ interface TrackingEvent {
   type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_KINDLE' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
+  country?: string;
+  ipAddress?: string;
   pagePath?: string;
   createdAt: string;
 }
@@ -503,46 +505,8 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* Recent Activity */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <div className="bg-[#111] rounded-xl border border-[#222] max-h-80 overflow-y-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#333] text-gray-400 sticky top-0 bg-[#111]">
-                <tr>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Partner</th>
-                  <th className="px-4 py-3">Event</th>
-                  <th className="px-4 py-3">Device</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.slice().reverse().slice(0, 50).map((e) => {
-                  const partner = partners.find(p => p.id === e.partnerId);
-                  return (
-                    <tr key={e.id} className="border-t border-[#222]">
-                      <td className="px-4 py-2 text-gray-400">
-                        {new Date(e.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-2">{partner?.name ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        <EventBadge type={e.type} />
-                      </td>
-                      <td className="px-4 py-2 text-gray-400">{e.device ?? '—'}</td>
-                    </tr>
-                  );
-                })}
-                {events.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                      No events yet. Share partner links to start tracking.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* Consumer Activity */}
+        <ConsumerActivitySection events={events} partners={partners} />
       </main>
 
       {/* Confirmation Modal */}
@@ -662,6 +626,231 @@ function EventBadge({ type }: { type: string }) {
     <span className={`px-2 py-1 rounded text-xs font-medium ${c.bg} ${c.text}`}>
       {c.label}
     </span>
+  );
+}
+
+// Helper to determine site/domain from page path
+function getSiteFromPath(path?: string): { label: string; bg: string; text: string } {
+  if (!path) return { label: 'Direct', bg: 'bg-gray-700/50', text: 'text-gray-300' };
+  const p = path.toLowerCase();
+  if (p.includes('/reader')) return { label: 'Reader', bg: 'bg-purple-900/40', text: 'text-purple-300' };
+  if (p.includes('/author')) return { label: 'Author', bg: 'bg-cyan-900/40', text: 'text-cyan-300' };
+  if (p.includes('/book')) return { label: 'Book Site', bg: 'bg-amber-900/40', text: 'text-amber-300' };
+  if (p.includes('/publisher') || p.includes('/admin') || p.includes('/partner')) return { label: 'Publisher', bg: 'bg-gold/20', text: 'text-gold' };
+  return { label: 'Home', bg: 'bg-gray-700/50', text: 'text-gray-300' };
+}
+
+// Get journey status (highest priority event type)
+function getJourneyStatus(events: TrackingEvent[]): { label: string; bg: string; text: string; priority: number } {
+  const statusMap: Record<string, { label: string; bg: string; text: string; priority: number }> = {
+    SALE: { label: 'Sold', bg: 'bg-green-900/40', text: 'text-green-300', priority: 5 },
+    CLICK_DIRECT: { label: 'Sold', bg: 'bg-green-900/40', text: 'text-green-300', priority: 5 },
+    PENDING_SALE: { label: 'Pending Sale', bg: 'bg-yellow-900/40', text: 'text-yellow-300', priority: 4 },
+    CLICK_AMAZON: { label: 'Amazon Click', bg: 'bg-orange-900/40', text: 'text-orange-300', priority: 3 },
+    CLICK_BOOKBABY: { label: 'books.by Click', bg: 'bg-purple-900/40', text: 'text-purple-300', priority: 3 },
+    PAGE_VIEW: { label: 'Browsing', bg: 'bg-blue-900/40', text: 'text-blue-300', priority: 1 },
+  };
+  
+  let highest = { label: 'New', bg: 'bg-gray-700/50', text: 'text-gray-300', priority: 0 };
+  for (const e of events) {
+    const status = statusMap[e.type];
+    if (status && status.priority > highest.priority) {
+      highest = status;
+    }
+  }
+  return highest;
+}
+
+interface ConsumerData {
+  id: string; // IP address or unique identifier
+  events: TrackingEvent[];
+  latestEvent: TrackingEvent;
+  city: string;
+  country: string;
+  visits: number;
+  device: string;
+  journeyStatus: { label: string; bg: string; text: string; priority: number };
+  currentSite: { label: string; bg: string; text: string };
+}
+
+function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]; partners: Partner[] }) {
+  const [expandedConsumer, setExpandedConsumer] = useState<string | null>(null);
+  
+  // Group events by IP address to create consumer profiles
+  const consumers = useMemo(() => {
+    const consumerMap = new Map<string, TrackingEvent[]>();
+    
+    for (const event of events) {
+      const id = event.ipAddress || 'unknown';
+      if (!consumerMap.has(id)) {
+        consumerMap.set(id, []);
+      }
+      consumerMap.get(id)!.push(event);
+    }
+    
+    // Convert to consumer data array
+    const consumerList: ConsumerData[] = [];
+    consumerMap.forEach((consumerEvents, id) => {
+      // Sort events by date (newest first)
+      const sorted = [...consumerEvents].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      const latest = sorted[0];
+      
+      consumerList.push({
+        id,
+        events: sorted,
+        latestEvent: latest,
+        city: latest.city || '—',
+        country: latest.country || '—',
+        visits: consumerEvents.length,
+        device: latest.device || '—',
+        journeyStatus: getJourneyStatus(consumerEvents),
+        currentSite: getSiteFromPath(latest.pagePath),
+      });
+    });
+    
+    // Sort by most recent activity
+    return consumerList.sort((a, b) => 
+      new Date(b.latestEvent.createdAt).getTime() - new Date(a.latestEvent.createdAt).getTime()
+    );
+  }, [events]);
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString();
+  };
+
+  const formatShortId = (id: string) => {
+    if (id === 'unknown') return 'Unknown';
+    // Show last 4 chars of IP for privacy
+    return `...${id.slice(-4)}`;
+  };
+
+  return (
+    <section>
+      <h2 className="text-xl font-semibold mb-4">Consumer Activity</h2>
+      <p className="text-gray-500 text-sm mb-4">
+        Track customer journeys across your constellation. Click a row to see full activity history.
+      </p>
+      <div className="bg-[#111] rounded-xl border border-[#222] max-h-[500px] overflow-y-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-[#333] text-gray-400 sticky top-0 bg-[#111] z-10">
+            <tr>
+              <th className="px-4 py-3">Last Active</th>
+              <th className="px-4 py-3">Site</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">City</th>
+              <th className="px-4 py-3">Country</th>
+              <th className="px-4 py-3">Visits</th>
+              <th className="px-4 py-3">Device</th>
+            </tr>
+          </thead>
+          <tbody>
+            {consumers.slice(0, 100).map((consumer) => (
+              <React.Fragment key={consumer.id}>
+                {/* Main consumer row */}
+                <tr 
+                  className={`border-t border-[#222] cursor-pointer transition-colors ${
+                    expandedConsumer === consumer.id ? 'bg-[#1a1a1a]' : 'hover:bg-[#161616]'
+                  }`}
+                  onClick={() => setExpandedConsumer(
+                    expandedConsumer === consumer.id ? null : consumer.id
+                  )}
+                >
+                  <td className="px-4 py-3 text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <span className={`transition-transform ${expandedConsumer === consumer.id ? 'rotate-90' : ''}`}>
+                        ▶
+                      </span>
+                      {formatTime(consumer.latestEvent.createdAt)}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${consumer.currentSite.bg} ${consumer.currentSite.text}`}>
+                      {consumer.currentSite.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${consumer.journeyStatus.bg} ${consumer.journeyStatus.text}`}>
+                      {consumer.journeyStatus.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-300">{consumer.city}</td>
+                  <td className="px-4 py-3 text-gray-300">{consumer.country}</td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 rounded bg-gold/10 text-gold text-xs font-medium">
+                      {consumer.visits}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{consumer.device}</td>
+                </tr>
+                
+                {/* Expanded activity details */}
+                {expandedConsumer === consumer.id && (
+                  <tr>
+                    <td colSpan={7} className="bg-[#0a0a0a] border-t border-[#333]">
+                      <div className="px-6 py-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-gold">
+                            Full Activity History ({consumer.events.length} events)
+                          </h4>
+                          <span className="text-xs text-gray-500">
+                            Consumer ID: {formatShortId(consumer.id)}
+                          </span>
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {consumer.events.map((event, idx) => {
+                            const partner = partners.find(p => p.id === event.partnerId);
+                            const site = getSiteFromPath(event.pagePath);
+                            return (
+                              <div 
+                                key={event.id} 
+                                className={`flex items-center gap-4 py-2 px-3 rounded ${
+                                  idx === 0 ? 'bg-gold/5 border border-gold/20' : 'bg-[#111]'
+                                }`}
+                              >
+                                <span className="text-xs text-gray-500 w-40">
+                                  {formatTime(event.createdAt)}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${site.bg} ${site.text}`}>
+                                  {site.label}
+                                </span>
+                                <EventBadge type={event.type} />
+                                {partner && (
+                                  <span className="text-xs text-gray-400">
+                                    via {partner.name}
+                                  </span>
+                                )}
+                                {idx === 0 && (
+                                  <span className="text-xs text-gold ml-auto">← Most Recent</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+            {consumers.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  No consumer activity yet. Traffic will appear here as visitors interact with your domains.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {consumers.length > 100 && (
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          Showing 100 of {consumers.length} consumers
+        </p>
+      )}
+    </section>
   );
 }
 
