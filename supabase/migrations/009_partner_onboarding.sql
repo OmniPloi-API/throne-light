@@ -1,6 +1,13 @@
 -- Partner Onboarding Email System
 -- Tracks email deployment status, team members, and messaging
 
+-- CLEANUP: Drop old tables with wrong types (if they exist)
+DROP TABLE IF EXISTS partner_ticket_messages CASCADE;
+DROP TABLE IF EXISTS partner_support_tickets CASCADE;
+DROP TABLE IF EXISTS partner_messages CASCADE;
+DROP TABLE IF EXISTS partner_team_members CASCADE;
+DROP TABLE IF EXISTS email_forwarding_rules CASCADE;
+
 -- Add onboarding fields to partners table
 ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_email_sent_at TIMESTAMPTZ;
 ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_scheduled_at TIMESTAMPTZ;

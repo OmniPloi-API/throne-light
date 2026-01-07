@@ -325,7 +325,7 @@ const dictionaries: Record<Language, Dictionary> = {
     },
     publisherHero: {
       est: 'Est. 2025',
-      headlinePart1: "We Don't Just Publish The Book.",
+      headlinePart1: "We Don't Just Publish Books.",
       headlinePart2: "We Deliver Purpose.",
       subheadlineName: 'Throne Light Publishing',
       subheadlineText1: 'Exists to enthrone voices, not just print them.',

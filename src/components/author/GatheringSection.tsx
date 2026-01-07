@@ -65,6 +65,22 @@ export default function GatheringSection() {
   const [newState, setNewState] = useState('');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  
+  // Promoter form state
+  const [showPromoterForm, setShowPromoterForm] = useState(false);
+  const [promoterSubmitting, setPromoterSubmitting] = useState(false);
+  const [promoterSubmitted, setPromoterSubmitted] = useState(false);
+  const [promoterData, setPromoterData] = useState({
+    city: '',
+    state: '',
+    country: '',
+    email: '',
+    contactName: '',
+    website: '',
+    socialLinks: '',
+    concertLink: '',
+    message: '',
+  });
 
   // Load pending cities from localStorage on mount
   useEffect(() => {
@@ -97,11 +113,23 @@ export default function GatheringSection() {
     setSelectedCity(city);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
-      console.log('Notify:', selectedCity, email);
+    if (email && selectedCity) {
+      try {
+        const res = await fetch('/api/notify-city', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, city: selectedCity, type: 'notify' }),
+        });
+        if (res.ok) {
+          setIsSubmitted(true);
+        } else {
+          console.error('Failed to send notification');
+        }
+      } catch (err) {
+        console.error('Error sending notification:', err);
+      }
     }
   };
 
@@ -146,6 +174,39 @@ export default function GatheringSection() {
       localStorage.setItem('pendingCities_v2', JSON.stringify(updated));
       return updated;
     });
+  };
+
+  const handlePromoterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoterData.city || !promoterData.email) return;
+    
+    setPromoterSubmitting(true);
+    try {
+      const res = await fetch('/api/notify-city', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: promoterData.email,
+          city: `${promoterData.city}, ${promoterData.state}, ${promoterData.country}`,
+          type: 'promoter',
+          promoterData,
+        }),
+      });
+      
+      if (res.ok) {
+        setPromoterSubmitted(true);
+        setShowPromoterForm(false);
+        setPromoterData({
+          city: '', state: '', country: '', email: '',
+          contactName: '', website: '', socialLinks: '', concertLink: '', message: '',
+        });
+        setTimeout(() => setPromoterSubmitted(false), 5000);
+      }
+    } catch (err) {
+      console.error('Error submitting promoter form:', err);
+    } finally {
+      setPromoterSubmitting(false);
+    }
   };
 
   return (
@@ -372,6 +433,173 @@ export default function GatheringSection() {
                 >
                   <p className="text-gold text-sm">
                     {dict.gathering.successMessage}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Promoter Application Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12"
+        >
+          <div className="bg-charcoal/5 border border-gold/40 rounded-xl p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                <span className="text-gold text-lg">✦</span>
+              </div>
+              <div>
+                <h3 className="font-serif text-xl text-charcoal">Become a Promoter</h3>
+                <p className="text-charcoal/50 text-sm">Partner with us to bring EOLLES to your city</p>
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {!showPromoterForm ? (
+                <motion.div
+                  key="promoter-intro"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <p className="text-charcoal/60 text-sm mb-4">
+                    Are you an event organizer, venue owner, or promoter? We are looking for partners who can help bring the gathering to their city. Share your information and let us connect.
+                  </p>
+                  <button
+                    onClick={() => setShowPromoterForm(true)}
+                    className="w-full btn-royal py-3"
+                  >
+                    Apply as Promoter
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="promoter-form"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  onSubmit={handlePromoterSubmit}
+                  className="mt-4 space-y-4"
+                >
+                  {/* Location */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <input
+                      type="text"
+                      value={promoterData.city}
+                      onChange={(e) => setPromoterData({...promoterData, city: e.target.value})}
+                      placeholder="City *"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                      required
+                    />
+                    <input
+                      type="text"
+                      value={promoterData.state}
+                      onChange={(e) => setPromoterData({...promoterData, state: e.target.value})}
+                      placeholder="State/Province"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={promoterData.country}
+                      onChange={(e) => setPromoterData({...promoterData, country: e.target.value})}
+                      placeholder="Country *"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Contact Info */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={promoterData.contactName}
+                      onChange={(e) => setPromoterData({...promoterData, contactName: e.target.value})}
+                      placeholder="Your Name *"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                      required
+                    />
+                    <input
+                      type="email"
+                      value={promoterData.email}
+                      onChange={(e) => setPromoterData({...promoterData, email: e.target.value})}
+                      placeholder="Email Address *"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Links */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input
+                      type="url"
+                      value={promoterData.website}
+                      onChange={(e) => setPromoterData({...promoterData, website: e.target.value})}
+                      placeholder="Website (optional)"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={promoterData.socialLinks}
+                      onChange={(e) => setPromoterData({...promoterData, socialLinks: e.target.value})}
+                      placeholder="Social Media Links (optional)"
+                      className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                    />
+                  </div>
+                  
+                  {/* Concert/Event Link */}
+                  <input
+                    type="url"
+                    value={promoterData.concertLink}
+                    onChange={(e) => setPromoterData({...promoterData, concertLink: e.target.value})}
+                    placeholder="Link to a past event you produced (optional)"
+                    className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors"
+                  />
+                  
+                  {/* Message */}
+                  <textarea
+                    value={promoterData.message}
+                    onChange={(e) => setPromoterData({...promoterData, message: e.target.value})}
+                    placeholder="Tell us about your vision for hosting EOLLES in your city (optional)"
+                    rows={3}
+                    className="w-full px-4 py-3 bg-ivory-300 border border-charcoal/20 rounded-lg text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-gold transition-colors resize-none"
+                  />
+                  
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowPromoterForm(false)}
+                      className="flex-1 px-4 py-3 border border-charcoal/20 rounded-lg text-charcoal/60 hover:border-charcoal/40 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={promoterSubmitting}
+                      className="flex-1 btn-royal py-3 disabled:opacity-50"
+                    >
+                      {promoterSubmitting ? 'Submitting...' : 'Submit Application'}
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {/* Promoter success toast */}
+            <AnimatePresence>
+              {promoterSubmitted && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-4 p-4 bg-gold/10 border border-gold/30 rounded-lg text-center"
+                >
+                  <p className="text-gold text-sm">
+                    Thank you for your interest! We will review your application and be in touch soon.
                   </p>
                 </motion.div>
               )}
