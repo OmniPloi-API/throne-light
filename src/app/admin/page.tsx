@@ -35,6 +35,7 @@ interface Partner {
   email: string;
   slug: string;
   couponCode: string;
+  accessCode?: string;
   amazonUrl?: string;
   kindleUrl?: string;
   bookBabyUrl?: string;
@@ -44,6 +45,9 @@ interface Partner {
   isActive: boolean;
   deactivatedAt?: string;
   createdAt: string;
+  onboardingEmailSentAt?: string;
+  onboardingScheduledAt?: string;
+  onboardingCancelled?: boolean;
 }
 
 interface TrackingEvent {
@@ -412,6 +416,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3">Discount %</th>
                   <th className="px-4 py-3">Click Bounty</th>
                   <th className="px-4 py-3">Total Owed</th>
+                  <th className="px-4 py-3">Outreach</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -449,6 +454,9 @@ export default function AdminPage() {
                       <td className="px-4 py-3">${p.clickBounty.toFixed(2)}</td>
                       <td className="px-4 py-3 font-semibold text-gold">
                         ${(pCommission + pClickBounty).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <EmailDeploymentControls partner={p} onUpdate={fetchAll} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -495,7 +503,7 @@ export default function AdminPage() {
                 })}
                 {partners.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={12} className="px-4 py-8 text-center text-gray-500">
                       No partners yet. Create one above.
                     </td>
                   </tr>
@@ -560,13 +568,13 @@ export default function AdminPage() {
 
       {/* Footer */}
       <footer className="border-t border-[#222] py-6 mt-8">
-        <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-1">
           <span className="text-gray-500 text-sm">Powered by</span>
           <Image 
             src="/images/AMPLE LOGO.png" 
             alt="AMPLE" 
-            width={60}
-            height={20}
+            width={30}
+            height={10}
             className="opacity-50 hover:opacity-70 transition-opacity"
           />
         </div>
@@ -854,6 +862,191 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
   );
 }
 
+// Email Deployment Controls for Partner Onboarding
+function EmailDeploymentControls({ partner, onUpdate }: { partner: Partner; onUpdate: () => void }) {
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<'pending' | 'deploying' | 'sent' | 'cancelled'>('pending');
+
+  // Calculate countdown from scheduled time
+  useEffect(() => {
+    if (partner.onboardingEmailSentAt) {
+      setStatus('sent');
+      return;
+    }
+    
+    if (partner.onboardingCancelled) {
+      setStatus('cancelled');
+      return;
+    }
+    
+    if (!partner.onboardingScheduledAt) {
+      setStatus('pending');
+      return;
+    }
+
+    const scheduledTime = new Date(partner.onboardingScheduledAt).getTime();
+    
+    const updateCountdown = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((scheduledTime - now) / 1000));
+      setCountdown(remaining);
+      
+      if (remaining <= 0 && status !== 'sent') {
+        // Auto-deploy when countdown reaches 0
+        handleInstantDeploy();
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [partner.onboardingScheduledAt, partner.onboardingEmailSentAt, partner.onboardingCancelled]);
+
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleInstantDeploy = async () => {
+    setLoading(true);
+    setStatus('deploying');
+    try {
+      const res = await fetch('/api/partners/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerId: partner.id, instant: true }),
+      });
+      
+      if (res.ok) {
+        setStatus('sent');
+        onUpdate();
+      } else {
+        const data = await res.json();
+        console.error('Deploy failed:', data);
+        setStatus('pending');
+      }
+    } catch (error) {
+      console.error('Deploy error:', error);
+      setStatus('pending');
+    }
+    setLoading(false);
+  };
+
+  const handleCancel = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/partners/send-welcome', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerId: partner.id, action: 'cancel' }),
+      });
+      
+      if (res.ok) {
+        setStatus('cancelled');
+        setCountdown(null);
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Cancel error:', error);
+    }
+    setLoading(false);
+  };
+
+  const handleRedeploy = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/partners/send-welcome', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerId: partner.id, action: 'reset' }),
+      });
+      
+      if (res.ok) {
+        setStatus('pending');
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Redeploy error:', error);
+    }
+    setLoading(false);
+  };
+
+  // Already sent
+  if (status === 'sent' || partner.onboardingEmailSentAt) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-green-400">✓ Sent</span>
+        <span className="text-xs text-gray-500">
+          {new Date(partner.onboardingEmailSentAt!).toLocaleDateString()}
+        </span>
+      </div>
+    );
+  }
+
+  // Cancelled - show redeploy option
+  if (status === 'cancelled') {
+    return (
+      <button
+        onClick={handleRedeploy}
+        disabled={loading}
+        className="px-2 py-1 text-xs rounded bg-gold/20 text-gold hover:bg-gold/30 transition disabled:opacity-50"
+      >
+        {loading ? '...' : '↻ Redeploy'}
+      </button>
+    );
+  }
+
+  // Deploying
+  if (status === 'deploying') {
+    return (
+      <div className="flex items-center gap-2">
+        <Loader2 className="w-3 h-3 animate-spin text-gold" />
+        <span className="text-xs text-gold">Sending...</span>
+      </div>
+    );
+  }
+
+  // Countdown active
+  if (countdown !== null && countdown > 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-mono bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded">
+          {formatCountdown(countdown)}
+        </span>
+        <button
+          onClick={handleInstantDeploy}
+          disabled={loading}
+          className="px-2 py-1 text-xs rounded bg-green-900/30 text-green-300 hover:bg-green-900/50 transition disabled:opacity-50"
+          title="Send immediately"
+        >
+          ⚡ Deploy
+        </button>
+        <button
+          onClick={handleCancel}
+          disabled={loading}
+          className="px-2 py-1 text-xs rounded bg-red-900/30 text-red-300 hover:bg-red-900/50 transition disabled:opacity-50"
+          title="Cancel deployment"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  // No deployment scheduled yet
+  return (
+    <button
+      onClick={handleRedeploy}
+      disabled={loading}
+      className="px-2 py-1 text-xs rounded bg-gold/20 text-gold hover:bg-gold/30 transition disabled:opacity-50"
+    >
+      {loading ? '...' : '📧 Schedule'}
+    </button>
+  );
+}
+
 function CreatePartnerForm({ onCreated, onPartnerCreated }: { 
   onCreated: () => void; 
   onPartnerCreated?: (partner: any) => void; 
@@ -925,6 +1118,17 @@ function CreatePartnerForm({ onCreated, onPartnerCreated }: {
     const partner = await res.json();
     setCreatedPartner(partner);
     setShowAccessCode(true);
+    
+    // Auto-schedule welcome email (5 minute countdown)
+    try {
+      await fetch('/api/partners/send-welcome', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerId: partner.id, action: 'schedule' }),
+      });
+    } catch (err) {
+      console.error('Failed to schedule welcome email:', err);
+    }
     
     if (onPartnerCreated) {
       onPartnerCreated(partner);
