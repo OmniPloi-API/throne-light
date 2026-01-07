@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 
 // Dynamic import for the Command Center map (no SSR)
@@ -595,9 +596,15 @@ export default function AdminPage() {
 
       {/* Footer */}
       <footer className="border-t border-[#222] py-6 mt-8">
-        <p className="text-center text-gray-500 text-sm">
-          Powered by <span className="text-gold font-semibold">AMPLE</span>
-        </p>
+        <div className="flex justify-center items-center">
+          <Image 
+            src="/images/AMPLE LOGO.png" 
+            alt="Powered by AMPLE" 
+            width={120}
+            height={40}
+            className="opacity-50 hover:opacity-70 transition-opacity"
+          />
+        </div>
       </footer>
     </div>
   );
