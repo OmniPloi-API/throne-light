@@ -8,8 +8,8 @@ ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_cancelled BOOLEAN DEFAU
 
 -- Partner team members (view-only access for team)
 CREATE TABLE IF NOT EXISTS partner_team_members (
-    id TEXT PRIMARY KEY,
-    partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     name TEXT,
     role TEXT DEFAULT 'viewer', -- 'admin' or 'viewer'
@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS partner_team_members (
 
 -- Partner messages (two-way communication)
 CREATE TABLE IF NOT EXISTS partner_messages (
-    id TEXT PRIMARY KEY,
-    partner_id TEXT REFERENCES partners(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
     sender_type TEXT NOT NULL, -- 'admin' or 'partner'
-    sender_id TEXT, -- partner_id if from partner, null if from admin
+    sender_id UUID, -- partner_id if from partner, null if from admin
     subject TEXT,
     message TEXT NOT NULL,
     is_announcement BOOLEAN DEFAULT FALSE,
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS partner_messages (
 
 -- Partner support tickets
 CREATE TABLE IF NOT EXISTS partner_support_tickets (
-    id TEXT PRIMARY KEY,
-    partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     subject TEXT NOT NULL,
     status TEXT DEFAULT 'open', -- 'open', 'in_progress', 'resolved', 'closed'
     priority TEXT DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS partner_support_tickets (
 
 -- Support ticket messages (thread)
 CREATE TABLE IF NOT EXISTS partner_ticket_messages (
-    id TEXT PRIMARY KEY,
-    ticket_id TEXT NOT NULL REFERENCES partner_support_tickets(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES partner_support_tickets(id) ON DELETE CASCADE,
     sender_type TEXT NOT NULL, -- 'admin' or 'partner'
     message TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS partner_ticket_messages (
 
 -- Email forwarding rules (for partners@thronelightpublishing.com)
 CREATE TABLE IF NOT EXISTS email_forwarding_rules (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_address TEXT NOT NULL,
     forward_to TEXT[] NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -67,13 +67,12 @@ CREATE TABLE IF NOT EXISTS email_forwarding_rules (
 );
 
 -- Insert default forwarding rule for partners@ email
-INSERT INTO email_forwarding_rules (id, from_address, forward_to, is_active)
+INSERT INTO email_forwarding_rules (from_address, forward_to, is_active)
 VALUES (
-    'default-partners-forward',
     'partners@thronelightpublishing.com',
     ARRAY['developer@thronelightpublishing.com', 'info@thronelightpublishing.com', 'olivia@thronelightpublishing.com'],
     TRUE
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT DO NOTHING;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_partner_team_members_partner_id ON partner_team_members(partner_id);

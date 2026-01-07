@@ -9,6 +9,9 @@ export default function PageViewTracker() {
   const trackedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    // Skip tracking for admin pages - admin activity should not affect analytics
+    if (pathname?.startsWith('/admin')) return;
+    
     // Create unique key for this page view to prevent duplicate tracking
     const pageKey = `${pathname}${searchParams.toString()}`;
     if (trackedRef.current.has(pageKey)) return;
