@@ -10,11 +10,11 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "next lint",
-    "tauri": "./node_modules/.bin/tauri",
-    "tauri:dev": "./node_modules/.bin/tauri dev",
-    "tauri:build": "./node_modules/.bin/tauri build",
-    "tauri:build:mac": "./node_modules/.bin/tauri build --target universal-apple-darwin",
-    "tauri:build:win": "./node_modules/.bin/tauri build --target x86_64-pc-windows-msvc"
+    "tauri": "npx tauri",
+    "tauri:dev": "npx tauri dev",
+    "tauri:build": "npx tauri build",
+    "tauri:build:mac": "npx tauri build --target universal-apple-darwin",
+    "tauri:build:win": "npx tauri build --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
     "@prisma/client": "^6.2.0",
