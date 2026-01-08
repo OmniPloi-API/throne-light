@@ -1,10 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import AnimatedSection, { ParticleField } from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
+import QuillIcon from '@/components/shared/QuillIcon';
 
 export default function VoiceSection() {
   const { language } = useLanguage();
@@ -44,14 +44,14 @@ export default function VoiceSection() {
               {/* Soft inner glow */}
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_0%,_transparent_70%)]" />
               
-              {/* Floating Crown Image */}
+              {/* Floating Golden Quill */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
                   className="relative w-28 h-28 md:w-36 md:h-36"
                 >
-                  {/* Radiant glow behind crown */}
+                  {/* Radiant glow behind quill */}
                   <motion.div
                     animate={{
                       opacity: [0.4, 0.8, 0.4],
@@ -61,26 +61,19 @@ export default function VoiceSection() {
                     className="absolute inset-0 bg-white/60 rounded-full blur-xl"
                   />
                   
-                  {/* Crown image with glow effect */}
+                  {/* Quill icon with glow effect */}
                   <motion.div
                     animate={{
                       filter: [
-                        'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.3))',
-                        'drop-shadow(0 0 15px rgba(255,255,255,0.9)) drop-shadow(0 0 35px rgba(255,255,255,0.5))',
-                        'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 0 20px rgba(255,255,255,0.3))'
+                        'drop-shadow(0 0 8px rgba(201,169,97,0.5)) drop-shadow(0 0 20px rgba(201,169,97,0.3))',
+                        'drop-shadow(0 0 15px rgba(201,169,97,0.9)) drop-shadow(0 0 35px rgba(201,169,97,0.5))',
+                        'drop-shadow(0 0 8px rgba(201,169,97,0.5)) drop-shadow(0 0 20px rgba(201,169,97,0.3))'
                       ]
                     }}
                     transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                     className="relative w-full h-full"
                   >
-                    <Image
-                      src="/images/Light-of-Eolles-Crown.png?v=2"
-                      alt="Light of Eolles Crown"
-                      fill
-                      className="object-contain"
-                      priority
-                      unoptimized
-                    />
+                    <QuillIcon className="w-full h-full" />
                   </motion.div>
                 </motion.div>
               </div>

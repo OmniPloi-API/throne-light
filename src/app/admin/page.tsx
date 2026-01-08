@@ -56,6 +56,7 @@ interface TrackingEvent {
   type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_KINDLE' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
+  region?: string;
   country?: string;
   ipAddress?: string;
   pagePath?: string;
@@ -670,7 +671,7 @@ interface ConsumerData {
   id: string; // IP address or unique identifier
   events: TrackingEvent[];
   latestEvent: TrackingEvent;
-  city: string;
+  cityState: string;
   country: string;
   visits: number;
   device: string;
@@ -702,11 +703,18 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
       );
       const latest = sorted[0];
       
+      // Build city/state string - show both if region is available
+      const cityPart = latest.city || '';
+      const regionPart = latest.region || '';
+      const cityState = cityPart && regionPart 
+        ? `${cityPart}, ${regionPart}` 
+        : cityPart || regionPart || '—';
+      
       consumerList.push({
         id,
         events: sorted,
         latestEvent: latest,
-        city: latest.city || '—',
+        cityState,
         country: latest.country || '—',
         visits: consumerEvents.length,
         device: latest.device || '—',
@@ -745,7 +753,7 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
               <th className="px-4 py-3">Last Active</th>
               <th className="px-4 py-3">Site</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">City</th>
+              <th className="px-4 py-3">City/State</th>
               <th className="px-4 py-3">Country</th>
               <th className="px-4 py-3">Visits</th>
               <th className="px-4 py-3">Device</th>
@@ -781,7 +789,7 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
                       {consumer.journeyStatus.label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{consumer.city}</td>
+                  <td className="px-4 py-3 text-gray-300">{consumer.cityState}</td>
                   <td className="px-4 py-3 text-gray-300">{consumer.country}</td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-0.5 rounded bg-gold/10 text-gold text-xs font-medium">

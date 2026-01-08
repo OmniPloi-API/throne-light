@@ -461,7 +461,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Throne Light Reader Access</title>
+  <title>Your Book Is Ready - The Crowded Bed & The Empty Throne</title>
 </head>
 <body style="margin: 0; padding: 0; background: linear-gradient(180deg, #fdf8f3 0%, #f9efe6 100%); font-family: Georgia, 'Times New Roman', serif;">
   
@@ -481,7 +481,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
           <tr>
             <td align="center" style="padding-bottom: 8px;">
               <span style="color: #c9a961; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">
-                THRONE LIGHT READER
+                THRONE LIGHT PUBLISHING
               </span>
             </td>
           </tr>
@@ -489,7 +489,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
           <tr>
             <td align="center" style="padding-bottom: 32px;">
               <span style="color: #9a8478; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">
-                Your Access Is Ready
+                Your Book Is Ready
               </span>
             </td>
           </tr>
@@ -501,73 +501,118 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                 <tr>
                   <td style="padding: 48px 40px;">
                     
-                    <p style="color: #c9a961; font-size: 24px; margin: 0 0 24px 0; font-style: italic;">
+                    <p style="color: #c9a961; font-size: 24px; margin: 0 0 24px 0; font-style: italic; text-align: center;">
                       Dear ${firstName},
                     </p>
                     
-                    <p style="color: #3d3d3d; font-size: 16px; line-height: 1.8; margin: 0 0 24px 0; text-align: center;">
-                      Thank you for purchasing the Throne Light Reader. Your journey into words of transformation begins now.
+                    <p style="color: #3d3d3d; font-size: 16px; line-height: 1.8; margin: 0 0 32px 0; text-align: center;">
+                      Thank you for your purchase. Your journey into words of transformation begins now.
                     </p>
                     
-                    <!-- License Code Box -->
+                    <!-- Book Cover and Access Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 32px 0;">
+                      <tr>
+                        <td align="center">
+                          <a href="https://thronelightpublishing.com/reader" style="text-decoration: none; display: block;">
+                            <!-- Book Cover Image -->
+                            <img src="https://thronelightpublishing.com/images/CBET-book-cover.png" 
+                                 alt="The Crowded Bed & The Empty Throne" 
+                                 width="200" 
+                                 style="display: block; margin: 0 auto 24px auto; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+                          </a>
+                          
+                          <p style="color: #3d3d3d; font-size: 18px; font-weight: bold; margin: 0 0 8px 0; text-align: center;">
+                            The Crowded Bed & The Empty Throne
+                          </p>
+                          <p style="color: #7a6b63; font-size: 14px; margin: 0 0 24px 0; text-align: center;">
+                            by Eolles
+                          </p>
+                          
+                          <!-- Access Your Book Button -->
+                          <a href="https://thronelightpublishing.com/reader" 
+                             style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 18px; font-weight: bold; text-decoration: none; padding: 18px 48px; border-radius: 12px; box-shadow: 0 4px 16px rgba(201, 169, 97, 0.4);">
+                            📖 Access Your Book
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Divider -->
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                      <tr>
+                        <td align="center">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width: 80px; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(201, 169, 97, 0.4) 100%);"></td>
+                              <td style="padding: 0 16px;">
+                                <span style="color: rgba(201, 169, 97, 0.6); font-size: 16px;">✦</span>
+                              </td>
+                              <td style="width: 80px; height: 1px; background: linear-gradient(90deg, rgba(201, 169, 97, 0.4) 0%, transparent 100%);"></td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- License Code Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 32px 0;">
                       <tr>
                         <td align="center">
                           <div style="background: linear-gradient(135deg, rgba(201, 169, 97, 0.15) 0%, rgba(201, 169, 97, 0.08) 100%); border: 2px solid #c9a961; border-radius: 12px; padding: 24px;">
                             <p style="color: #7a6b63; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 12px 0;">
-                              Your License Code
+                              Your Unique Access Code
                             </p>
                             <p style="color: #c9a961; font-size: 28px; font-weight: bold; letter-spacing: 4px; margin: 0; font-family: 'Courier New', monospace;">
                               ${licenseCode}
                             </p>
                             <p style="color: #9a8478; font-size: 12px; margin: 16px 0 0 0;">
-                              Valid for 2 devices
+                              Valid for 2 devices • Keep this code safe
                             </p>
                           </div>
                         </td>
                       </tr>
                     </table>
                     
-                    <p style="color: #3d3d3d; font-size: 16px; line-height: 1.8; margin: 0 0 32px 0; text-align: center;">
-                      Choose your preferred way to experience the Throne Light Reader:
-                    </p>
+                    <!-- Instructions -->
+                    <div style="background: rgba(201, 169, 97, 0.08); border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                      <p style="color: #c9a961; font-size: 14px; font-weight: bold; margin: 0 0 12px 0; text-align: center;">
+                        How to Access Your Book
+                      </p>
+                      <p style="color: #7a6b63; font-size: 14px; line-height: 1.8; margin: 0; text-align: center;">
+                        1. Click "Access Your Book" above or download the Throne Light Reader app<br>
+                        2. Enter your unique access code when prompted<br>
+                        3. Begin reading immediately on any device
+                      </p>
+                    </div>
                     
                     <!-- Download Options -->
+                    <p style="color: #3d3d3d; font-size: 14px; margin: 0 0 16px 0; text-align: center;">
+                      Download the Throne Light Reader for the best experience:
+                    </p>
+                    
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td align="center">
                           <table cellpadding="0" cellspacing="0">
-                            <!-- Desktop Row -->
                             <tr>
-                              <td style="padding: 8px;">
-                                <a href="https://thronelightpublishing.com/download/macos" style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 24px; border-radius: 8px; min-width: 120px; text-align: center;">
-                                  🍎 Mac OS
+                              <td style="padding: 6px;">
+                                <a href="https://thronelightpublishing.com/download/macos" style="display: inline-block; background: transparent; border: 1px solid #c9a961; color: #c9a961; font-size: 12px; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
+                                  🍎 Mac
                                 </a>
                               </td>
-                              <td style="padding: 8px;">
-                                <a href="https://thronelightpublishing.com/download/windows" style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 24px; border-radius: 8px; min-width: 120px; text-align: center;">
+                              <td style="padding: 6px;">
+                                <a href="https://thronelightpublishing.com/download/windows" style="display: inline-block; background: transparent; border: 1px solid #c9a961; color: #c9a961; font-size: 12px; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
                                   🪟 Windows
                                 </a>
                               </td>
-                            </tr>
-                            <!-- Mobile Row -->
-                            <tr>
-                              <td style="padding: 8px;">
-                                <a href="https://thronelightpublishing.com/download/ios" style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 24px; border-radius: 8px; min-width: 120px; text-align: center;">
-                                  📱 iPhone
+                              <td style="padding: 6px;">
+                                <a href="https://thronelightpublishing.com/download/ios" style="display: inline-block; background: transparent; border: 1px solid #c9a961; color: #c9a961; font-size: 12px; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
+                                  📱 iOS
                                 </a>
                               </td>
-                              <td style="padding: 8px;">
-                                <a href="https://thronelightpublishing.com/download/android" style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 24px; border-radius: 8px; min-width: 120px; text-align: center;">
+                              <td style="padding: 6px;">
+                                <a href="https://thronelightpublishing.com/download/android" style="display: inline-block; background: transparent; border: 1px solid #c9a961; color: #c9a961; font-size: 12px; text-decoration: none; padding: 10px 16px; border-radius: 6px;">
                                   🤖 Android
-                                </a>
-                              </td>
-                            </tr>
-                            <!-- Web Row -->
-                            <tr>
-                              <td colspan="2" style="padding: 8px;" align="center">
-                                <a href="https://thronelightpublishing.com/reader" style="display: inline-block; background: transparent; border: 2px solid #c9a961; color: #c9a961; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 48px; border-radius: 8px;">
-                                  🌐 Access via Web Browser
                                 </a>
                               </td>
                             </tr>
@@ -582,29 +627,19 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                         <td align="center">
                           <table cellpadding="0" cellspacing="0">
                             <tr>
-                              <td style="width: 40px; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(201, 169, 97, 0.4) 100%);"></td>
+                              <td style="width: 80px; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(201, 169, 97, 0.2) 100%);"></td>
                               <td style="padding: 0 16px;">
-                                <span style="color: rgba(201, 169, 97, 0.6); font-size: 16px;">✦</span>
+                                <span style="color: rgba(201, 169, 97, 0.4); font-size: 12px;">✦</span>
                               </td>
-                              <td style="width: 40px; height: 1px; background: linear-gradient(90deg, rgba(201, 169, 97, 0.4) 0%, transparent 100%);"></td>
+                              <td style="width: 80px; height: 1px; background: linear-gradient(90deg, rgba(201, 169, 97, 0.2) 0%, transparent 100%);"></td>
                             </tr>
                           </table>
                         </td>
                       </tr>
                     </table>
                     
-                    <!-- Instructions -->
-                    <div style="background: rgba(201, 169, 97, 0.08); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                      <p style="color: #7a6b63; font-size: 14px; line-height: 1.7; margin: 0;">
-                        <strong style="color: #c9a961;">How to Activate:</strong><br>
-                        1. Download or open the Throne Light Reader<br>
-                        2. Enter your license code when prompted<br>
-                        3. Begin your journey into transformation
-                      </p>
-                    </div>
-                    
                     <p style="color: #7a6b63; font-size: 13px; line-height: 1.7; margin: 0; text-align: center;">
-                      Your license allows activation on up to 2 devices. Need help? Contact us at 
+                      Need help? Contact us at 
                       <a href="mailto:support@thronelightpublishing.com" style="color: #c9a961;">support@thronelightpublishing.com</a>
                     </p>
                     

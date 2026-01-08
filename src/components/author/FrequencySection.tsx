@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipForward, SkipBack, X, Mail, Phone, Bell } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
+
+// Fade out duration in seconds
+const FADE_OUT_DURATION = 2;
+// Loop point: 2 minutes 14 seconds = 134 seconds
+const LOOP_POINT_SECONDS = 134;
+// Base volume
+const BASE_VOLUME = 0.5;
 
 // Audio visualizer bars - using deterministic values to avoid hydration mismatch
 const barHeights = [48, 56, 44, 60, 52, 64, 40, 58, 46, 54, 50, 62];
@@ -36,25 +43,115 @@ function AudioVisualizer({ isPlaying }: { isPlaying: boolean }) {
 }
 
 export default function FrequencySection() {
-  // Music is coming soon - never actually plays
   const [currentTrack, setCurrentTrack] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isFadingRef = useRef(false);
   const { language } = useLanguage();
   const dict = getDictionary(language);
   
   const tracks = dict.frequency.tracks;
 
+  // Fade out and loop function
+  const fadeOutAndLoop = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || isFadingRef.current) return;
+
+    isFadingRef.current = true;
+
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+    }
+
+    const fadeSteps = 20;
+    const fadeStepDuration = (FADE_OUT_DURATION * 1000) / fadeSteps;
+    const volumeStep = BASE_VOLUME / fadeSteps;
+    let currentStep = 0;
+
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      const newVolume = Math.max(0, BASE_VOLUME - (volumeStep * currentStep));
+      audio.volume = newVolume;
+
+      if (currentStep >= fadeSteps) {
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+        }
+        audio.currentTime = 0;
+        audio.volume = BASE_VOLUME;
+        isFadingRef.current = false;
+      }
+    }, fadeStepDuration);
+  }, []);
+
+  // Initialize audio for the playable track
+  useEffect(() => {
+    const audio = new Audio('/audio/EOLLES - THE KING HAS TO RISE.mp3');
+    audio.loop = false;
+    audio.volume = BASE_VOLUME;
+    audioRef.current = audio;
+
+    const handleTimeUpdate = () => {
+      setProgress(audio.currentTime);
+      if (!isFadingRef.current && audio.currentTime >= LOOP_POINT_SECONDS - FADE_OUT_DURATION) {
+        fadeOutAndLoop();
+      }
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
+    };
+  }, [fadeOutAndLoop]);
+
   const handlePlayClick = () => {
-    setShowComingSoonModal(true);
+    // Check if current track is playable (Rise)
+    if (tracks[currentTrack].playable && audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play().catch(console.error);
+        setIsPlaying(true);
+      }
+    } else {
+      setShowComingSoonModal(true);
+    }
   };
 
   const handleTrackClick = (index: number) => {
+    // If switching tracks, stop current playback
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+      setProgress(0);
+    }
     setCurrentTrack(index);
-    setShowComingSoonModal(true);
+    
+    // If the new track is not playable, show coming soon modal
+    if (!tracks[index].playable) {
+      setShowComingSoonModal(true);
+    }
   };
 
   const handleNotifySubmit = async (e: React.FormEvent) => {
@@ -122,9 +219,9 @@ export default function FrequencySection() {
             <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-gold/40 rounded-bl-2xl" />
             <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-gold/40 rounded-br-2xl" />
 
-            {/* Visualizer - static since music is coming soon */}
+            {/* Visualizer - animates when playing */}
             <div className="mb-8">
-              <AudioVisualizer isPlaying={false} />
+              <AudioVisualizer isPlaying={isPlaying && !!tracks[currentTrack].playable} />
             </div>
 
             {/* Track Info */}
@@ -134,18 +231,30 @@ export default function FrequencySection() {
               </h3>
               <p className="text-gold/60 text-sm">
                 Eolles • {tracks[currentTrack].duration}
+                {tracks[currentTrack].playable && <span className="ml-2 text-gold">• Sample</span>}
               </p>
             </div>
 
-            {/* Progress Bar - static since music is coming soon */}
+            {/* Progress Bar - shows progress for playable tracks */}
             <div className="relative h-1 bg-parchment/10 rounded-full mb-8 overflow-hidden">
-              <div className="absolute left-0 top-0 h-full bg-gold rounded-full w-0" />
+              <div 
+                className="absolute left-0 top-0 h-full bg-gold rounded-full transition-all duration-100" 
+                style={{ width: tracks[currentTrack].playable ? `${(progress / LOOP_POINT_SECONDS) * 100}%` : '0%' }}
+              />
             </div>
 
             {/* Controls */}
             <div className="flex items-center justify-center gap-6">
               <button
-                onClick={() => setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length)}
+                onClick={() => {
+                  if (isPlaying && audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                    setIsPlaying(false);
+                    setProgress(0);
+                  }
+                  setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length);
+                }}
                 className="text-parchment/50 hover:text-gold transition-colors"
               >
                 <SkipBack className="w-6 h-6" />
@@ -157,11 +266,23 @@ export default function FrequencySection() {
                 onClick={handlePlayClick}
                 className="w-16 h-16 rounded-full bg-gold text-onyx flex items-center justify-center shadow-lg shadow-gold/30"
               >
-                <Play className="w-7 h-7 ml-1" />
+                {isPlaying && tracks[currentTrack].playable ? (
+                  <Pause className="w-7 h-7" />
+                ) : (
+                  <Play className="w-7 h-7 ml-1" />
+                )}
               </motion.button>
               
               <button
-                onClick={() => setCurrentTrack((prev) => (prev + 1) % tracks.length)}
+                onClick={() => {
+                  if (isPlaying && audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                    setIsPlaying(false);
+                    setProgress(0);
+                  }
+                  setCurrentTrack((prev) => (prev + 1) % tracks.length);
+                }}
                 className="text-parchment/50 hover:text-gold transition-colors"
               >
                 <SkipForward className="w-6 h-6" />

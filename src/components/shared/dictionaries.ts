@@ -131,7 +131,7 @@ type Dictionary = {
     label: string;
     headline: string;
     description: string;
-    tracks: { title: string; duration: string }[];
+    tracks: { title: string; duration: string; playable?: boolean }[];
     comingSoon: string;
   };
   gathering: {
@@ -352,7 +352,7 @@ const dictionaries: Record<Language, Dictionary> = {
       headline: 'The Frequency',
       description: 'The journey to the throne has a frequency. Tune into the sound of your divine right.',
       tracks: [
-        { title: 'Throne Room', duration: '4:32' },
+        { title: 'Rise', duration: '2:14', playable: true },
         { title: 'The Coronation', duration: '3:45' },
         { title: 'Sovereign Ground', duration: '5:12' },
       ],

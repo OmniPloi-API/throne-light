@@ -1,30 +1,81 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
 
+// Fade out duration in seconds
+const FADE_OUT_DURATION = 2;
+// Loop point: 2 minutes 14 seconds = 134 seconds
+const LOOP_POINT_SECONDS = 134;
+// Base volume
+const BASE_VOLUME = 0.3;
+
 export default function AudioToggle() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isFadingRef = useRef(false);
   const { language } = useLanguage();
   const dict = getDictionary(language);
+
+  // Fade out and loop function
+  const fadeOutAndLoop = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || isFadingRef.current) return;
+
+    isFadingRef.current = true;
+
+    // Clear any existing fade interval
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+    }
+
+    const fadeSteps = 20;
+    const fadeStepDuration = (FADE_OUT_DURATION * 1000) / fadeSteps;
+    const volumeStep = BASE_VOLUME / fadeSteps;
+    let currentStep = 0;
+
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      const newVolume = Math.max(0, BASE_VOLUME - (volumeStep * currentStep));
+      audio.volume = newVolume;
+
+      if (currentStep >= fadeSteps) {
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+        }
+        // Reset to beginning and restore volume
+        audio.currentTime = 0;
+        audio.volume = BASE_VOLUME;
+        isFadingRef.current = false;
+      }
+    }, fadeStepDuration);
+  }, []);
 
   useEffect(() => {
     // Create a single ambient audio element for the entire app lifecycle
     const audio = new Audio('/audio/EOLLES - THE KING HAS TO RISE.mp3');
-    audio.loop = true; // loops only after full track playback
-    audio.volume = 0.3;
+    audio.loop = false; // We handle looping manually with fade
+    audio.volume = BASE_VOLUME;
     audioRef.current = audio;
 
     const handleCanPlay = () => {
       setIsLoaded(true);
     };
 
+    // Check for loop point during playback
+    const handleTimeUpdate = () => {
+      if (!isFadingRef.current && audio.currentTime >= LOOP_POINT_SECONDS - FADE_OUT_DURATION) {
+        fadeOutAndLoop();
+      }
+    };
+
     audio.addEventListener('canplaythrough', handleCanPlay);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
 
     // Gentle autoplay attempt on first load (may be blocked by browser)
     audio
@@ -40,8 +91,12 @@ export default function AudioToggle() {
     return () => {
       audio.pause();
       audio.removeEventListener('canplaythrough', handleCanPlay);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
     };
-  }, []);
+  }, [fadeOutAndLoop]);
 
   const toggleAudio = () => {
     if (!audioRef.current) return;
