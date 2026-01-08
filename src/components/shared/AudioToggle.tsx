@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '@/components/shared/LanguageProvider';
@@ -21,6 +22,10 @@ export default function AudioToggle() {
   const isFadingRef = useRef(false);
   const { language } = useLanguage();
   const dict = getDictionary(language);
+  const pathname = usePathname();
+  
+  // Hide AudioToggle on author page - audio is controlled by the player there
+  const isAuthorPage = pathname === '/author';
 
   // Fade out and loop function
   const fadeOutAndLoop = useCallback(() => {
@@ -111,6 +116,11 @@ export default function AudioToggle() {
     }
     setIsPlaying(!isPlaying);
   };
+
+  // Don't render on author page - audio is controlled by the player there
+  if (isAuthorPage) {
+    return null;
+  }
 
   return (
     <motion.button

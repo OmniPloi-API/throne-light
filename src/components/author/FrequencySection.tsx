@@ -132,6 +132,8 @@ export default function FrequencySection() {
       } else {
         audioRef.current.play().catch(console.error);
         setIsPlaying(true);
+        // Show Coming Soon modal when starting to play Rise
+        setShowComingSoonModal(true);
       }
     } else {
       setShowComingSoonModal(true);
