@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Throne Light Publishing",
-    description: "We don't distribute books. We deliver divine revelation",
+    description: "We don't just distribute books. We deliver divine revelation",
     type: "website",
   },
 };
