@@ -1,7 +1,7 @@
 {
   "build": {
     "beforeDevCommand": "",
-    "beforeBuildCommand": "./tauri-build.sh",
+    "beforeBuildCommand": "",
     "devPath": "https://thronelightpublishing.com/reader/home",
     "distDir": "../out"
   },
