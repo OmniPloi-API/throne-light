@@ -74,7 +74,7 @@ export default function VoiceSection() {
                     className="relative w-full h-full"
                   >
                     <Image
-                      src="/images/Quill-Of-Eolles.png?v=2"
+                      src="/images/Quill-Of-Eolles.png?v=3"
                       alt="Quill of Eolles"
                       fill
                       className="object-contain"
