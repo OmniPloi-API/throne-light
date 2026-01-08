@@ -360,7 +360,7 @@ const dictionaries: Record<Language, Dictionary> = {
     },
     gathering: {
       label: 'The Gathering',
-      headlinePart1: 'We Do Not Tour.',
+      headlinePart1: 'We Do Not Just Tour.',
       headlinePart2: 'We Assemble.',
       description: 'Throne Light events are not concerts or conferences. They are convocations. When we move, we move with purpose.',
       waitlistTitle: 'Join Waitlist',
@@ -432,7 +432,7 @@ const dictionaries: Record<Language, Dictionary> = {
       slogan: 'Sovereignty in every word.',
     },
     footer: {
-      taglinePart1: "We don't distribute books.",
+      taglinePart1: "We don't just distribute books.",
       taglinePart2: "We bring forth light.",
       constellation: "The Constellation",
       connect: "Connect",
@@ -582,7 +582,7 @@ const dictionaries: Record<Language, Dictionary> = {
     },
     gathering: {
       label: 'Le Rassemblement',
-      headlinePart1: 'Nous Ne Faisons Pas De Tournée.',
+      headlinePart1: 'Nous Ne Faisons Pas Que Tournée.',
       headlinePart2: 'Nous Nous Rassemblons.',
       description: 'Les événements Lumière du Trône ne sont pas des concerts ou des conférences. Ce sont des convocations. Quand nous bougeons, nous bougeons avec un but.',
       waitlistTitle: 'Rejoindre la Liste d\'Attente',
@@ -654,7 +654,7 @@ const dictionaries: Record<Language, Dictionary> = {
       slogan: 'Souveraineté dans chaque mot.',
     },
     footer: {
-      taglinePart1: "Nous ne distribuons pas de livres.",
+      taglinePart1: "Nous ne faisons pas que distribuer des livres.",
       taglinePart2: "Nous distribuons la lumière.",
       constellation: "La Constellation",
       connect: "Connecter",

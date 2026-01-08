@@ -235,27 +235,19 @@ export default function Footer({ variant = 'book' }: FooterProps) {
                   <Download className="w-5 h-5 text-parchment/40" />
                 </button>
 
-                {/* Windows Download */}
-                <button
-                  onClick={() => handleDownload('windows')}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                    detectedOS === 'windows'
-                      ? 'border-gold bg-gold/10 hover:bg-gold/15'
-                      : 'border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5'
-                  }`}
+                {/* Windows Download - Coming Soon */}
+                <div
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5 transition-all opacity-60 cursor-not-allowed"
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
                     <Monitor className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 text-left">
                     <div className="text-parchment font-medium">Windows</div>
-                    <div className="text-xs text-parchment/50">Download .exe installer</div>
+                    <div className="text-xs text-parchment/50">Coming soon</div>
                   </div>
-                  {detectedOS === 'windows' && (
-                    <span className="text-xs text-gold bg-gold/10 px-2 py-1 rounded-full">Recommended</span>
-                  )}
-                  <Download className="w-5 h-5 text-parchment/40" />
-                </button>
+                  <span className="text-xs text-parchment/40 bg-parchment/10 px-2 py-1 rounded-full">Soon</span>
+                </div>
 
                 {/* Mobile Section */}
                 <p className="text-xs text-parchment/40 uppercase tracking-wider mt-4 mb-2">Mobile</p>

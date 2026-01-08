@@ -43,7 +43,7 @@ export default function AltarSection() {
   return (
     <>
       <PurchaseModal isOpen={isPurchaseModalOpen} onClose={() => setIsPurchaseModalOpen(false)} />
-      <section className="relative min-h-screen flex items-center justify-center bg-manuscript-200 py-24 md:py-32 overflow-hidden">
+      <section id="altar" className="relative min-h-screen flex items-center justify-center bg-manuscript-200 py-24 md:py-32 overflow-hidden">
       {/* Gold radial gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(201,169,97,0.15)_0%,_transparent_60%)]" />
       

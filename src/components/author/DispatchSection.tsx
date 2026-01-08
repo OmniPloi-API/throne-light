@@ -34,6 +34,9 @@ const DivineReveal = ({ children, delay = 0 }: { children: React.ReactNode; dela
 };
 
 export default function DispatchSection() {
+  const { language } = useLanguage();
+  const dict = getDictionary(language);
+
   return (
     <section id="dispatch" className="relative min-h-screen bg-ivory-200 py-24 md:py-32">
       {/* Abstract fire/light imagery - subtle gradient */}
@@ -44,10 +47,10 @@ export default function DispatchSection() {
         {/* Section Header */}
         <AnimatedSection animation="fadeInUp" className="text-center mb-16">
           <span className="text-gold-600/60 text-xs uppercase tracking-[0.3em] font-sans block mb-4">
-            The Origin
+            {dict.dispatch.label}
           </span>
           <h2 className="font-serif text-3xl md:text-5xl text-charcoal">
-            <span className="text-gold-600">Heavenly Instruction</span>
+            <span className="text-gold-600">{dict.dispatch.headline}</span>
           </h2>
         </AnimatedSection>
 
@@ -57,15 +60,12 @@ export default function DispatchSection() {
           <div className="space-y-6">
             <DivineReveal>
               <p className="text-charcoal/80 text-lg md:text-xl leading-relaxed font-sans first-letter:text-5xl first-letter:font-serif first-letter:text-gold-600 first-letter:float-left first-letter:mr-3 first-letter:leading-none">
-                Eolles is a sovereign voice forged in the fire of silence. She carries 
-                the ancestral roar of bold women and the sacred hush of divine downloads. 
-                A soul appointed not by algorithms, but by assignment.
+                {dict.dispatch.text1Part1}
               </p>
             </DivineReveal>
             <DivineReveal delay={400}>
               <p className="text-charcoal/70 text-lg leading-relaxed">
-                Her name means <span className="text-gold-600 italic">&ldquo;light,&rdquo;</span> but her 
-                work is thunder: poetic, prophetic, and unapologetically throne-bound.
+                {dict.dispatch.text2}
               </p>
             </DivineReveal>
           </div>
@@ -74,16 +74,12 @@ export default function DispatchSection() {
           <div className="space-y-6">
             <DivineReveal>
               <p className="text-charcoal/80 text-lg md:text-xl leading-relaxed font-sans">
-                She writes not for entertainment but for <span className="text-gold-600">enthronement</span>. 
-                Her debut, <em>The Crowded Bed & The Empty Throne</em>, is more than a book, it 
-                is a spiritual awakening.
+                {dict.dispatch.text3Part1}<span className="text-gold-600">{dict.dispatch.text3Part2}</span>{dict.dispatch.text3Part3}
               </p>
             </DivineReveal>
             <DivineReveal delay={400}>
               <p className="text-charcoal/70 text-lg leading-relaxed">
-                With the cadence of scripture and the punch of protest, Eolles exposes 
-                the counterfeit of being &ldquo;chosen&rdquo; and calls women into alignment with 
-                destiny, not desire.
+                {dict.dispatch.text4}
               </p>
             </DivineReveal>
           </div>
@@ -96,11 +92,11 @@ export default function DispatchSection() {
             <span className="absolute -top-8 left-0 text-gold-500/30 text-8xl font-serif">&ldquo;</span>
             <p className="font-serif text-2xl md:text-4xl text-charcoal italic leading-relaxed">
               <DivineReveal delay={400}>
-                This is not an author page.
+                {dict.dispatch.quotePart1}
               </DivineReveal>
               <span className="block text-gold-600 mt-2">
                 <DivineReveal delay={800}>
-                  It is a holy dispatch.
+                  {dict.dispatch.quotePart2}
                 </DivineReveal>
               </span>
             </p>
@@ -130,9 +126,7 @@ export default function DispatchSection() {
           className="mt-16 text-center"
         >
           <p className="text-charcoal/60 text-lg max-w-2xl mx-auto">
-            Whether writing, speaking, or creating kingdom art, Eolles is not chasing
-            fame; she is building legacy. The heartbeat behind a growing movement of
-            women who refuse to be rotated, hidden, or silenced.
+            {dict.dispatch.mission}
           </p>
         </motion.div>
       </div>
