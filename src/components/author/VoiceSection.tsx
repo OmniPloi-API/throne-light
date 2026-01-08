@@ -1,10 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import AnimatedSection, { ParticleField } from '@/components/shared/AnimatedSection';
 import { useLanguage } from '@/components/shared/LanguageProvider';
 import { getDictionary } from '@/components/shared/dictionaries';
-import QuillIcon from '@/components/shared/QuillIcon';
 
 export default function VoiceSection() {
   const { language } = useLanguage();
@@ -61,7 +61,7 @@ export default function VoiceSection() {
                     className="absolute inset-0 bg-white/60 rounded-full blur-xl"
                   />
                   
-                  {/* Quill icon with glow effect */}
+                  {/* Quill image with glow effect */}
                   <motion.div
                     animate={{
                       filter: [
@@ -73,7 +73,12 @@ export default function VoiceSection() {
                     transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                     className="relative w-full h-full"
                   >
-                    <QuillIcon className="w-full h-full" />
+                    <Image
+                      src="/images/Quill-Of-Eolles.png"
+                      alt="Quill of Eolles"
+                      fill
+                      className="object-contain"
+                    />
                   </motion.div>
                 </motion.div>
               </div>
