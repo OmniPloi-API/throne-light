@@ -96,7 +96,11 @@ export default function FrequencySection() {
     const audio = new Audio('/audio/EOLLES - THE KING HAS TO RISE.mp3');
     audio.loop = false;
     audio.volume = BASE_VOLUME;
+    audio.preload = 'auto';
     audioRef.current = audio;
+    
+    // Preload the audio
+    audio.load();
 
     const handleTimeUpdate = () => {
       setProgress(audio.currentTime);
@@ -233,7 +237,7 @@ export default function FrequencySection() {
               </h3>
               <p className="text-gold/60 text-sm">
                 Eolles • {tracks[currentTrack].duration}
-                {tracks[currentTrack].playable && <span className="ml-2 text-gold">• Sample</span>}
+                {tracks[currentTrack].playable && <span className="ml-2 text-gold">• Teaser</span>}
               </p>
             </div>
 
