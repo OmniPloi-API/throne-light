@@ -19,6 +19,7 @@ const barDurations = [0.55, 0.68, 0.52, 0.75, 0.6, 0.72, 0.5, 0.65, 0.58, 0.7, 0
 
 function AudioVisualizer({ isPlaying }: { isPlaying: boolean }) {
   const bars = 12;
+  const restHeight = 16;
   
   return (
     <div className="flex items-end justify-center gap-1 h-16">
@@ -26,16 +27,28 @@ function AudioVisualizer({ isPlaying }: { isPlaying: boolean }) {
         <motion.div
           key={i}
           className="w-1 bg-gold rounded-full"
-          animate={isPlaying ? {
-            height: [16, barHeights[i], 16],
-          } : { height: 16 }}
-          transition={{
-            duration: barDurations[i],
-            repeat: Infinity,
-            repeatType: 'reverse',
-            ease: 'easeInOut',
-            delay: i * 0.05,
-          }}
+          initial={{ height: restHeight }}
+          animate={
+            isPlaying
+              ? {
+                  height: [restHeight, barHeights[i]],
+                }
+              : { height: restHeight }
+          }
+          transition={
+            isPlaying
+              ? {
+                  duration: barDurations[i] * 2,
+                  repeat: Infinity,
+                  repeatType: 'mirror',
+                  ease: 'easeInOut',
+                  delay: i * 0.05,
+                }
+              : {
+                  duration: 0.2,
+                  ease: 'easeInOut',
+                }
+          }
         />
       ))}
     </div>
@@ -109,17 +122,34 @@ export default function FrequencySection() {
       }
     };
 
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
+      isFadingRef.current = false;
+      audio.volume = BASE_VOLUME;
+    };
+
     const handleEnded = () => {
       setIsPlaying(false);
       setProgress(0);
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
     audio.addEventListener('ended', handleEnded);
 
     return () => {
       audio.pause();
       audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
       if (fadeIntervalRef.current) {
         clearInterval(fadeIntervalRef.current);
@@ -128,28 +158,36 @@ export default function FrequencySection() {
   }, [fadeOutAndLoop]);
 
   const handlePlayClick = () => {
-    // Check if current track is playable (Rise)
-    if (tracks[currentTrack].playable && audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play().catch(console.error);
-        setIsPlaying(true);
-        // Show Coming Soon modal when starting to play Rise
-        setShowComingSoonModal(true);
-      }
-    } else {
+    const track = tracks[currentTrack];
+    const audio = audioRef.current;
+    if (!track.playable || !audio) {
       setShowComingSoonModal(true);
+      return;
     }
+
+    if (!audio.paused) {
+      audio.pause();
+      return;
+    }
+
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+    }
+    isFadingRef.current = false;
+    audio.volume = BASE_VOLUME;
+
+    // Show Coming Soon modal when starting to play Rise
+    setShowComingSoonModal(true);
+    audio.play().catch((err) => {
+      console.error(err);
+    });
   };
 
   const handleTrackClick = (index: number) => {
     // If switching tracks, stop current playback
-    if (isPlaying && audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
       setProgress(0);
     }
     setCurrentTrack(index);
@@ -236,7 +274,7 @@ export default function FrequencySection() {
                 {tracks[currentTrack].title}
               </h3>
               <p className="text-gold/60 text-sm">
-                Eolles • {tracks[currentTrack].duration}
+                EOLLES • {tracks[currentTrack].duration}
                 {tracks[currentTrack].playable && <span className="ml-2 text-gold">• Teaser</span>}
               </p>
             </div>

@@ -118,7 +118,7 @@ export default function AltarSection() {
             {/* Book */}
             <Image
               src="/images/book-cover.jpg"
-              alt="The Crowded Bed & The Empty Throne by Eolles"
+              alt="The Crowded Bed & The Empty Throne by EOLLES"
               width={224}
               height={306}
               className="rounded-lg border border-gold/30 shadow-2xl shadow-gold/20 mx-auto w-48 md:w-56 h-auto"

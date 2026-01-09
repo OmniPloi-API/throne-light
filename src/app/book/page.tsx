@@ -9,7 +9,7 @@ import AltarSection from '@/components/book/AltarSection';
 import { Navigation, Footer } from '@/components/shared';
 
 export const metadata: Metadata = {
-  title: 'The Crowded Bed & The Empty Throne | By Eolles',
+  title: 'The Crowded Bed & The Empty Throne | By EOLLES',
   description: 'A prophetic scroll for women who are done competing for a man\'s attention and ready to reclaim their crown. Stop auditioning for a man who is only offering you rotation. It is time to reign.',
   openGraph: {
     title: 'The Crowded Bed & The Empty Throne',

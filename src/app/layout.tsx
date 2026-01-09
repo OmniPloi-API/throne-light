@@ -35,9 +35,9 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: "Throne Light Publishing | Awakening Royalty Through Revelation",
-  description: "The Crowded Bed & The Empty Throne by Eolles. A prophetic scroll for women who are done competing for a man's attention and ready to reclaim their crown.",
-  keywords: ["Eolles", "The Crowded Bed", "The Empty Throne", "Throne Light Publishing", "women empowerment", "sovereignty", "prophetic", "spiritual awakening"],
-  authors: [{ name: "Eolles" }],
+  description: "The Crowded Bed & The Empty Throne by EOLLES. A prophetic scroll for women who are done competing for a man's attention and ready to reclaim their crown.",
+  keywords: ["EOLLES", "The Crowded Bed", "The Empty Throne", "Throne Light Publishing", "women empowerment", "sovereignty", "prophetic", "spiritual awakening"],
+  authors: [{ name: "EOLLES" }],
   icons: {
     icon: '/images/favicon.ico',
   },

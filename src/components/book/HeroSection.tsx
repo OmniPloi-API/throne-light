@@ -104,7 +104,7 @@ export default function HeroSection() {
             {/* Book cover image */}
             <Image
               src="/images/book-cover.jpg"
-              alt="The Crowded Bed & The Empty Throne by Eolles"
+              alt="The Crowded Bed & The Empty Throne by EOLLES"
               width={320}
               height={437}
               className="rounded-lg shadow-2xl shadow-gold/20 border border-gold/20 w-64 md:w-80 h-auto"

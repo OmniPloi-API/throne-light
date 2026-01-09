@@ -637,7 +637,7 @@ function EventBadge({ type }: { type: string }) {
 
 // Helper to determine site/domain from page path
 function getSiteFromPath(path?: string): { label: string; bg: string; text: string } {
-  if (!path) return { label: 'Direct', bg: 'bg-gray-700/50', text: 'text-gray-300' };
+  if (!path) return { label: 'Referral', bg: 'bg-gray-700/50', text: 'text-gray-300' };
   const p = path.toLowerCase();
   if (p.includes('/reader')) return { label: 'Reader', bg: 'bg-purple-900/40', text: 'text-purple-300' };
   if (p.includes('/author')) return { label: 'Author', bg: 'bg-cyan-900/40', text: 'text-cyan-300' };

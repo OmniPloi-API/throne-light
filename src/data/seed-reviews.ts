@@ -58,8 +58,8 @@ const names = [
 ];
 
 // Review templates - no Oxford commas, authentic voices
-// Distribution: 70% single sentence, 30% longer (2-6 sentences)
-// Of the 30% longer: equal 2&3 sentence, equal 4&5 sentence, 5% are 6 sentences
+// Distribution: 70% short (1-2 sentences), 30% longer (3-7 sentences equally distributed)
+// Plus 1 super long 19-sentence review scattered in the middle
 const shortReviewTemplates = [
   // 5-star reviews (majority) - single sentence
   "This book changed my entire perspective on relationships.",
@@ -181,23 +181,43 @@ const fiveSentenceTemplates = [
   "I've stopped making excuses for men who don't deserve my energy. My relationship with myself has improved dramatically. My relationship with everyone else followed. It's like I finally learned to value myself. Everything else shifted from there.",
 ];
 
-// 6-sentence reviews (only 5% of the 30%)
+// 6-sentence reviews
 const sixSentenceTemplates = [
   "My whole friend group is reading it now. The conversations are incredible and we meet weekly to discuss it. We've all made changes in our lives because of this book. Boundaries we never thought we'd set are now firm. Relationships that were draining us are over. We're all becoming the women we were meant to be.",
   "Valuable perspective on relationships. The ending felt a bit abrupt but the journey to get there was worth it. I've gone back and reread certain chapters multiple times. The wisdom keeps revealing itself. I've started a journal just to process all the thoughts this book brings up. It's genuinely changing how I move through the world.",
+  "I was skeptical at first because I've read so many books like this. But Eolles is different. She doesn't sugarcoat anything. The truth is raw and sometimes uncomfortable. But by the end you feel stronger for having faced it. This is real talk from a real woman who has been through it.",
+  "My sister bought this for me after her own transformation. I didn't understand why she was so insistent until I started reading. Chapter by chapter my eyes opened wider. Things I had accepted as normal suddenly looked different. By the end I had a list of changes to make. I've already started on half of them.",
+  "Every woman in my office is reading this now. It started with me leaving it on my desk. One person borrowed it then another. Now we have our own little book club going. The discussions at lunch have been incredible. We're all growing together because of this book.",
+  "I've highlighted so many passages I might as well have highlighted the whole thing. Every page has something that makes you stop and think. The wisdom here is generational. It's the kind of book you'll pass down. Your daughters need to read this. Their daughters will too.",
+  "This book came into my life at exactly the right moment. I was about to make decisions that would have set me back years. Instead I chose differently. I chose myself for the first time. The person I am today thanks Eolles every day. Sometimes the right words at the right time change everything.",
+  "I read this on a flight and the woman next to me asked what I was reading. I was crying and laughing and she had to know. I gave her the title and she bought it before we landed. That's the power of this book. It spreads because it resonates. Truth always finds its way.",
 ];
 
-// One super long 14-sentence review for the middle
-const superLongReview = "I need to talk about this book because it genuinely altered the course of my life. I picked it up on a random Tuesday when I was at my lowest point. I had just discovered some things about my situation that broke me. I almost didn't buy it because I thought what can another book really do. But something made me grab it and I started reading that same night. By chapter three I was sobbing on my couch. By chapter five I was angry at myself for all the years I wasted. By the middle of the book I had a plan forming in my mind. I finished it at 4am and I couldn't sleep after because my whole brain was rewired. The next morning I made phone calls I'd been avoiding for months. Within two weeks my entire life looked different. I'm writing this review three months later and I am not the same woman. If you're on the fence about buying this please just do it. It might just save your life like it saved mine.";
+// 7-sentence reviews
+const sevenSentenceTemplates = [
+  "I want to be honest about something. I almost didn't buy this book because I thought I had my life figured out. I was wrong about so many things. Eolles showed me blind spots I didn't know I had. She did it with grace but also with firmness. I needed both. Now I recommend this to every woman I meet regardless of where they think they are in life.",
+  "Let me tell you what happened after I finished this book. I had a conversation with my partner that I'd been avoiding for two years. I set boundaries I never thought I'd have the courage to set. Some people in my life didn't like the new me. But the people who matter celebrated my growth. That's how you know who belongs in your life. This book gave me that clarity.",
+  "This is not a book you read once and forget. I'm on my fourth read and I still find new meaning. Each time I come back to it I'm in a different place in my life. And each time it speaks to exactly where I am. That's the mark of truly timeless wisdom. Eolles has created something that will outlive all of us. Future generations of women will thank her.",
+  "I bought this book after seeing it recommended everywhere. I thought it was just hype. By page 20 I understood why everyone was talking about it. By chapter 5 I was telling everyone I knew to get a copy. The transformation this book catalyzes is real and measurable. My friends have noticed the change. My family has noticed the change. I notice the change every time I look in the mirror.",
+  "The chapter on crowded beds versus empty thrones rewired my brain completely. I had never thought about relationships through that lens before. Once you see it you can't unsee it. It changed how I evaluate every relationship in my life. Not just romantic ones but friendships and family too. The throne metaphor applies everywhere. I am finally protecting my seat.",
+  "I was in a dark place when I found this book. I had lost myself in a relationship that demanded everything from me. Eolles helped me understand how I got there. More importantly she showed me the way out. Step by step I reclaimed my identity. Today I barely recognize the woman I was before. This book saved me from myself.",
+  "My mother asked me what changed in me recently. I handed her this book without saying a word. A week later she called me crying. She wished she had read something like this 30 years ago. But she also said it's never too late to reclaim your throne. That's three generations of women in my family now transformed. The ripple effects of this book are immeasurable.",
+  "I've recommended a lot of books in my life but none like this. This one I don't just recommend I insist on. I've bought copies for friends just to make sure they read it. The wisdom here is too important to miss. Every woman deserves to know her worth. Every woman deserves to understand her power. Eolles delivers both with precision and love.",
+];
+
+// One super long 19-sentence review for the middle
+const superLongReview = "I need to talk about this book because it genuinely altered the course of my life. I picked it up on a random Tuesday when I was at my lowest point. I had just discovered some things about my situation that broke me. I almost didn't buy it because I thought what can another book really do. But something made me grab it and I started reading that same night. By chapter three I was sobbing on my couch. By chapter five I was angry at myself for all the years I wasted. By the middle of the book I had a plan forming in my mind. I finished it at 4am and I couldn't sleep after because my whole brain was rewired. The next morning I made phone calls I'd been avoiding for months. I ended relationships that were draining my spirit. I started speaking up for myself in ways I never had before. The people who truly loved me celebrated the change. The ones who didn't showed themselves out. Within two weeks my entire life looked different. I found my voice and I found my throne. I'm writing this review three months later and I am not the same woman. If you're on the fence about buying this please just do it. It might just save your life like it saved mine.";
 
 // Combine all templates with type markers
+// Short = 1-2 sentences, Longer = 3-7 sentences
 const reviewTemplates = [
   ...shortReviewTemplates.map(t => ({ content: t, type: 'short' })),
-  ...twoSentenceTemplates.map(t => ({ content: t, type: '2sentence' })),
+  ...twoSentenceTemplates.map(t => ({ content: t, type: 'short' })), // 2-sentence counts as short
   ...threeSentenceTemplates.map(t => ({ content: t, type: '3sentence' })),
   ...fourSentenceTemplates.map(t => ({ content: t, type: '4sentence' })),
   ...fiveSentenceTemplates.map(t => ({ content: t, type: '5sentence' })),
   ...sixSentenceTemplates.map(t => ({ content: t, type: '6sentence' })),
+  ...sevenSentenceTemplates.map(t => ({ content: t, type: '7sentence' })),
 ];
 
 // Emoji review additions (for ~30%)
@@ -229,7 +249,7 @@ function randomDate(): string {
 
 // Generate seed reviews with proper rating distribution for 4.9 average
 // To get 4.9 average with 127 reviews: need ~115 five-stars and ~12 four-stars
-// Distribution: 70% short, 30% longer (of which: equal 2&3, equal 4&5, 5% 6-sentence)
+// Distribution: 70% short (1-2 sentences), 30% longer (3-7 sentences equally distributed)
 export function generateSeedReviews(): Review[] {
   const reviews: Review[] = [];
   
@@ -237,15 +257,15 @@ export function generateSeedReviews(): Review[] {
   const shuffledNames = [...names].sort(() => Math.random() - 0.5);
   
   // Create distribution of review lengths for 127 reviews
-  // 70% short (~89), 30% longer (~38)
-  // Of the 38 longer: 12 two-sentence, 12 three-sentence, 6 four-sentence, 6 five-sentence, 2 six-sentence
+  // 70% short (~88), 30% longer (~38) - 1 super long = 37 distributed across 3-7 sentences
+  // 37 longer reviews / 5 categories = ~7-8 each
   const reviewLengthAssignments: string[] = [];
-  for (let i = 0; i < 89; i++) reviewLengthAssignments.push('short');
-  for (let i = 0; i < 12; i++) reviewLengthAssignments.push('2sentence');
-  for (let i = 0; i < 12; i++) reviewLengthAssignments.push('3sentence');
-  for (let i = 0; i < 6; i++) reviewLengthAssignments.push('4sentence');
-  for (let i = 0; i < 6; i++) reviewLengthAssignments.push('5sentence');
-  for (let i = 0; i < 2; i++) reviewLengthAssignments.push('6sentence');
+  for (let i = 0; i < 88; i++) reviewLengthAssignments.push('short');
+  for (let i = 0; i < 8; i++) reviewLengthAssignments.push('3sentence');
+  for (let i = 0; i < 8; i++) reviewLengthAssignments.push('4sentence');
+  for (let i = 0; i < 8; i++) reviewLengthAssignments.push('5sentence');
+  for (let i = 0; i < 7; i++) reviewLengthAssignments.push('6sentence');
+  for (let i = 0; i < 7; i++) reviewLengthAssignments.push('7sentence');
   
   // Shuffle the assignments
   const shuffledAssignments = reviewLengthAssignments.sort(() => Math.random() - 0.5);
@@ -256,21 +276,21 @@ export function generateSeedReviews(): Review[] {
   // Track used templates per type to avoid duplicates
   const usedTemplates: Record<string, Set<number>> = {
     'short': new Set(),
-    '2sentence': new Set(),
     '3sentence': new Set(),
     '4sentence': new Set(),
     '5sentence': new Set(),
     '6sentence': new Set(),
+    '7sentence': new Set(),
   };
   
-  // Get templates by type
+  // Get templates by type - short includes both 1 and 2 sentence reviews
   const templatesByType: Record<string, string[]> = {
-    'short': shortReviewTemplates,
-    '2sentence': twoSentenceTemplates,
+    'short': [...shortReviewTemplates, ...twoSentenceTemplates],
     '3sentence': threeSentenceTemplates,
     '4sentence': fourSentenceTemplates,
     '5sentence': fiveSentenceTemplates,
     '6sentence': sixSentenceTemplates,
+    '7sentence': sevenSentenceTemplates,
   };
   
   for (let i = 0; i < 127; i++) {

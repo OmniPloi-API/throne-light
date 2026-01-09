@@ -77,7 +77,7 @@ export default function ArchiveSection() {
                       >
                         <Image
                           src="/images/book-cover.jpg"
-                          alt="The Crowded Bed & The Empty Throne by Eolles"
+                          alt="The Crowded Bed & The Empty Throne by EOLLES"
                           width={400}
                           height={546}
                           className="rounded-lg border border-gold/20 shadow-2xl shadow-gold/10 w-full h-auto"

@@ -15,7 +15,7 @@ interface FooterProps {
 
 // Native app download URLs (signed builds)
 const DOWNLOAD_URLS = {
-  mac: '/downloads/Throne Light Reader_1.0.1_universal.dmg',
+  mac: '/downloads/Throne Light Reader_1.0.2_universal.dmg',
   windows: '/downloads/ThroneLight-Reader-Windows.exe', // Coming soon
 };
 

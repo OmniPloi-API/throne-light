@@ -525,7 +525,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                             The Crowded Bed & The Empty Throne
                           </p>
                           <p style="color: #7a6b63; font-size: 14px; margin: 0 0 24px 0; text-align: center;">
-                            by Eolles
+                            by EOLLES
                           </p>
                           
                           <!-- Access Your Book Button -->

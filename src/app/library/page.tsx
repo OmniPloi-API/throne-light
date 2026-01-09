@@ -199,7 +199,7 @@ export default function LibraryPage() {
                 </div>
                 <div className="mt-2">
                   <h3 className="font-semibold text-sm truncate">The Crowded Bed & The Empty Throne</h3>
-                  <p className="text-gray-500 text-xs">C.B. Etienne-Tate</p>
+                  <p className="text-gray-500 text-xs">EOLLES</p>
                   <p className="text-gold text-sm font-medium mt-1">$29.99</p>
                 </div>
               </Link>

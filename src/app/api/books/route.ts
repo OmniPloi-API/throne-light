@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       id: generateId(),
       title,
       subtitle: subtitle || undefined,
-      author: author || 'Eolles',
+      author: author || 'EOLLES',
       description: description || undefined,
       coverImage,
       fileUrl,

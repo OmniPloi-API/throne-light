@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShoppingBag, ExternalLink, Star, Globe, ChevronDown } from 'lucide-react';
+import { ShoppingBag, ExternalLink, Star, Globe, ChevronDown, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCopyrightYear } from '@/lib/copyright';
 
@@ -37,6 +37,9 @@ const translations: Record<Language, {
   reviews: string;
   off: string;
   learnMore: string;
+  downloadApp: string;
+  downloadAppDesc: string;
+  downloadNow: string;
 }> = {
   en: {
     specialOffer: 'Special Offer',
@@ -56,6 +59,9 @@ const translations: Record<Language, {
     reviews: 'reviews',
     off: 'OFF',
     learnMore: 'Learn more about the book →',
+    downloadApp: 'Get the Throne Light Reader App',
+    downloadAppDesc: 'Read your book beautifully on Mac, Windows, iOS, or Android.',
+    downloadNow: 'Download App',
   },
   yo: {
     specialOffer: 'Ìpèsè Pàtàkì',
@@ -75,6 +81,9 @@ const translations: Record<Language, {
     reviews: 'àwọn àyẹ̀wò',
     off: 'DÍNWÓ',
     learnMore: 'Kọ́ síi nípa ìwé náà →',
+    downloadApp: 'Gba Ètò Throne Light Reader',
+    downloadAppDesc: 'Ka ìwé rẹ lẹ́wà lórí Mac, Windows, iOS, tàbí Android.',
+    downloadNow: 'Gba Ètò Náà',
   },
   ha: {
     specialOffer: 'Tayin Na Musamman',
@@ -94,6 +103,9 @@ const translations: Record<Language, {
     reviews: 'sharhi',
     off: 'RANGWAME',
     learnMore: 'Ƙara koyo game da littafin →',
+    downloadApp: 'Sami Manhajar Throne Light Reader',
+    downloadAppDesc: 'Karanta littafinku da kyau akan Mac, Windows, iOS, ko Android.',
+    downloadNow: 'Zazzage Manhaja',
   },
   fr: {
     specialOffer: 'Offre Spéciale',
@@ -113,6 +125,9 @@ const translations: Record<Language, {
     reviews: 'avis',
     off: 'DE RÉDUCTION',
     learnMore: 'En savoir plus sur le livre →',
+    downloadApp: 'Téléchargez l\'Application Throne Light Reader',
+    downloadAppDesc: 'Lisez votre livre magnifiquement sur Mac, Windows, iOS ou Android.',
+    downloadNow: 'Télécharger',
   },
   es: {
     specialOffer: 'Oferta Especial',
@@ -132,6 +147,9 @@ const translations: Record<Language, {
     reviews: 'reseñas',
     off: 'DE DESCUENTO',
     learnMore: 'Más información sobre el libro →',
+    downloadApp: 'Descarga la App Throne Light Reader',
+    downloadAppDesc: 'Lee tu libro hermosamente en Mac, Windows, iOS o Android.',
+    downloadNow: 'Descargar App',
   },
   pt: {
     specialOffer: 'Oferta Especial',
@@ -151,6 +169,9 @@ const translations: Record<Language, {
     reviews: 'avaliações',
     off: 'DE DESCONTO',
     learnMore: 'Saiba mais sobre o livro →',
+    downloadApp: 'Baixe o App Throne Light Reader',
+    downloadAppDesc: 'Leia seu livro lindamente no Mac, Windows, iOS ou Android.',
+    downloadNow: 'Baixar App',
   },
 };
 
@@ -392,7 +413,7 @@ export default function BridgePage() {
             >
               <Image
                 src="/images/book-cover.jpg"
-                alt="The Crowded Bed & The Empty Throne by Eolles"
+                alt="The Crowded Bed & The Empty Throne by EOLLES"
                 fill
                 className="object-cover group-hover:brightness-110 transition-all duration-300"
                 priority
@@ -516,6 +537,35 @@ export default function BridgePage() {
             <div>
               <p className="text-2xl font-bold text-gold">7-Day</p>
               <p className="text-sm text-gray-400">{t.moneyBack}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Download App Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mt-12 p-6 bg-gradient-to-br from-charcoal to-charcoal/50 border border-gold/20 rounded-xl"
+        >
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-16 h-16 bg-gold/10 rounded-xl flex items-center justify-center">
+                <Download className="w-8 h-8 text-gold" />
+              </div>
+            </div>
+            <div className="flex-grow text-center md:text-left">
+              <h3 className="text-xl font-semibold text-gold mb-1">{t.downloadApp}</h3>
+              <p className="text-gray-400 text-sm">{t.downloadAppDesc}</p>
+            </div>
+            <div className="flex-shrink-0">
+              <a
+                href="/download"
+                className="inline-flex items-center gap-2 bg-gold/20 hover:bg-gold/30 text-gold font-medium py-3 px-6 rounded-lg transition-all duration-300 border border-gold/30 hover:border-gold/50"
+              >
+                <Download className="w-4 h-4" />
+                {t.downloadNow}
+              </a>
             </div>
           </div>
         </motion.div>

@@ -87,6 +87,33 @@ export async function GET(request: NextRequest) {
   });
 }
 
+// PUT - Reseed reviews (admin action to regenerate seed data)
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    
+    if (action !== 'reseed') {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    }
+    
+    const db = readDb();
+    
+    // Clear existing reviews and reseed
+    db.reviews = seedReviews;
+    writeDb(db);
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Reviews reseeded successfully',
+      count: seedReviews.length
+    });
+  } catch (error) {
+    console.error('Error reseeding reviews:', error);
+    return NextResponse.json({ error: 'Failed to reseed reviews' }, { status: 500 });
+  }
+}
+
 // POST - Submit a new review (goes to pending)
 export async function POST(request: NextRequest) {
   try {
