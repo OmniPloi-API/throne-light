@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://thronelightpublishing.com';
 
     // Create Stripe checkout session
-    const session = await stripeClient.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -62,16 +62,22 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://thronelightpublishing.com'}/checkout/add-device/success?session_id={CHECKOUT_SESSION_ID}&license=${licenseCode}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://thronelightpublishing.com'}/checkout/add-device?license=${licenseCode}`,
-      customer_email: validation.email || undefined,
+      success_url: `${baseUrl}/checkout/add-device/success?session_id={CHECKOUT_SESSION_ID}&license=${licenseCode}`,
+      cancel_url: `${baseUrl}/checkout/add-device?license=${licenseCode}`,
       metadata: {
         type: 'add_device',
         license_code: licenseCode,
-        license_id: validation.licenseId,
-        current_max_devices: String(validation.maxDevices),
+        license_id: validation.licenseId || '',
+        current_max_devices: String(validation.maxDevices || 2),
       },
-    });
+    };
+    
+    // Only add customer_email if we have one
+    if (validation.email) {
+      sessionParams.customer_email = validation.email;
+    }
+    
+    const session = await stripeClient.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ 
       url: session.url,
