@@ -6,6 +6,8 @@ interface SupabaseDiagnostics {
   ordersTableExists: boolean;
   orderCount: number;
   error: string | null;
+  testInsertError: string | null;
+  tableColumns: string[] | null;
 }
 
 export async function GET() {
@@ -13,7 +15,9 @@ export async function GET() {
     connected: false, 
     ordersTableExists: false, 
     orderCount: 0, 
-    error: null 
+    error: null,
+    testInsertError: null,
+    tableColumns: null,
   };
 
   try {
@@ -22,6 +26,7 @@ export async function GET() {
     
     supabaseDiag.connected = true;
 
+    // Check if orders table exists and get count
     const { error, count } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true });
@@ -33,6 +38,35 @@ export async function GET() {
       supabaseDiag.ordersTableExists = true;
       supabaseDiag.orderCount = count || 0;
     }
+
+    // Test insert with a fake order to see what error we get
+    const testOrderId = 'test-debug-' + Date.now();
+    const maturityDate = new Date();
+    maturityDate.setDate(maturityDate.getDate() + 16);
+    
+    const { error: insertError } = await supabase
+      .from('orders')
+      .insert({
+        id: testOrderId,
+        stripe_session_id: 'test_session_' + Date.now(),
+        total_amount: 29.99,
+        commission_earned: 0,
+        customer_email: 'test@debug.com',
+        status: 'COMPLETED',
+        maturity_date: maturityDate.toISOString(),
+        is_matured: false,
+        refund_status: 'NONE',
+        created_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      supabaseDiag.testInsertError = `${insertError.message} (code: ${insertError.code}, details: ${insertError.details})`;
+    } else {
+      // Clean up test order
+      await supabase.from('orders').delete().eq('id', testOrderId);
+      supabaseDiag.testInsertError = 'SUCCESS - test order created and deleted';
+    }
+
   } catch (e) {
     supabaseDiag.error = e instanceof Error ? e.message : String(e);
   }
