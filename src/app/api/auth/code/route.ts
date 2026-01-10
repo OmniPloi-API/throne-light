@@ -38,8 +38,11 @@ export async function POST(req: NextRequest) {
     // Re-format to standard format: XXXX-XXXX-XXXX-XXXX
     const formattedCode = cleanCode.match(/.{1,4}/g)?.join('-') || cleanCode;
 
-    // Generate device fingerprint if not provided (for web)
-    const fingerprint = deviceFingerprint || `web-${uuidv4()}`;
+    // Get or create a persistent device fingerprint
+    // Priority: 1) Provided fingerprint, 2) Existing cookie, 3) Generate new
+    const existingCookieFingerprint = req.cookies.get('device_fingerprint')?.value;
+    const fingerprint = deviceFingerprint || existingCookieFingerprint || `web-${uuidv4()}`;
+    const isNewFingerprint = !deviceFingerprint && !existingCookieFingerprint;
 
     // Get IP and user agent
     const forwarded = req.headers.get('x-forwarded-for');
@@ -132,6 +135,18 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 30,
       path: '/',
     });
+
+    // Set persistent device fingerprint cookie (if new)
+    // This ensures the same device is recognized on future logins
+    if (isNewFingerprint) {
+      response.cookies.set('device_fingerprint', fingerprint, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365 * 2, // 2 years - device should persist long-term
+        path: '/',
+      });
+    }
 
     return response;
 
