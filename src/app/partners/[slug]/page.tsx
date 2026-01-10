@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShoppingBag, ExternalLink, Star, Globe, ChevronDown, Download } from 'lucide-react';
+import { ShoppingBag, ExternalLink, Star, Globe, ChevronDown, Download, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCopyrightYear } from '@/lib/copyright';
+
+// Audio constants
+const FADE_OUT_DURATION = 2;
+const LOOP_POINT_SECONDS = 134;
+const BASE_VOLUME = 0.3;
 
 // Language translations for the partner page
 type Language = 'en' | 'yo' | 'fr' | 'es' | 'pt' | 'ha';
@@ -219,6 +224,10 @@ export default function BridgePage() {
   const [reviewStats, setReviewStats] = useState<ReviewStats>({ totalReviews: 0, averageRating: 0 });
   const [language, setLanguage] = useState<Language>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isFadingRef = useRef(false);
   const t = translations[language];
 
   // Detect language on mount
@@ -226,6 +235,74 @@ export default function BridgePage() {
     const detected = detectLanguage();
     setLanguage(detected);
   }, []);
+
+  // Initialize and auto-play background music
+  useEffect(() => {
+    const audio = new Audio('/audio/EOLLES - THE KING HAS TO RISE.mp3');
+    audio.loop = false;
+    audio.volume = BASE_VOLUME;
+    audioRef.current = audio;
+
+    const fadeOutAndLoop = () => {
+      if (!audio || isFadingRef.current) return;
+      isFadingRef.current = true;
+
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
+
+      const fadeSteps = 20;
+      const fadeStepDuration = (FADE_OUT_DURATION * 1000) / fadeSteps;
+      const volumeStep = BASE_VOLUME / fadeSteps;
+      let currentStep = 0;
+
+      fadeIntervalRef.current = setInterval(() => {
+        currentStep++;
+        const newVolume = Math.max(0, BASE_VOLUME - (volumeStep * currentStep));
+        audio.volume = newVolume;
+
+        if (currentStep >= fadeSteps) {
+          if (fadeIntervalRef.current) {
+            clearInterval(fadeIntervalRef.current);
+          }
+          audio.currentTime = 0;
+          audio.volume = BASE_VOLUME;
+          isFadingRef.current = false;
+        }
+      }, fadeStepDuration);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!isFadingRef.current && audio.currentTime >= LOOP_POINT_SECONDS - FADE_OUT_DURATION) {
+        fadeOutAndLoop();
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+
+    // Auto-play on load (may be blocked by browser)
+    audio.play()
+      .then(() => setIsAudioPlaying(true))
+      .catch(() => setIsAudioPlaying(false));
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {});
+    }
+    setIsAudioPlaying(!isAudioPlaying);
+  };
 
   useEffect(() => {
     async function loadPartner() {
@@ -337,6 +414,33 @@ export default function BridgePage() {
 
   return (
     <div className="min-h-screen bg-onyx text-parchment">
+      {/* Audio Toggle - Fixed Bottom Right */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 1, duration: 0.5 }}
+        onClick={toggleAudio}
+        className={`fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-500 ${
+          isAudioPlaying
+            ? 'border-gold bg-gold/10 text-gold'
+            : 'border-parchment/20 bg-onyx/50 text-parchment/50 hover:border-gold/50 hover:text-gold/70'
+        }`}
+        aria-label={isAudioPlaying ? 'Mute music' : 'Play music'}
+      >
+        {isAudioPlaying && (
+          <motion.span
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute inset-0 rounded-full bg-gold/10"
+          />
+        )}
+        {isAudioPlaying ? (
+          <Volume2 className="w-5 h-5 relative z-10" />
+        ) : (
+          <VolumeX className="w-5 h-5 relative z-10" />
+        )}
+      </motion.button>
+
       {/* Language Selector - Fixed Top Right */}
       <div className="fixed top-4 right-4 z-50">
         <div className="relative">

@@ -176,8 +176,7 @@ export default function FrequencySection() {
     isFadingRef.current = false;
     audio.volume = BASE_VOLUME;
 
-    // Show Coming Soon modal when starting to play Rise
-    setShowComingSoonModal(true);
+    // Play the track (no modal for playable tracks)
     audio.play().catch((err) => {
       console.error(err);
     });
