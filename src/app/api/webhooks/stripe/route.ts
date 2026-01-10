@@ -4,9 +4,27 @@ import { getPartnerById as getPartnerByIdJson, readDb, writeDb, generateId } fro
 import { createOrder as createOrderSupabase, getPartnerById as getPartnerByIdSupabase } from '@/lib/db-supabase';
 import { hashPassword, generateSessionToken } from '@/lib/auth';
 import { createLicenseFromPurchase, sendReaderDownloadEmail } from '@/lib/reader-licensing';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+
+// Log webhook events for debugging
+async function logWebhookEvent(eventType: string, sessionId: string | null, amount: number, status: string, details: string) {
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from('webhook_logs').insert({
+      event_type: eventType,
+      stripe_session_id: sessionId,
+      amount,
+      status,
+      details,
+      created_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error('Failed to log webhook event:', e);
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -80,8 +98,9 @@ export async function POST(req: NextRequest) {
         const maturityDate = new Date();
         maturityDate.setDate(maturityDate.getDate() + 16);
         
-        console.log(`[WEBHOOK] Attempting to create order in Supabase for session: ${session.id}`);
-        console.log(`[WEBHOOK] Order data: amount=${totalAmount}, email=${customerEmail}, partnerId=${partnerId}`);
+        // Log the attempt
+        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'ATTEMPTING', 
+          `email=${customerEmail}, partnerId=${partnerId}, paymentIntent=${session.payment_intent}`);
         
         const order = await createOrderSupabase({
           partnerId: partnerId || undefined,
@@ -98,12 +117,17 @@ export async function POST(req: NextRequest) {
           refundStatus: 'NONE',
         });
         orderId = order.id;
-        console.log(`[WEBHOOK] SUCCESS: Order recorded in Supabase: id=${orderId}, $${totalAmount}, commission: $${commissionEarned}`);
+        
+        // Log success
+        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SUCCESS', 
+          `orderId=${orderId}, commission=${commissionEarned}`);
       } catch (dbError: unknown) {
         const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         const errorDetails = dbError && typeof dbError === 'object' && 'code' in dbError ? (dbError as { code: string }).code : 'unknown';
-        console.error(`[WEBHOOK] FAILED to create order: ${errorMessage} (code: ${errorDetails})`);
-        console.error(`[WEBHOOK] Full error:`, dbError);
+        
+        // Log failure
+        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'FAILED', 
+          `error=${errorMessage}, code=${errorDetails}`);
       }
       
       // DIGITAL PURCHASE: Create license and send download email
