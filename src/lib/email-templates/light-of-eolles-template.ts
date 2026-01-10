@@ -9,16 +9,21 @@ interface TemplateOptions {
   recipientEmail: string;
   firstName?: string;
   hasPurchased: boolean;
+  hasReviewed: boolean;      // Whether user has already submitted a review
+  purchasedDaysAgo?: number; // Days since purchase (for showing review CTA after 2 weeks)
   unsubscribeUrl: string;
 }
 
 export function generateLightOfEollesEmail(options: TemplateOptions): string {
-  const { letter, recipientEmail, firstName, hasPurchased, unsubscribeUrl } = options;
+  const { letter, recipientEmail, firstName, hasPurchased, hasReviewed, purchasedDaysAgo, unsubscribeUrl } = options;
   
   // Personalize greeting if we have a first name
   const greeting = firstName 
     ? letter.greeting.replace('Beloved', `Beloved ${firstName}`)
     : letter.greeting;
+  
+  // Show review CTA if: purchased, owned for 14+ days, and hasn't reviewed yet
+  const showReviewCta = hasPurchased && !hasReviewed && (purchasedDaysAgo ?? 0) >= 14;
   
   // Format body paragraphs - center aligned with charcoal text
   const bodyHtml = letter.body
@@ -29,6 +34,44 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
     `)
     .join('');
   
+  // Review CTA for purchasers who haven't reviewed yet (after 2 weeks)
+  const reviewCta = showReviewCta ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 40px;">
+      <tr>
+        <td style="padding: 32px; background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(129, 199, 132, 0.08) 100%); border: 1px solid rgba(76, 175, 80, 0.25); border-radius: 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center">
+                <span style="font-size: 32px; display: block; margin-bottom: 12px;">⭐</span>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <h3 style="color: #4caf50; font-size: 20px; margin: 0 0 12px 0; font-family: Georgia, 'Times New Roman', serif;">
+                  Share Your Experience
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <p style="color: #6a5b53; font-size: 14px; line-height: 1.7; margin: 0 0 20px 0; max-width: 400px; font-family: Georgia, 'Times New Roman', serif;">
+                  Your words help other readers discover their path. Would you take a moment to share how "The Crowded Bed & The Empty Throne" has impacted your journey?
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <a href="https://thronelightpublishing.com/book#reviews" style="display: inline-block; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: #fff; font-size: 14px; font-weight: bold; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-family: Georgia, 'Times New Roman', serif;">
+                  Leave a Review
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
   // Non-purchaser CTA section - updated for light theme
   const readerCta = !hasPurchased ? `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 40px;">
@@ -170,6 +213,9 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
                     <p style="color: #c9a961; font-size: 22px; margin: 0; font-family: Georgia, 'Times New Roman', serif;">
                       ${letter.signature}
                     </p>
+                    
+                    <!-- Review CTA for purchasers (after 2 weeks, if no review) -->
+                    ${reviewCta}
                     
                     <!-- Reader CTA for non-purchasers -->
                     ${readerCta}

@@ -20,7 +20,7 @@ function getResend(): Resend | null {
 
 const FROM_EMAIL = 'EOLLES <eolles@thronelightpublishing.com>';
 const CAMPAIGN_SLUG = 'light-of-eolles';
-const BI_WEEKLY_DAYS = 14;
+const EMAIL_FREQUENCY_DAYS = 5; // Changed from 14 to 5 days
 
 export interface SendEmailResult {
   success: boolean;
@@ -42,7 +42,9 @@ export async function sendLightOfEollesEmail(
   subscriberEmail: string,
   letterNumber: number,
   firstName?: string,
-  hasPurchased: boolean = false
+  hasPurchased: boolean = false,
+  hasReviewed: boolean = false,
+  purchasedDaysAgo?: number
 ): Promise<SendEmailResult> {
   try {
     const client = getResend();
@@ -65,6 +67,8 @@ export async function sendLightOfEollesEmail(
       recipientEmail: subscriberEmail,
       firstName,
       hasPurchased,
+      hasReviewed,
+      purchasedDaysAgo,
       unsubscribeUrl,
     });
 
@@ -92,10 +96,10 @@ export async function sendLightOfEollesEmail(
   }
 }
 
-// Calculate next send date (bi-weekly from now)
+// Calculate next send date (every 5 days from now)
 export function calculateNextSendDate(fromDate?: Date): Date {
   const date = fromDate || new Date();
-  date.setDate(date.getDate() + BI_WEEKLY_DAYS);
+  date.setDate(date.getDate() + EMAIL_FREQUENCY_DAYS);
   return date;
 }
 
@@ -110,6 +114,6 @@ export function getCampaignInfo() {
     slug: CAMPAIGN_SLUG,
     name: 'Light of EOLLES',
     totalEmails: getLetterCount(),
-    frequencyDays: BI_WEEKLY_DAYS,
+    frequencyDays: EMAIL_FREQUENCY_DAYS,
   };
 }

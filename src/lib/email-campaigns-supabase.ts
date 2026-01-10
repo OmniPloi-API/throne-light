@@ -117,19 +117,39 @@ export async function processScheduledEmails() {
 
       const nextEmailNumber = sub.current_email_number + 1;
 
-      const { data: libraryAccess } = await client
-        .from('library_access')
-        .select('id')
-        .eq('user_id', sub.subscriber_id)
+      // Check if user has purchased (via reader_licenses table by email)
+      const { data: licenses } = await client
+        .from('reader_licenses')
+        .select('id, created_at')
+        .eq('email', sub.email.toLowerCase())
         .limit(1);
 
-      const hasPurchased = libraryAccess && libraryAccess.length > 0;
+      const hasPurchased = licenses && licenses.length > 0;
+      
+      // Calculate days since purchase
+      let purchasedDaysAgo: number | undefined;
+      if (hasPurchased && licenses[0].created_at) {
+        const purchaseDate = new Date(licenses[0].created_at);
+        const now = new Date();
+        purchasedDaysAgo = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      // Check if user has already submitted a review (by email)
+      const { data: reviews } = await client
+        .from('Review')
+        .select('id')
+        .eq('email', sub.email.toLowerCase())
+        .limit(1);
+
+      const hasReviewed = reviews && reviews.length > 0;
 
       const emailResult = await sendLightOfEollesEmail(
         sub.email,
         nextEmailNumber,
         sub.first_name,
-        hasPurchased || false
+        hasPurchased || false,
+        hasReviewed || false,
+        purchasedDaysAgo
       );
 
       if (emailResult.success) {
