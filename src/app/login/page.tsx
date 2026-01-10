@@ -51,12 +51,19 @@ function LoginContent() {
     setDeviceLimitError(null);
 
     try {
+      // Read existing device fingerprint from cookie (if available)
+      const existingFingerprint = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('device_fingerprint='))
+        ?.split('=')[1];
+
       const res = await fetch('/api/auth/code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessCode: codeToSubmit,
           deviceType: 'web',
+          deviceFingerprint: existingFingerprint || undefined,
         }),
       });
 

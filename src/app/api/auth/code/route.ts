@@ -136,17 +136,16 @@ export async function POST(req: NextRequest) {
       path: '/',
     });
 
-    // Set persistent device fingerprint cookie (if new)
-    // This ensures the same device is recognized on future logins
-    if (isNewFingerprint) {
-      response.cookies.set('device_fingerprint', fingerprint, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 365 * 2, // 2 years - device should persist long-term
-        path: '/',
-      });
-    }
+    // Set persistent device fingerprint cookie
+    // NOT httpOnly so client can read and send it explicitly (helps with mobile browsers)
+    // Always set to ensure it persists, even if not new
+    response.cookies.set('device_fingerprint', fingerprint, {
+      httpOnly: false, // Allow client-side access for explicit passing
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365 * 2, // 2 years - device should persist long-term
+      path: '/',
+    });
 
     return response;
 
