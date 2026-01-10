@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   // First find the license
   let licenseQuery = supabase.from('reader_licenses').select('*');
   if (email) {
-    licenseQuery = licenseQuery.eq('customer_email', email);
+    licenseQuery = licenseQuery.eq('email', email);
   } else if (licenseCode) {
     licenseQuery = licenseQuery.eq('license_code', licenseCode);
   }
@@ -43,10 +43,10 @@ export async function GET(req: NextRequest) {
     return {
       license: {
         id: license.id,
-        email: license.customer_email,
+        email: license.email,
         code: license.license_code,
         maxDevices: license.max_devices,
-        status: license.status,
+        isActive: license.is_active,
       },
       activations: activations || [],
       activeCount: activations?.filter(a => a.is_active).length || 0,
