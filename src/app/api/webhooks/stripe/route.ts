@@ -80,6 +80,9 @@ export async function POST(req: NextRequest) {
         const maturityDate = new Date();
         maturityDate.setDate(maturityDate.getDate() + 16);
         
+        console.log(`[WEBHOOK] Attempting to create order in Supabase for session: ${session.id}`);
+        console.log(`[WEBHOOK] Order data: amount=${totalAmount}, email=${customerEmail}, partnerId=${partnerId}`);
+        
         const order = await createOrderSupabase({
           partnerId: partnerId || undefined,
           stripeSessionId: session.id,
@@ -95,10 +98,12 @@ export async function POST(req: NextRequest) {
           refundStatus: 'NONE',
         });
         orderId = order.id;
-        console.log(`Order recorded in Supabase: $${totalAmount}, commission: $${commissionEarned}, matures: ${maturityDate.toDateString()}`);
-      } catch (dbError) {
-        // Likely duplicate - Stripe may send webhook twice
-        console.log('Order may already exist (duplicate webhook)', dbError);
+        console.log(`[WEBHOOK] SUCCESS: Order recorded in Supabase: id=${orderId}, $${totalAmount}, commission: $${commissionEarned}`);
+      } catch (dbError: unknown) {
+        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
+        const errorDetails = dbError && typeof dbError === 'object' && 'code' in dbError ? (dbError as { code: string }).code : 'unknown';
+        console.error(`[WEBHOOK] FAILED to create order: ${errorMessage} (code: ${errorDetails})`);
+        console.error(`[WEBHOOK] Full error:`, dbError);
       }
       
       // DIGITAL PURCHASE: Create license and send download email
