@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       .from('device_activations')
       .select('*')
       .eq('license_id', license.id)
-      .order('created_at', { ascending: false });
+      .order('activated_at', { ascending: false });
 
     return {
       license: {
