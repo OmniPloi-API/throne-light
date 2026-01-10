@@ -39,33 +39,34 @@ export async function GET() {
       supabaseDiag.orderCount = count || 0;
     }
 
-    // Test insert with a fake order to see what error we get
-    const { v4: uuidv4 } = await import('uuid');
-    const testOrderId = uuidv4();
-    const maturityDate = new Date();
-    maturityDate.setDate(maturityDate.getDate() + 16);
+    // Test insert using the EXACT same flow as the webhook's createOrder function
+    const { createOrder } = await import('@/lib/db-supabase');
     
-    const { error: insertError } = await supabase
-      .from('orders')
-      .insert({
-        id: testOrderId,
-        stripe_session_id: 'test_session_' + Date.now(),
-        total_amount: 29.99,
-        commission_earned: 0,
-        customer_email: 'test@debug.com',
+    try {
+      const maturityDate = new Date();
+      maturityDate.setDate(maturityDate.getDate() + 16);
+      
+      // This mimics exactly what the webhook passes
+      const order = await createOrder({
+        partnerId: undefined, // Direct sale, no partner
+        stripeSessionId: 'test_webhook_' + Date.now(),
+        stripeChargeId: 'pi_test_' + Date.now(),
+        stripePaymentIntentId: 'pi_test_' + Date.now(),
+        totalAmount: 29.99,
+        commissionEarned: 0,
+        customerEmail: 'test@debug.com',
+        customerName: 'Debug Test',
         status: 'COMPLETED',
-        maturity_date: maturityDate.toISOString(),
-        is_matured: false,
-        refund_status: 'NONE',
-        created_at: new Date().toISOString(),
+        maturityDate: maturityDate.toISOString(),
+        isMatured: false,
+        refundStatus: 'NONE',
       });
-
-    if (insertError) {
-      supabaseDiag.testInsertError = `${insertError.message} (code: ${insertError.code}, details: ${insertError.details})`;
-    } else {
+      
       // Clean up test order
-      await supabase.from('orders').delete().eq('id', testOrderId);
-      supabaseDiag.testInsertError = 'SUCCESS - test order created and deleted';
+      await supabase.from('orders').delete().eq('id', order.id);
+      supabaseDiag.testInsertError = `SUCCESS via createOrder - id: ${order.id}, amount: ${order.totalAmount}`;
+    } catch (e) {
+      supabaseDiag.testInsertError = `createOrder FAILED: ${e instanceof Error ? e.message : String(e)}`;
     }
 
   } catch (e) {
