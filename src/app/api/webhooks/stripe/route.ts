@@ -95,36 +95,46 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Create order record in Supabase (idempotent via stripeSessionId unique constraint)
+      // Create order record in Supabase with idempotency check
       let orderId: string | undefined;
       try {
-        // Calculate maturity date (16 days from now)
-        const maturityDate = new Date();
-        maturityDate.setDate(maturityDate.getDate() + 16);
+        // Check if order already exists for this session (idempotency)
+        const { getOrderByStripeSession } = await import('@/lib/db-supabase');
+        const existingOrder = await getOrderByStripeSession(session.id);
         
-        // Log the attempt (non-blocking)
-        logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'ATTEMPTING', 
-          `email=${customerEmail}, partnerId=${partnerId}, paymentIntent=${session.payment_intent}`);
-        
-        const order = await createOrderSupabase({
-          partnerId: partnerId || undefined,
-          stripeSessionId: session.id,
-          stripeChargeId: session.payment_intent as string || undefined,
-          stripePaymentIntentId: session.payment_intent as string || undefined,
-          totalAmount,
-          commissionEarned,
-          customerEmail,
-          customerName: session.customer_details?.name || undefined,
-          status: 'COMPLETED',
-          maturityDate: maturityDate.toISOString(),
-          isMatured: false,
-          refundStatus: 'NONE',
-        });
-        orderId = order.id;
-        
-        // Log success (non-blocking)
-        logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SUCCESS', 
-          `orderId=${orderId}, commission=${commissionEarned}`);
+        if (existingOrder) {
+          logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SKIPPED', 
+            `Order already exists: ${existingOrder.id}`);
+          orderId = existingOrder.id;
+        } else {
+          // Calculate maturity date (16 days from now)
+          const maturityDate = new Date();
+          maturityDate.setDate(maturityDate.getDate() + 16);
+          
+          // Log the attempt (non-blocking)
+          logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'ATTEMPTING', 
+            `email=${customerEmail}, partnerId=${partnerId}, paymentIntent=${session.payment_intent}`);
+          
+          const order = await createOrderSupabase({
+            partnerId: partnerId || undefined,
+            stripeSessionId: session.id,
+            stripeChargeId: session.payment_intent as string || undefined,
+            stripePaymentIntentId: session.payment_intent as string || undefined,
+            totalAmount,
+            commissionEarned,
+            customerEmail,
+            customerName: session.customer_details?.name || undefined,
+            status: 'COMPLETED',
+            maturityDate: maturityDate.toISOString(),
+            isMatured: false,
+            refundStatus: 'NONE',
+          });
+          orderId = order.id;
+          
+          // Log success (non-blocking)
+          logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SUCCESS', 
+            `orderId=${orderId}, commission=${commissionEarned}`);
+        }
       } catch (dbError: unknown) {
         const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         const errorDetails = dbError && typeof dbError === 'object' && 'code' in dbError ? (dbError as { code: string }).code : 'unknown';
