@@ -55,6 +55,9 @@ export default function LibraryPage() {
         }
         const authData = await authRes.json();
         setUser(authData.user);
+        if (authData?.user?.email) {
+          localStorage.setItem('user-email', authData.user.email);
+        }
 
         // Load library
         const libRes = await fetch('/api/library');
@@ -210,7 +213,7 @@ export default function LibraryPage() {
             {books.map((book) => (
               <Link
                 key={book.id}
-                href={`/read/${book.id}`}
+                href={book.id === 'crowded-bed-empty-throne' ? '/reader' : `/read/${book.id}`}
                 className="group"
               >
                 <div className="aspect-[3/4] relative bg-[#1a1a1a] rounded-lg overflow-hidden shadow-lg group-hover:shadow-gold/20 transition-all duration-300 group-hover:scale-[1.02]">

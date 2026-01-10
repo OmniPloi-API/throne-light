@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const supabase = getSupabaseAdmin();
 
@@ -123,7 +127,10 @@ export async function GET() {
 }
 
 // Manually add a location (for testing or manual entries)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { type, city, country, countryCode, latitude, longitude, amount, userId, email } = body;

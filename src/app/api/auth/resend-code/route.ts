@@ -6,7 +6,14 @@ import { Resend } from 'resend';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResend(): Resend | null {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 function getSupabase() {
   if (supabaseUrl && supabaseServiceKey) {
@@ -26,6 +33,11 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabase();
     if (!supabase) {
       return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+    }
+
+    const emailClient = getResend();
+    if (!emailClient) {
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 503 });
     }
 
     // Find license(s) for this email
@@ -52,7 +64,7 @@ export async function POST(req: NextRequest) {
     // Send email with the access code
     const magicLink = `https://thronelightpublishing.com/login?code=${license.license_code}`;
 
-    await resend.emails.send({
+    await emailClient.emails.send({
       from: 'Throne Light Publishing <books@thronelightpublishing.com>',
       to: email.toLowerCase(),
       subject: 'Your Throne Light Reader Access Code',

@@ -26,6 +26,12 @@ export default function ReaderPage() {
   const router = useRouter();
   const bookId = params.bookId as string;
 
+  useEffect(() => {
+    if (bookId === 'crowded-bed-empty-throne') {
+      router.replace('/reader');
+    }
+  }, [bookId, router]);
+
   const [bookContent, setBookContent] = useState<BookContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +45,9 @@ export default function ReaderPage() {
   useEffect(() => {
     async function fetchBookContent() {
       try {
+        if (bookId === 'crowded-bed-empty-throne') {
+          return;
+        }
         const res = await fetch(`/api/books/${bookId}/content`);
         
         if (res.status === 401) {

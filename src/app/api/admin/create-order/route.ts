@@ -1,8 +1,12 @@
 // Admin endpoint to manually create an order (for testing/fixing missing orders)
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrder } from '@/lib/db-supabase';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
 export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     

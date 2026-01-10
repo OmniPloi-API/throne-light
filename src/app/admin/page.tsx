@@ -220,13 +220,14 @@ export default function AdminPage() {
     setTimeout(() => setCopiedSlug(null), 2000);
   }
 
-  // Calculate totals from local data if stats API fails
-  // Use real-time calculation instead of potentially stale stats API
+  // Calculate totals from Supabase orders (source of truth for revenue)
+  // Legacy stats API only has JSON data which may be empty
   const totalVisits = events.filter(e => e.type === 'PAGE_VIEW').length;
   const amazonClicks = stats?.totalAmazonClicks ?? events.filter(e => e.type === 'CLICK_AMAZON').length;
   const directClicks = stats?.totalDirectClicks ?? events.filter(e => e.type === 'CLICK_DIRECT').length;
-  const totalRevenue = stats?.totalDirectRevenue ?? orders.reduce((s, o) => s + o.totalAmount, 0);
-  const totalCommission = stats?.totalCommissionOwed ?? orders.reduce((s, o) => s + o.commissionEarned, 0);
+  // Always calculate revenue from Supabase orders (not legacy JSON stats)
+  const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalCommission = orders.reduce((s, o) => s + o.commissionEarned, 0);
   const retentionRate = totalVisits > 0 ? (directClicks / totalVisits * 100) : 0;
   const bounceRate = totalVisits > 0 ? (amazonClicks / totalVisits * 100) : 0;
 
@@ -341,7 +342,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard 
               icon={<DollarSign className="text-green-400" />} 
-              label="Total Revenue" 
+              label="Gross Revenue" 
               value={`$${totalRevenue.toFixed(2)}`}
               sublabel="Verified via Stripe"
               color="green"
@@ -1528,7 +1529,7 @@ function RevenueBreakdownModal({ orders, partners, totalRevenue, onClose }: {
         
         <div className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
           <p className="text-3xl font-bold text-green-400 text-center">${totalRevenue.toFixed(2)}</p>
-          <p className="text-gray-400 text-center text-sm mt-1">Total Revenue (Verified via Stripe)</p>
+          <p className="text-gray-400 text-center text-sm mt-1">Gross Revenue (Verified via Stripe)</p>
         </div>
         
         <div className="space-y-3">

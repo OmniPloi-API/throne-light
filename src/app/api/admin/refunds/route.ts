@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
 import Stripe from 'stripe';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 // Get all pending refund requests
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const db = readDb();
     
@@ -34,6 +38,9 @@ export async function GET() {
 
 // Approve or reject a refund
 export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const { orderId, action, reason } = await req.json();
     

@@ -1,8 +1,12 @@
 // Admin endpoint to clean up duplicate orders
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const supabase = getSupabaseAdmin();
     

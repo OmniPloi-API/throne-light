@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResend(): Resend | null {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +19,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and city are required' }, { status: 400 });
     }
 
+    const emailClient = getResend();
+    if (!emailClient) {
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 503 });
+    }
+
     // Send confirmation email to the user
-    const confirmationEmail = await resend.emails.send({
+    const confirmationEmail = await emailClient.emails.send({
       from: 'EOLLES <eolles@thronelightpublishing.com>',
       to: email,
       subject: `You're on the list for ${city}`,
@@ -81,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // If this is a promoter submission, also notify the admin
     if (type === 'promoter' && promoterData) {
-      await resend.emails.send({
+      await emailClient.emails.send({
         from: 'EOLLES System <system@thronelightpublishing.com>',
         to: ['developer@thronelightpublishing.com', 'info@thronelightpublishing.com'],
         subject: `New Promoter Application: ${city}`,

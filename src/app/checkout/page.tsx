@@ -22,8 +22,9 @@ function CheckoutLoading() {
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const partnerId = searchParams.get('partner');
-  const couponCode = searchParams.get('code');
+  const partnerId = searchParams.get('partner') || searchParams.get('partnerId');
+  const couponCode = searchParams.get('code') || searchParams.get('couponCode');
+  const bookId = searchParams.get('book') || searchParams.get('bookId');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +63,7 @@ function CheckoutContent() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partnerId, couponCode }),
+        body: JSON.stringify({ partnerId, couponCode, bookId }),
       });
       
       const data = await res.json();

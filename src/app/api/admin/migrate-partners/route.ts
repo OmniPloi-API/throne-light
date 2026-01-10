@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
 /**
  * One-time migration to update existing partners with new Stripe Connect fields
  * POST /api/admin/migrate-partners
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const db = readDb();
     let updatedCount = 0;
@@ -67,7 +71,10 @@ export async function POST() {
  * Check migration status
  * GET /api/admin/migrate-partners
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const db = readDb();
     

@@ -44,6 +44,31 @@ export default function ReaderHomePage() {
     }
   }, []);
 
+  // Prefer server truth for purchases (license/session auth)
+  useEffect(() => {
+    if (!mounted) return;
+    let cancelled = false;
+
+    async function fetchLibraryPurchases() {
+      try {
+        const res = await fetch('/api/library');
+        if (!res.ok) return;
+        const books = await res.json();
+        const ids = Array.isArray(books) ? books.map((b: any) => b?.id).filter(Boolean) : [];
+        if (cancelled) return;
+        setPurchasedBookIds(ids);
+        localStorage.setItem('reader-purchased-books', JSON.stringify(ids));
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchLibraryPurchases();
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted]);
+
   // Save preferences
   useEffect(() => {
     if (mounted) {

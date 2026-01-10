@@ -6,7 +6,14 @@ import { Resend } from 'resend';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResend(): Resend | null {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 const DEVELOPER_EMAIL = 'ampledevelopment@gmail.com';
 const MAX_DEVICES = 2;
@@ -368,7 +375,9 @@ async function sendSupportClaimNotification(
   message: string
 ): Promise<void> {
   try {
-    await resend.emails.send({
+    const client = getResend();
+    if (!client) return;
+    await client.emails.send({
       from: 'Throne Light Support <support@thronelightpublishing.com>',
       to: DEVELOPER_EMAIL,
       subject: `[SUPPORT CLAIM] ${claimNumber} - ${claimType}`,
@@ -421,11 +430,15 @@ export async function sendReaderDownloadEmail(
   licenseCode: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabase();
+  const client = getResend();
+  if (!client) {
+    return { success: false, error: 'Email service not configured' };
+  }
   
   try {
     const firstName = customerName?.split(' ')[0] || 'Valued Customer';
     
-    const { data: emailResult, error: sendError } = await resend.emails.send({
+    const { data: emailResult, error: sendError } = await client.emails.send({
       from: 'Throne Light Publishing <reader@thronelightpublishing.com>',
       to: email,
       subject: '✨ Your Throne Light Reader Access',
@@ -515,7 +528,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                         <td align="center">
                           <a href="https://thronelightpublishing.com/reader" style="text-decoration: none; display: block;">
                             <!-- Book Cover Image -->
-                            <img src="https://thronelightpublishing.com/images/CBET-book-cover.png" 
+                            <img src="https://thronelightpublishing.com/images/book-cover.jpg" 
                                  alt="The Crowded Bed & The Empty Throne" 
                                  width="200" 
                                  style="display: block; margin: 0 auto 24px auto; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
@@ -529,7 +542,7 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                           </p>
                           
                           <!-- Magic Link - Auto-fills access code -->
-                          <a href="https://thronelightpublishing.com/login?code=${licenseCode}" 
+                          <a href="https://thronelightpublishing.com/login?code=${licenseCode}&redirect=/reader" 
                              style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 18px; font-weight: bold; text-decoration: none; padding: 18px 48px; border-radius: 12px; box-shadow: 0 4px 16px rgba(201, 169, 97, 0.4);">
                             📖 Open Reader Instantly
                           </a>
@@ -571,6 +584,10 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                             <p style="color: #9a8478; font-size: 12px; margin: 16px 0 0 0;">
                               Valid for 2 devices • Keep this code safe
                             </p>
+                            <a href="https://thronelightpublishing.com/code/${licenseCode}" 
+                               style="display: inline-block; margin-top: 16px; background: transparent; border: 1px solid #c9a961; color: #c9a961; font-size: 12px; text-decoration: none; padding: 8px 16px; border-radius: 6px;">
+                              📋 Tap to Copy Code
+                            </a>
                           </div>
                         </td>
                       </tr>
@@ -747,6 +764,10 @@ export async function generateDailySalesReport(): Promise<{
 
 export async function sendDailySalesReportEmail(): Promise<{ success: boolean; error?: string }> {
   try {
+    const client = getResend();
+    if (!client) {
+      return { success: false, error: 'Email service not configured' };
+    }
     const { success, report, error } = await generateDailySalesReport();
     
     if (!success || !report) {
@@ -764,7 +785,7 @@ export async function sendDailySalesReportEmail(): Promise<{ success: boolean; e
         `).join('')
       : '<tr><td colspan="4" style="padding: 24px; text-align: center; color: #999;">No sales recorded</td></tr>';
 
-    await resend.emails.send({
+    await client.emails.send({
       from: 'Throne Light Reports <reports@thronelightpublishing.com>',
       to: DEVELOPER_EMAIL,
       subject: `📊 Daily Sales Report - ${report.date} | $${report.totalRevenue.toFixed(2)} from ${report.totalSales} sales`,

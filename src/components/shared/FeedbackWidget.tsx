@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquarePlus, Camera, Mic, MicOff, X, Send, Loader2, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { usePathname } from 'next/navigation';
 
 interface FeedbackWidgetProps {
   enabled?: boolean;
 }
 
 export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [partnerName, setPartnerName] = useState('');
@@ -25,21 +27,39 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
 
-  // Check if widget should be visible
-  useEffect(() => {
-    async function checkVisibility() {
-      try {
-        const res = await fetch('/api/feedback/settings');
-        if (res.ok) {
-          const data = await res.json();
-          setIsVisible(data.feedbackWidgetEnabled);
-        }
-      } catch (e) {
-        // Default to visible if API fails
+  const checkVisibility = useCallback(async () => {
+    try {
+      const res = await fetch('/api/feedback/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setIsVisible(!!data.feedbackWidgetEnabled);
       }
+    } catch {
+      // ignore
     }
-    checkVisibility();
   }, []);
+
+  useEffect(() => {
+    checkVisibility();
+  }, [checkVisibility, pathname]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      checkVisibility();
+    };
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkVisibility();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [checkVisibility]);
 
   // Initialize speech recognition
   useEffect(() => {

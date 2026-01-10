@@ -1,8 +1,12 @@
 // Admin endpoint to convert all PENDING_SALE events to SALE
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   try {
     const supabase = getSupabaseAdmin();
     

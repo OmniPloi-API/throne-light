@@ -1,9 +1,12 @@
 // Admin endpoint to manage device activations
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { requireAdminAuth } from '@/lib/adminAuth';
 
 // GET: View device activations for a license (by email or license code)
 export async function GET(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
   const { searchParams } = new URL(req.url);
   const email = searchParams.get('email');
   const licenseCode = searchParams.get('code');
@@ -59,6 +62,9 @@ export async function GET(req: NextRequest) {
 
 // DELETE: Clear device activations for a license
 export async function DELETE(req: NextRequest) {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   const { searchParams } = new URL(req.url);
   const licenseId = searchParams.get('licenseId');
   const deviceId = searchParams.get('deviceId'); // Optional: clear specific device
