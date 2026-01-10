@@ -9,11 +9,15 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
-// Log webhook events for debugging
-async function logWebhookEvent(eventType: string, sessionId: string | null, amount: number, status: string, details: string) {
+// Log webhook events for debugging - non-blocking, fire-and-forget
+function logWebhookEvent(eventType: string, sessionId: string | null, amount: number, status: string, details: string) {
+  // Always log to console for Railway logs
+  console.log(`[WEBHOOK] ${status}: ${eventType} - amount=${amount}, ${details}`);
+  
+  // Fire and forget to database - don't block the main flow
   try {
     const supabase = getSupabaseAdmin();
-    await supabase.from('webhook_logs').insert({
+    supabase.from('webhook_logs').insert({
       event_type: eventType,
       stripe_session_id: sessionId,
       amount,
@@ -21,8 +25,8 @@ async function logWebhookEvent(eventType: string, sessionId: string | null, amou
       details,
       created_at: new Date().toISOString(),
     });
-  } catch (e) {
-    console.error('Failed to log webhook event:', e);
+  } catch {
+    // Silently ignore - we already logged to console
   }
 }
 
@@ -98,8 +102,8 @@ export async function POST(req: NextRequest) {
         const maturityDate = new Date();
         maturityDate.setDate(maturityDate.getDate() + 16);
         
-        // Log the attempt
-        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'ATTEMPTING', 
+        // Log the attempt (non-blocking)
+        logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'ATTEMPTING', 
           `email=${customerEmail}, partnerId=${partnerId}, paymentIntent=${session.payment_intent}`);
         
         const order = await createOrderSupabase({
@@ -118,15 +122,15 @@ export async function POST(req: NextRequest) {
         });
         orderId = order.id;
         
-        // Log success
-        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SUCCESS', 
+        // Log success (non-blocking)
+        logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'SUCCESS', 
           `orderId=${orderId}, commission=${commissionEarned}`);
       } catch (dbError: unknown) {
         const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         const errorDetails = dbError && typeof dbError === 'object' && 'code' in dbError ? (dbError as { code: string }).code : 'unknown';
         
-        // Log failure
-        await logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'FAILED', 
+        // Log failure (non-blocking)
+        logWebhookEvent('checkout.session.completed', session.id, totalAmount, 'FAILED', 
           `error=${errorMessage}, code=${errorDetails}`);
       }
       
