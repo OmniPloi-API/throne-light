@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createOrder, getPartnerById, readDb, writeDb, generateId } from '@/lib/db';
+import { getPartnerById as getPartnerByIdJson, readDb, writeDb, generateId } from '@/lib/db';
+import { createOrder as createOrderSupabase, getPartnerById as getPartnerByIdSupabase } from '@/lib/db-supabase';
 import { hashPassword, generateSessionToken } from '@/lib/auth';
 import { createLicenseFromPurchase, sendReaderDownloadEmail } from '@/lib/reader-licensing';
 
@@ -39,7 +40,9 @@ export async function POST(req: NextRequest) {
       let commissionEarned = 0;
       
       if (partnerId) {
-        const partner = getPartnerById(partnerId);
+        // Try Supabase first, fallback to JSON
+        let partner = await getPartnerByIdSupabase(partnerId);
+        if (!partner) partner = getPartnerByIdJson(partnerId) || null;
         if (partner) {
           commissionEarned = (totalAmount * partner.commissionPercent) / 100;
           
@@ -70,14 +73,14 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Create order record (idempotent via stripeSessionId unique constraint)
+      // Create order record in Supabase (idempotent via stripeSessionId unique constraint)
       let orderId: string | undefined;
       try {
         // Calculate maturity date (16 days from now)
         const maturityDate = new Date();
         maturityDate.setDate(maturityDate.getDate() + 16);
         
-        const order = createOrder({
+        const order = await createOrderSupabase({
           partnerId: partnerId || undefined,
           stripeSessionId: session.id,
           stripeChargeId: session.payment_intent as string || undefined,
@@ -92,15 +95,17 @@ export async function POST(req: NextRequest) {
           refundStatus: 'NONE',
         });
         orderId = order.id;
-        console.log(`Order recorded: $${totalAmount}, commission: $${commissionEarned}, matures: ${maturityDate.toDateString()}`);
+        console.log(`Order recorded in Supabase: $${totalAmount}, commission: $${commissionEarned}, matures: ${maturityDate.toDateString()}`);
       } catch (dbError) {
         // Likely duplicate - Stripe may send webhook twice
-        console.log('Order may already exist (duplicate webhook)');
+        console.log('Order may already exist (duplicate webhook)', dbError);
       }
       
-      // READER PURCHASE: Create license and send download email
+      // DIGITAL PURCHASE: Create license and send download email
+      // Handle both 'reader' and 'digital' product types, or any purchase with an email
       const productType = session.metadata?.product_type;
-      if (productType === 'reader' && customerEmail) {
+      const isDigitalPurchase = productType === 'reader' || productType === 'digital' || (!productType && customerEmail);
+      if (isDigitalPurchase && customerEmail) {
         const licenseResult = await createLicenseFromPurchase(
           customerEmail,
           session.customer_details?.name || null,
