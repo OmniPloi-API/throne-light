@@ -40,7 +40,8 @@ export async function GET() {
     }
 
     // Test insert with a fake order to see what error we get
-    const testOrderId = 'test-debug-' + Date.now();
+    const { v4: uuidv4 } = await import('uuid');
+    const testOrderId = uuidv4();
     const maturityDate = new Date();
     maturityDate.setDate(maturityDate.getDate() + 16);
     
