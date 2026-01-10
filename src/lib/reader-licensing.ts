@@ -528,11 +528,14 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                             by EOLLES
                           </p>
                           
-                          <!-- Access Your Book Button -->
-                          <a href="https://thronelightpublishing.com/reader" 
+                          <!-- Magic Link - Auto-fills access code -->
+                          <a href="https://thronelightpublishing.com/login?code=${licenseCode}" 
                              style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); color: #fff; font-size: 18px; font-weight: bold; text-decoration: none; padding: 18px 48px; border-radius: 12px; box-shadow: 0 4px 16px rgba(201, 169, 97, 0.4);">
-                            📖 Access Your Book
+                            📖 Open Reader Instantly
                           </a>
+                          <p style="color: #9a8478; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
+                            Click above to auto-activate your device
+                          </p>
                         </td>
                       </tr>
                     </table>
@@ -579,9 +582,8 @@ function generateReaderDownloadEmailHtml(firstName: string, licenseCode: string)
                         How to Access Your Book
                       </p>
                       <p style="color: #7a6b63; font-size: 14px; line-height: 1.8; margin: 0; text-align: center;">
-                        1. Click "Access Your Book" above or download the Throne Light Reader app<br>
-                        2. Enter your unique access code when prompted<br>
-                        3. Begin reading immediately on any device
+                        <strong>Option 1:</strong> Click "Open Reader Instantly" above - it auto-enters your code<br><br>
+                        <strong>Option 2:</strong> Download the Throne Light Reader app and enter your access code manually
                       </p>
                     </div>
                     
