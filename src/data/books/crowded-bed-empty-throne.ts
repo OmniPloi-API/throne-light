@@ -31,19 +31,19 @@ export interface BookData {
 export const bookData: BookData = {
   id: 'crowded-bed-empty-throne',
   title: 'The Crowded Bed & The Empty Throne',
-  author: 'Eolles',
+  author: 'EOLLES',
   subtitle: 'Why so many women are in his bed, but no one reigns beside him',
   
   copyright: [
     `THE CROWDED BED & THE EMPTY THRONE`,
-    `© 2025 Eolles. All rights reserved.`,
+    `© 2025 EOLLES. All rights reserved.`,
     `No part of this book may be reproduced, stored in a retrieval system, or transmitted in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without prior written permission from the publisher, except for brief quotations in reviews, articles, or scholarly work.`,
     `Print: ISBN-979-8-9936122-0-1`,
     `eBook: ISBN-979-8-9936122-1-8`,
     `First Edition November 2025`,
     `Published by Throne Light Publishing LLC, USA`,
-    `Cover Design: Eolles`,
-    `Interior Design & Typesetting: Eolles`,
+    `Cover Design: EOLLES`,
+    `Interior Design & Typesetting: EOLLES`,
     `DISCLAIMER: This book provides spiritual and practical reflections intended for personal growth. It is not a substitute for professional counseling, legal, medical, or safety services. If you are in danger, contact local emergency services or the resources listed in the appendix.`,
   ],
 
