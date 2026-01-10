@@ -341,7 +341,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard 
               icon={<DollarSign className="text-green-400" />} 
-              label="Direct Revenue" 
+              label="Total Revenue" 
               value={`$${totalRevenue.toFixed(2)}`}
               sublabel="Verified via Stripe"
               color="green"
@@ -1522,7 +1522,7 @@ function RevenueBreakdownModal({ orders, partners, totalRevenue, onClose }: {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div className="bg-[#111] border border-gold/30 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-semibold text-gold">Direct Revenue Breakdown</h3>
+          <h3 className="text-2xl font-semibold text-gold">Revenue Breakdown</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
         </div>
         

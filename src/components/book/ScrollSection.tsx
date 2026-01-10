@@ -118,7 +118,12 @@ export default function ScrollSection() {
 
             {/* CTA */}
             <div>
-              <button className="btn-royal mt-6">
+              <button 
+                className="btn-royal mt-6"
+                onClick={() => {
+                  document.getElementById('altar')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 {dict.scrollSection.cta}
               </button>
             </div>

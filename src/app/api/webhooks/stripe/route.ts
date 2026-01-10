@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getPartnerById as getPartnerByIdJson, readDb, writeDb, generateId } from '@/lib/db';
-import { createOrder as createOrderSupabase, getPartnerById as getPartnerByIdSupabase } from '@/lib/db-supabase';
+import { createOrder as createOrderSupabase, getPartnerById as getPartnerByIdSupabase, convertPendingSaleToSale } from '@/lib/db-supabase';
 import { hashPassword, generateSessionToken } from '@/lib/auth';
 import { createLicenseFromPurchase, sendReaderDownloadEmail } from '@/lib/reader-licensing';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -68,28 +68,31 @@ export async function POST(req: NextRequest) {
         if (partner) {
           commissionEarned = (totalAmount * partner.commissionPercent) / 100;
           
-          // Convert PENDING_SALE to SALE or create new SALE event
+          // Convert PENDING_SALE to SALE in Supabase (primary)
+          const converted = await convertPendingSaleToSale(partnerId);
+          if (converted) {
+            console.log(`[WEBHOOK] Converted PENDING_SALE to SALE in Supabase for partner ${partnerId}`);
+          } else {
+            console.log(`[WEBHOOK] No PENDING_SALE found to convert for partner ${partnerId}`);
+          }
+          
+          // Also update JSON file for backward compatibility
           const db = readDb();
           const pendingSaleEvent = db.events.find(e => 
             e.partnerId === partnerId && 
             e.type === 'PENDING_SALE' &&
-            // Find the most recent pending sale (within last hour)
             new Date(e.createdAt).getTime() > Date.now() - (60 * 60 * 1000)
           );
           
           if (pendingSaleEvent) {
-            // Convert pending to sale
             pendingSaleEvent.type = 'SALE';
-            console.log(`Converted pending sale to actual sale for partner ${partnerId}`);
           } else {
-            // Create new sale event
             db.events.push({
               id: crypto.randomUUID(),
               partnerId,
               type: 'SALE',
               createdAt: new Date().toISOString(),
             });
-            console.log(`Created new sale event for partner ${partnerId}`);
           }
           writeDb(db);
         }

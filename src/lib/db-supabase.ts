@@ -346,6 +346,40 @@ export async function createEvent(event: Omit<TrackingEvent, 'id' | 'createdAt'>
   } as unknown as TrackingEvent;
 }
 
+// Convert PENDING_SALE to SALE for a partner (used by webhook after successful payment)
+export async function convertPendingSaleToSale(partnerId: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  
+  // Find the most recent PENDING_SALE for this partner (within last hour)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  
+  const { data: pendingEvents, error: findError } = await supabase
+    .from('tracking_events')
+    .select('id')
+    .eq('partner_id', partnerId)
+    .eq('event_type', 'PENDING_SALE')
+    .gte('created_at', oneHourAgo)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  
+  if (findError || !pendingEvents || pendingEvents.length === 0) {
+    return false;
+  }
+  
+  // Update to SALE
+  const { error: updateError } = await supabase
+    .from('tracking_events')
+    .update({ event_type: 'SALE' })
+    .eq('id', pendingEvents[0].id);
+  
+  if (updateError) {
+    console.error('Error converting pending sale to sale:', updateError);
+    return false;
+  }
+  
+  return true;
+}
+
 export async function getEventStats(partnerId?: string): Promise<{
   pageViews: number;
   amazonClicks: number;
