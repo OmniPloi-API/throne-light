@@ -16,7 +16,37 @@ function getResend(): Resend | null {
 }
 
 const DEVELOPER_EMAIL = 'ampledevelopment@gmail.com';
-const MAX_DEVICES = 2;
+const MAX_DEVICES = 2; // What users see - "2 device limit"
+const MAX_DEVICES_PER_CATEGORY = 2; // Internal: 2 mobile + 2 desktop = more flexibility
+
+// Device category helpers - allows 2 mobile + 2 desktop activations internally
+// This gives users flexibility for different browsers on same device type
+type DeviceCategory = 'mobile' | 'desktop';
+
+function getDeviceCategory(deviceType: string, userAgent?: string): DeviceCategory {
+  // Native app types
+  if (deviceType === 'ios' || deviceType === 'android') {
+    return 'mobile';
+  }
+  if (deviceType === 'macos' || deviceType === 'windows') {
+    return 'desktop';
+  }
+  
+  // For 'web' type, detect from user agent
+  if (userAgent) {
+    const mobileKeywords = [
+      'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 'webOS', 
+      'BlackBerry', 'Opera Mini', 'IEMobile', 'Windows Phone'
+    ];
+    const isMobile = mobileKeywords.some(keyword => 
+      userAgent.includes(keyword)
+    );
+    return isMobile ? 'mobile' : 'desktop';
+  }
+  
+  // Default to desktop if we can't determine
+  return 'desktop';
+}
 
 function getSupabase() {
   if (supabaseUrl && supabaseServiceKey) {
@@ -260,7 +290,29 @@ export async function activateDevice(
       }
     }
 
-    if (!validation.canActivate) {
+    // Category-based device limits: allow 2 mobile + 2 desktop activations
+    // This gives users flexibility for different browsers on same device type
+    // while still showing "2 device limit" to users
+    const newDeviceCategory = getDeviceCategory(deviceType, userAgent);
+    
+    // Get all active activations with their device info to count by category
+    const { data: allActivations } = await supabase
+      .from('device_activations')
+      .select('id, device_type, user_agent')
+      .eq('license_id', validation.licenseId)
+      .eq('is_active', true);
+    
+    // Count activations in the same category as the new device
+    const sameCategoryCount = (allActivations || []).filter(activation => {
+      const category = getDeviceCategory(activation.device_type, activation.user_agent);
+      return category === newDeviceCategory;
+    }).length;
+    
+    // Check category limit instead of total limit
+    const canActivateInCategory = sameCategoryCount < MAX_DEVICES_PER_CATEGORY;
+    
+    if (!canActivateInCategory) {
+      // Show user-friendly message (they see "2 device limit")
       return {
         success: false,
         error: `Device limit reached. Your license allows ${validation.maxDevices} devices and you have ${validation.activeDevices} active devices. Per our Terms of Service, each license covers up to ${validation.maxDevices} devices. If you believe this is an error or need to transfer your license to a new device, please contact support.`,
