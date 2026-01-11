@@ -320,9 +320,9 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
-        <div className="relative max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="relative max-w-3xl mx-auto px-2 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: Help, Menu & Home */}
-          <div className="flex items-center gap-1 z-10 ml-12">
+          <div className="flex items-center gap-0.5 sm:gap-1 z-10">
             <button
               onClick={() => setShowHelpModal(true)}
               className={`p-2 rounded-lg transition-colors ${
@@ -358,8 +358,8 @@ export default function ReaderPage() {
             </Link>
           </div>
 
-          {/* Center: Title - Absolutely positioned for true centering */}
-          <div className="absolute left-1/2 -translate-x-1/2 text-center">
+          {/* Center: Title - Hidden on mobile to prevent overlap */}
+          <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 text-center">
             <p className={`text-sm font-serif whitespace-nowrap ${
               isDarkMode ? 'text-parchment/80' : 'text-charcoal/80'
             }`}>
@@ -373,7 +373,7 @@ export default function ReaderPage() {
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-1 z-10">
+          <div className="flex items-center gap-0.5 sm:gap-1 z-10">
             <LanguageSelector
               selectedLanguage={selectedLanguage}
               onLanguageChange={handleLanguageChange}

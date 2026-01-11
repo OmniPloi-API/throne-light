@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "Throne Light Reader",
-    "version": "1.0.2"
+    "version": "1.0.4"
   },
   "tauri": {
     "allowlist": {

@@ -161,7 +161,7 @@ function AddDeviceContent() {
           <div className="flex items-baseline justify-between mb-6 pb-4 border-b border-[#222]">
             <span className="text-gray-400">One-time payment</span>
             <div className="text-right">
-              <span className="text-3xl font-bold text-gold">$14.99</span>
+              <span className="text-3xl font-bold text-gold">$5.99</span>
               <span className="text-gray-500 text-sm ml-1">USD</span>
             </div>
           </div>
@@ -186,7 +186,7 @@ function AddDeviceContent() {
             ) : (
               <>
                 <Shield className="w-5 h-5" />
-                Add Device - $14.99
+                Add Device - $5.99
               </>
             )}
           </button>

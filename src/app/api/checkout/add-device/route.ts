@@ -14,7 +14,7 @@ function getStripe(): Stripe | null {
   return stripe;
 }
 
-const ADD_DEVICE_PRICE = 1499; // $14.99 in cents
+const ADD_DEVICE_PRICE = 599; // $5.99 in cents
 
 export async function POST(req: NextRequest) {
   try {

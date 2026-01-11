@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
           message: `Your license allows ${validation.maxDevices} devices and you have ${validation.activeDevices} active. Would you like to add another device license?`,
           upsell: {
             available: true,
-            price: 14.99,
+            price: 5.99,
             currency: 'USD',
             description: 'Add 1 additional device to your license',
             checkoutUrl: `/checkout/add-device?license=${formattedCode}`,
