@@ -82,16 +82,8 @@ export default function AudioToggle() {
     audio.addEventListener('canplaythrough', handleCanPlay);
     audio.addEventListener('timeupdate', handleTimeUpdate);
 
-    // Gentle autoplay attempt on first load (may be blocked by browser)
-    audio
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-      })
-      .catch(() => {
-        // Autoplay blocked - wait for user interaction
-        setIsPlaying(false);
-      });
+    // No autoplay - let users read in peace and choose to play music
+    setIsPlaying(false);
 
     return () => {
       audio.pause();

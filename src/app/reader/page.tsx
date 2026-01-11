@@ -250,7 +250,11 @@ export default function ReaderPage() {
   };
 
   const frontMatter: Section[] = [
+    { id: 'title-page', title: bookData.title, type: 'front' },
+    { id: 'copyright', title: 'Copyright', type: 'front' },
     { id: 'dedication', title: 'Dedication', type: 'front' },
+    { id: 'acknowledgments', title: 'Acknowledgments', type: 'front' },
+    { id: 'about-author', title: 'About the Author', type: 'front' },
     { id: 'manifesto', title: 'The Manifesto', type: 'front' },
     { id: 'foreword', title: 'Foreword', type: 'front' },
   ];
@@ -631,10 +635,45 @@ export default function ReaderPage() {
               const contentKey = `${currentSection.id}_${selectedLanguage}`;
               const translatedParagraphs = translatedContent[contentKey];
               
+              if (currentSection.type === 'front' && currentSection.id === 'title-page') {
+                return (
+                  <div className="text-center py-12">
+                    <p className={`text-xs uppercase tracking-[0.3em] mb-8 ${isDarkMode ? 'text-gold/60' : 'text-gold-700/60'}`}>
+                      {bookData.author}
+                    </p>
+                    <h1 className={`font-serif text-4xl md:text-5xl mb-6 ${isDarkMode ? 'text-parchment' : 'text-charcoal'}`}>
+                      {bookData.title}
+                    </h1>
+                    {bookData.subtitle && (
+                      <p className={`italic text-lg max-w-md mx-auto ${isDarkMode ? 'text-parchment/60' : 'text-charcoal/60'}`}>
+                        {bookData.subtitle}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+              if (currentSection.type === 'front' && currentSection.id === 'copyright') {
+                const content = translatedParagraphs || bookData.copyright || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center text-sm leading-relaxed">{p}</p>
+                ));
+              }
               if (currentSection.type === 'front' && currentSection.id === 'dedication') {
                 const content = translatedParagraphs || bookData.dedication || [];
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center italic">{p}</p>
+                ));
+              }
+              if (currentSection.type === 'front' && currentSection.id === 'acknowledgments') {
+                const content = translatedParagraphs || bookData.acknowledgments || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
+                ));
+              }
+              if (currentSection.type === 'front' && currentSection.id === 'about-author') {
+                const content = translatedParagraphs || bookData.aboutAuthor || [];
+                return content.map((p: string, i: number) => (
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'manifesto') {

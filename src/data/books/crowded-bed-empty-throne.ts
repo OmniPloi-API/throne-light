@@ -96,7 +96,7 @@ export const bookData: BookData = {
       id: 'chapter-1',
       title: 'Chapter 1',
       subtitle: 'The Bed is Crowded, But the Throne is Empty',
-      epigraph: 'Why so many women are in his bed, but no one rules beside him',
+      epigraph: 'Why so many women are in his bed, but no one reigns beside him',
       content: [
         `She is adored, pursued, devoured.`,
         `But never established. Never seated.`,
