@@ -675,43 +675,43 @@ export default function ReaderPage() {
               if (currentSection.type === 'front' && currentSection.id === 'acknowledgments') {
                 const content = translatedParagraphs || bookData.acknowledgments || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'about-author') {
                 const content = translatedParagraphs || bookData.aboutAuthor || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'manifesto') {
                 const content = translatedParagraphs || bookData.manifesto || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'foreword') {
                 const content = translatedParagraphs || bookData.foreword || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-justify">{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'chapter') {
                 const content = translatedParagraphs || currentSection.content || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-center'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'appendices') {
                 const content = translatedParagraphs || bookData.appendices || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold mt-8 mb-2' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-8 mb-2' : 'text-center'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'epilogue') {
                 const content = translatedParagraphs || bookData.epilogue || [];
                 return content.map((p: string, i: number) => (
-                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-justify'}>{p}</p>
+                  <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-center'}>{p}</p>
                 ));
               }
               return null;
