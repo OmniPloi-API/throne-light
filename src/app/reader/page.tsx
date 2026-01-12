@@ -249,6 +249,9 @@ export default function ReaderPage() {
     royalReflection?: string[];
   };
 
+  // Content order per master manuscript:
+  // 1) Title, 2) Copyright, 3) Dedication, 4) Acknowledgments, 5) About Author,
+  // 6) Manifesto, 7) Chapter 1, 8) Foreword, 9) Chapters 2-15...
   const frontMatter: Section[] = [
     { id: 'title-page', title: bookData.title, type: 'front' },
     { id: 'copyright', title: 'Copyright', type: 'front' },
@@ -256,8 +259,11 @@ export default function ReaderPage() {
     { id: 'acknowledgments', title: 'Acknowledgments', type: 'front' },
     { id: 'about-author', title: 'About the Author', type: 'front' },
     { id: 'manifesto', title: 'The Manifesto', type: 'front' },
-    { id: 'foreword', title: 'Foreword', type: 'front' },
   ];
+  
+  // Chapter 1 comes before Foreword per master manuscript
+  const chapter1 = bookData.chapters[0];
+  const remainingChapters = bookData.chapters.slice(1);
   
   const backMatter: Section[] = [
     { id: 'appendices', title: 'Appendices & Resources', type: 'back' },
@@ -266,7 +272,9 @@ export default function ReaderPage() {
 
   const allSections: Section[] = [
     ...frontMatter,
-    ...bookData.chapters.map(ch => ({ ...ch, type: 'chapter' as const })),
+    { ...chapter1, type: 'chapter' as const },
+    { id: 'foreword', title: 'Foreword', type: 'front' as const },
+    ...remainingChapters.map(ch => ({ ...ch, type: 'chapter' as const })),
     ...backMatter,
   ];
 
