@@ -80,8 +80,8 @@ export default function DownloadPage() {
       title: 'Throne Light Reader for Mac',
       subtitle: 'macOS 10.13+ (Intel & Apple Silicon)',
       fileName: 'Throne-Light-Reader-macOS-v1.0.4.dmg',
-      fileSize: '~15 MB',
-      downloadUrl: '/downloads/Throne-Light-Reader-macOS-v1.0.4.dmg',
+      fileSize: '~6 MB',
+      downloadUrl: 'https://github.com/OmniPloi-API/throne-light/releases/download/v1.0.4/Throne-Light-Reader-macOS-v1.0.4.dmg',
       available: true,
     },
     {
