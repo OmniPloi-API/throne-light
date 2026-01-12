@@ -952,6 +952,13 @@ export default function ReaderPage() {
             }
           }}
           onClose={() => setShowAudioPlayer(false)}
+          onPageComplete={() => {
+            // Continuous play: auto-advance to next page and start audio
+            if (currentChapterIndex < allSections.length - 1) {
+              setCurrentChapterIndex(prev => prev + 1);
+              setShouldAutoStartAudio(true);
+            }
+          }}
         />
       )}
 

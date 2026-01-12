@@ -18,6 +18,10 @@ export interface AudioState {
   autoScrollEnabled: boolean;
   error: string | null;
   prefetchedUrls: Map<number, string>; // Pre-fetched audio URLs by paragraph index
+  isLanguageChanging: boolean; // Show "Rendering new translation..." message
+  languageChangeComplete: boolean; // Show completion message briefly
+  repeatPageEnabled: boolean; // Loop current page
+  continuousPlayEnabled: boolean; // Auto-advance to next page
 }
 
 interface UseAudioSyncOptions {
@@ -26,6 +30,7 @@ interface UseAudioSyncOptions {
   voiceId?: string;
   onParagraphChange?: (index: number) => void;
   onError?: (error: string) => void;
+  onPageComplete?: () => void; // Called when all paragraphs on page are done (for continuous play)
 }
 
 interface AudioResponse {
@@ -56,6 +61,7 @@ export function useAudioSync(
     voiceId = 'shimmer',
     onParagraphChange,
     onError,
+    onPageComplete,
   } = options;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -69,6 +75,10 @@ export function useAudioSync(
     autoScrollEnabled: true,
     error: null,
     prefetchedUrls: new Map(),
+    isLanguageChanging: false,
+    languageChangeComplete: false,
+    repeatPageEnabled: false,
+    continuousPlayEnabled: true, // Default to continuous play
   });
 
   // Track which paragraphs are currently being prefetched
@@ -96,7 +106,7 @@ export function useAudioSync(
         }
       });
       
-      // Clear all prefetched URLs and reset state
+      // Clear all prefetched URLs and reset state - show language changing message
       prefetchingRef.current.clear();
       setState(prev => ({
         ...prev,
@@ -108,7 +118,26 @@ export function useAudioSync(
         currentVersion: 1,
         prefetchedUrls: new Map(),
         error: null,
+        isLanguageChanging: true,
+        languageChangeComplete: false,
       }));
+      
+      // Show "language changing" for a moment, then show completion
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          isLanguageChanging: false,
+          languageChangeComplete: true,
+        }));
+        
+        // Hide completion message after 3 seconds
+        setTimeout(() => {
+          setState(prev => ({
+            ...prev,
+            languageChangeComplete: false,
+          }));
+        }, 3000);
+      }, 1500);
       
       prevLanguageRef.current = languageCode;
     }
@@ -318,6 +347,13 @@ export function useAudioSync(
     const handleEnded = () => {
       const nextIndex = state.activeParagraphIndex + 1;
 
+      // Check if repeat page is enabled - loop back to start
+      if (state.repeatPageEnabled && nextIndex >= paragraphs.length) {
+        console.log('[AudioSync] Repeat page enabled - looping back to start');
+        playParagraph(0, 1);
+        return;
+      }
+
       if (nextIndex < paragraphs.length) {
         // Check if we have prefetched audio for next paragraph
         const prefetchedUrl = state.prefetchedUrls.get(nextIndex);
@@ -348,9 +384,15 @@ export function useAudioSync(
           playParagraph(nextIndex, 1);
         }
       } else {
-        // Reached end of content
+        // Reached end of page content
         updateParagraphHighlight(state.activeParagraphIndex, false);
         setState(prev => ({ ...prev, isPlaying: false }));
+        
+        // If continuous play is enabled, notify parent to go to next page
+        if (state.continuousPlayEnabled && onPageComplete) {
+          console.log('[AudioSync] Continuous play - requesting next page');
+          onPageComplete();
+        }
       }
     };
 
@@ -370,7 +412,7 @@ export function useAudioSync(
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [state.activeParagraphIndex, paragraphs.length, playParagraph, state.prefetchedUrls, updateParagraphHighlight, scrollToParagraph, onParagraphChange, prefetchNext]);
+  }, [state.activeParagraphIndex, paragraphs.length, playParagraph, state.prefetchedUrls, state.repeatPageEnabled, state.continuousPlayEnabled, updateParagraphHighlight, scrollToParagraph, onParagraphChange, onPageComplete, prefetchNext]);
 
   // Play/Pause toggle
   const togglePlay = useCallback(() => {
@@ -450,6 +492,22 @@ export function useAudioSync(
     }));
   }, []);
 
+  // Toggle repeat page mode (loop current page)
+  const toggleRepeatPage = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      repeatPageEnabled: !prev.repeatPageEnabled,
+    }));
+  }, []);
+
+  // Toggle continuous play mode (auto-advance to next page)
+  const toggleContinuousPlay = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      continuousPlayEnabled: !prev.continuousPlayEnabled,
+    }));
+  }, []);
+
   // Report issue with current audio
   const reportIssue = useCallback(async (
     issueType: string,
@@ -506,6 +564,8 @@ export function useAudioSync(
     skipForward,
     skipBackward,
     toggleAutoScroll,
+    toggleRepeatPage,
+    toggleContinuousPlay,
     reportIssue,
     playParagraph,
   };

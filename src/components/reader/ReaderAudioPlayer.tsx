@@ -40,6 +40,7 @@ interface ReaderAudioPlayerProps {
   autoStart?: boolean;
   onReady?: (controls: { skipTo: (index: number) => void }) => void;
   onClose?: () => void;
+  onPageComplete?: () => void; // Called when page audio finishes (for continuous play)
 }
 
 const ISSUE_TYPES = [
@@ -60,6 +61,7 @@ export default function ReaderAudioPlayer({
   autoStart = false,
   onReady,
   onClose,
+  onPageComplete,
 }: ReaderAudioPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -77,18 +79,25 @@ export default function ReaderAudioPlayer({
     autoScrollEnabled,
     error,
     totalParagraphs,
+    isLanguageChanging,
+    languageChangeComplete,
+    repeatPageEnabled,
+    continuousPlayEnabled,
     togglePlay,
     pause,
     skipForward,
     skipBackward,
     skipTo,
     toggleAutoScroll,
+    toggleRepeatPage,
+    toggleContinuousPlay,
     reportIssue,
     audioRef,
   } = useAudioSync(paragraphs, {
     bookId,
     languageCode,
     voiceId,
+    onPageComplete,
   });
 
   // Auto-start playback when component mounts if autoStart is true
@@ -310,24 +319,92 @@ export default function ReaderAudioPlayer({
                   />
                 </div>
 
-                {/* Auto-scroll Toggle */}
-                <button
-                  onClick={toggleAutoScroll}
-                  className={`flex items-center gap-2 text-sm transition-colors ${
-                    autoScrollEnabled ? 'text-gold' : `${textColor} opacity-50`
-                  }`}
-                >
-                  <ListMusic className="w-4 h-4" />
-                  <span>Auto-scroll {autoScrollEnabled ? 'On' : 'Off'}</span>
-                </button>
+                {/* Playback Options */}
+                <div className="flex flex-wrap gap-3">
+                  {/* Auto-scroll Toggle */}
+                  <button
+                    onClick={toggleAutoScroll}
+                    className={`flex items-center gap-2 text-sm transition-colors ${
+                      autoScrollEnabled ? 'text-gold' : `${textColor} opacity-50`
+                    }`}
+                  >
+                    <ListMusic className="w-4 h-4" />
+                    <span>Auto-scroll</span>
+                  </button>
+
+                  {/* Continuous Play Toggle */}
+                  <button
+                    onClick={toggleContinuousPlay}
+                    className={`flex items-center gap-2 text-sm transition-colors ${
+                      continuousPlayEnabled ? 'text-gold' : `${textColor} opacity-50`
+                    }`}
+                    title="Continue playing to next page automatically"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                    <span>Continuous</span>
+                  </button>
+
+                  {/* Repeat Page Toggle */}
+                  <button
+                    onClick={toggleRepeatPage}
+                    className={`flex items-center gap-2 text-sm transition-colors ${
+                      repeatPageEnabled ? 'text-gold' : `${textColor} opacity-50`
+                    }`}
+                    title="Repeat current page"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 2l4 4-4 4" />
+                      <path d="M3 11v-1a4 4 0 014-4h14" />
+                      <path d="M7 22l-4-4 4-4" />
+                      <path d="M21 13v1a4 4 0 01-4 4H3" />
+                    </svg>
+                    <span>Repeat</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Error Display - More prominent */}
+        {/* Language Change Message */}
         <AnimatePresence>
-          {error && (
+          {isLanguageChanging && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-4 pb-3"
+            >
+              <div className="bg-gold/20 border border-gold/30 rounded-lg p-2 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-gold animate-spin" />
+                <p className="text-gold text-xs font-medium">Rendering new audio translation...</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Language Change Complete Message */}
+        <AnimatePresence>
+          {languageChangeComplete && !isLanguageChanging && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-4 pb-3"
+            >
+              <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-2 flex items-center gap-2">
+                <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-green-400 text-xs font-medium">Audio translation ready! Press play to listen.</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error Display - Only show for real errors, not language changes */}
+        <AnimatePresence>
+          {error && !isLanguageChanging && !languageChangeComplete && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -341,8 +418,8 @@ export default function ReaderAudioPlayer({
           )}
         </AnimatePresence>
 
-        {/* Debug: Log paragraphs count */}
-        {paragraphs.length === 0 && (
+        {/* No content warning */}
+        {paragraphs.length === 0 && !isLanguageChanging && (
           <div className="px-4 pb-3">
             <p className="text-yellow-400 text-xs">No audio content available for this section</p>
           </div>
