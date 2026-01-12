@@ -37,6 +37,7 @@ interface ReaderAudioPlayerProps {
   languageCode?: string;
   voiceId?: string;
   isDarkMode?: boolean;
+  autoStart?: boolean;
   onReady?: (controls: { skipTo: (index: number) => void }) => void;
   onClose?: () => void;
 }
@@ -56,6 +57,7 @@ export default function ReaderAudioPlayer({
   languageCode = 'en',
   voiceId = 'shimmer',
   isDarkMode = true,
+  autoStart = false,
   onReady,
   onClose,
 }: ReaderAudioPlayerProps) {
@@ -88,6 +90,18 @@ export default function ReaderAudioPlayer({
     languageCode,
     voiceId,
   });
+
+  // Auto-start playback when component mounts if autoStart is true
+  useEffect(() => {
+    if (autoStart && paragraphs.length > 0 && !isPlaying && !isLoading) {
+      console.log('[AudioPlayer] Auto-starting playback with', paragraphs.length, 'paragraphs');
+      // Small delay to ensure audio element is ready
+      const timer = setTimeout(() => {
+        togglePlay();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart]); // Only run on mount when autoStart changes
 
   // Expose controls to parent component and set up click handlers
   useEffect(() => {
@@ -311,7 +325,7 @@ export default function ReaderAudioPlayer({
           )}
         </AnimatePresence>
 
-        {/* Error Display */}
+        {/* Error Display - More prominent */}
         <AnimatePresence>
           {error && (
             <motion.div
@@ -320,10 +334,19 @@ export default function ReaderAudioPlayer({
               exit={{ height: 0, opacity: 0 }}
               className="px-4 pb-3"
             >
-              <p className="text-red-400 text-xs">{error}</p>
+              <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-2">
+                <p className="text-red-400 text-xs font-medium">{error}</p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Debug: Log paragraphs count */}
+        {paragraphs.length === 0 && (
+          <div className="px-4 pb-3">
+            <p className="text-yellow-400 text-xs">No audio content available for this section</p>
+          </div>
+        )}
       </motion.div>
 
       {/* Report Issue Modal */}

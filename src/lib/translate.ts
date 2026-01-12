@@ -55,17 +55,13 @@ export async function translateText(
   }
 
   try {
-    // Use LibreTranslate (free, no API key required for public instance)
-    const response = await fetch('https://libretranslate.com/translate', {
+    const response = await fetch('/api/translate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        q: text,
-        source: sourceLang,
-        target: targetLang,
-        format: 'text',
+        text,
+        targetLang,
+        sourceLang,
       }),
     });
 
@@ -82,25 +78,6 @@ export async function translateText(
     return translatedText;
   } catch (error) {
     console.error('Translation error:', error);
-    
-    // Fallback: Try MyMemory Translation API (free, 1000 words/day)
-    try {
-      const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.responseStatus === 200) {
-          const translatedText = data.responseData.translatedText;
-          translationCache.set(cacheKey, translatedText);
-          return translatedText;
-        }
-      }
-    } catch (fallbackError) {
-      console.error('Fallback translation error:', fallbackError);
-    }
-
     // Return original text if all translation attempts fail
     return text;
   }

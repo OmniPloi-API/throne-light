@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { createHash } from 'crypto';
 
 export interface ParagraphData {
   index: number;
@@ -37,6 +36,7 @@ interface AudioResponse {
   version: number;
   duration_seconds?: number;
   error?: string;
+  details?: string;
 }
 
 interface ReportResponse {
@@ -147,10 +147,19 @@ export function useAudioSync(
     version: number = 1
   ): Promise<AudioResponse | null> => {
     if (paragraphIndex < 0 || paragraphIndex >= paragraphs.length) {
+      console.warn('[AudioSync] Invalid paragraph index:', paragraphIndex);
       return null;
     }
 
     const paragraph = paragraphs[paragraphIndex];
+    
+    if (!paragraph.text || paragraph.text.trim().length === 0) {
+      console.warn('[AudioSync] Empty paragraph text at index:', paragraphIndex);
+      setState(prev => ({ ...prev, error: 'No text content to read' }));
+      return null;
+    }
+
+    console.log('[AudioSync] Fetching audio for paragraph', paragraphIndex, ':', paragraph.text.substring(0, 50) + '...');
 
     try {
       const response = await fetch('/api/audio/get-paragraph', {
@@ -167,14 +176,18 @@ export function useAudioSync(
       });
 
       const data: AudioResponse = await response.json();
+      
+      console.log('[AudioSync] API response:', { status: response.status, success: data.success, cached: data.cached, error: data.error });
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch audio');
+        const errorMsg = data.error || data.details || `Audio API error (${response.status})`;
+        throw new Error(errorMsg);
       }
 
       return data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch audio';
+      console.error('[AudioSync] Fetch error:', errorMessage);
       setState(prev => ({ ...prev, error: errorMessage }));
       onError?.(errorMessage);
       return null;
@@ -287,8 +300,13 @@ export function useAudioSync(
       // Start prefetching next paragraphs as soon as playback begins
       prefetchNext(index);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Audio playback failed. Please press Play again.';
       console.error('Playback error:', error);
-      setState(prev => ({ ...prev, isPlaying: false }));
+      setState(prev => ({ ...prev, isPlaying: false, error: errorMessage }));
+      onError?.(errorMessage);
     }
   }, [fetchAudio, scrollToParagraph, onParagraphChange, updateParagraphHighlight, prefetchNext]);
 
@@ -363,9 +381,18 @@ export function useAudioSync(
       setState(prev => ({ ...prev, isPlaying: false }));
       updateParagraphHighlight(state.activeParagraphIndex, false);
     } else if (state.currentAudioUrl) {
-      audioRef.current.play();
-      setState(prev => ({ ...prev, isPlaying: true }));
-      updateParagraphHighlight(state.activeParagraphIndex, true);
+      audioRef.current.play().then(() => {
+        setState(prev => ({ ...prev, isPlaying: true, error: null }));
+        updateParagraphHighlight(state.activeParagraphIndex, true);
+      }).catch((error) => {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Audio playback failed. Please press Play again.';
+        console.error('Playback error:', error);
+        setState(prev => ({ ...prev, isPlaying: false, error: errorMessage }));
+        onError?.(errorMessage);
+      });
     } else {
       // Start from current or first paragraph
       playParagraph(state.activeParagraphIndex, 1);

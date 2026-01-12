@@ -83,7 +83,7 @@ function LoginContent() {
       }
 
       // Success - redirect to library
-      const redirect = searchParams.get('redirect') || '/library';
+      const redirect = searchParams.get('redirect') || '/reader/home';
       router.push(redirect);
     } catch (err) {
       setError('Something went wrong. Please try again.');

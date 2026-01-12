@@ -195,8 +195,19 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Audio generation error:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Failed to generate audio';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage.includes('OPENAI_API_KEY')) {
+      userMessage = 'Audio service is not configured. Please contact support.';
+    } else if (errorMessage.includes('rate limit')) {
+      userMessage = 'Audio service is temporarily busy. Please try again.';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to generate audio', details: error instanceof Error ? error.message : 'Unknown error' },
+      { success: false, error: userMessage, details: errorMessage },
       { status: 500 }
     );
   }

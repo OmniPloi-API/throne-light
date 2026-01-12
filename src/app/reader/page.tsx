@@ -29,6 +29,55 @@ import { translateParagraphs } from '@/lib/translate';
 import ReaderAudioPlayer from '@/components/reader/ReaderAudioPlayer';
 import { ParagraphData } from '@/hooks/useAudioSync';
 
+function normalizeParagraphs(paragraphs: string[], maxLen: number = 800): string[] {
+  const splitByWords = (text: string) => {
+    const words = text.split(/\s+/).filter(Boolean);
+    const chunks: string[] = [];
+    let current = '';
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (next.length > maxLen) {
+        if (current) chunks.push(current);
+        current = word;
+      } else {
+        current = next;
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  };
+
+  const splitOne = (p: string) => {
+    const text = (p || '').trim();
+    if (!text) return [] as string[];
+    if (text.length <= maxLen) return [text];
+
+    const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+    const chunks: string[] = [];
+    let current = '';
+
+    for (const s of sentences) {
+      const next = current ? `${current} ${s}` : s;
+      if (next.length > maxLen) {
+        if (current) chunks.push(current);
+        if (s.length > maxLen) {
+          chunks.push(...splitByWords(s));
+          current = '';
+        } else {
+          current = s;
+        }
+      } else {
+        current = next;
+      }
+    }
+
+    if (current) chunks.push(current);
+    return chunks;
+  };
+
+  return (paragraphs || []).flatMap(splitOne);
+}
+
 export default function ReaderPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
@@ -41,10 +90,12 @@ export default function ReaderPage() {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<Record<string, string[]>>({});
+  const [translationError, setTranslationError] = useState<string | null>(null);
   
   // Audio player state
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioParagraphs, setAudioParagraphs] = useState<ParagraphData[]>([]);
+  const [shouldAutoStartAudio, setShouldAutoStartAudio] = useState(false);
 
   // Help modal state
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -138,6 +189,7 @@ export default function ReaderPage() {
   // Handle language change and translation
   const handleLanguageChange = useCallback(async (langCode: string) => {
     setSelectedLanguage(langCode);
+    setTranslationError(null);
     
     // If switching back to English, clear translations
     if (langCode === 'en') {
@@ -160,8 +212,14 @@ export default function ReaderPage() {
       // Get the content to translate based on section type
       let contentToTranslate: string[] = [];
       
-      if (section.type === 'front' && section.id === 'dedication') {
+      if (section.type === 'front' && section.id === 'copyright') {
+        contentToTranslate = bookData.copyright || [];
+      } else if (section.type === 'front' && section.id === 'dedication') {
         contentToTranslate = bookData.dedication || [];
+      } else if (section.type === 'front' && section.id === 'acknowledgments') {
+        contentToTranslate = bookData.acknowledgments || [];
+      } else if (section.type === 'front' && section.id === 'about-author') {
+        contentToTranslate = bookData.aboutAuthor || [];
       } else if (section.type === 'front' && section.id === 'manifesto') {
         contentToTranslate = bookData.manifesto || [];
       } else if (section.type === 'front' && section.id === 'foreword') {
@@ -174,8 +232,22 @@ export default function ReaderPage() {
         contentToTranslate = bookData.epilogue || [];
       }
       
-      if (contentToTranslate.length > 0) {
-        const translated = await translateParagraphs(contentToTranslate, langCode);
+      const normalizedToTranslate = normalizeParagraphs(contentToTranslate);
+
+      if (normalizedToTranslate.length > 0) {
+        const translated = await translateParagraphs(normalizedToTranslate, langCode);
+
+        const unchanged = translated.filter((t, idx) => {
+          const src = (normalizedToTranslate[idx] || '').trim();
+          const out = (t || '').trim();
+          return src.length > 0 && out === src;
+        }).length;
+
+        if (unchanged / translated.length > 0.9) {
+          setTranslationError('Translation is currently unavailable. Please try again in a moment.');
+          return;
+        }
+
         setTranslatedContent(prev => ({
           ...prev,
           [contentKey]: translated,
@@ -183,6 +255,8 @@ export default function ReaderPage() {
       }
     } catch (error) {
       console.error('Translation error:', error);
+      const message = error instanceof Error ? error.message : 'Translation failed. Please try again.';
+      setTranslationError(message);
     } finally {
       setIsTranslating(false);
     }
@@ -212,8 +286,16 @@ export default function ReaderPage() {
     
     let content: string[] = [];
     
-    if (section.type === 'front' && section.id === 'dedication') {
+    if (section.type === 'front' && section.id === 'title-page') {
+      content = [bookData.title, ...(bookData.subtitle ? [bookData.subtitle] : [])];
+    } else if (section.type === 'front' && section.id === 'copyright') {
+      content = translatedParagraphs || bookData.copyright || [];
+    } else if (section.type === 'front' && section.id === 'dedication') {
       content = translatedParagraphs || bookData.dedication || [];
+    } else if (section.type === 'front' && section.id === 'acknowledgments') {
+      content = translatedParagraphs || bookData.acknowledgments || [];
+    } else if (section.type === 'front' && section.id === 'about-author') {
+      content = translatedParagraphs || bookData.aboutAuthor || [];
     } else if (section.type === 'front' && section.id === 'manifesto') {
       content = translatedParagraphs || bookData.manifesto || [];
     } else if (section.type === 'front' && section.id === 'foreword') {
@@ -225,6 +307,8 @@ export default function ReaderPage() {
     } else if (section.type === 'back' && section.id === 'epilogue') {
       content = translatedParagraphs || bookData.epilogue || [];
     }
+
+    content = normalizeParagraphs(content);
 
     // Build paragraph data for audio sync
     const paragraphs: ParagraphData[] = content.map((text, index) => ({
@@ -637,6 +721,27 @@ export default function ReaderPage() {
                 </div>
               </div>
             )}
+
+            {translationError && !isTranslating && (
+              <div className="flex items-center justify-center py-6">
+                <div
+                  className={`max-w-xl w-full px-4 py-3 rounded-lg border text-sm text-center ${
+                    isDarkMode
+                      ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                      : 'bg-red-500/10 border-red-500/30 text-red-700'
+                  }`}
+                >
+                  {translationError}
+                </div>
+              </div>
+            )}
+
+            {/* Debug: show translation error details in console */}
+            {translationError && typeof window !== 'undefined' && (
+              <script dangerouslySetInnerHTML={{
+                __html: `console.error('Translation error details:', ${JSON.stringify(translationError)});`
+              }} />
+            )}
             
             {/* Content - use translated if available */}
             {!isTranslating && (() => {
@@ -661,55 +766,55 @@ export default function ReaderPage() {
                 );
               }
               if (currentSection.type === 'front' && currentSection.id === 'copyright') {
-                const content = translatedParagraphs || bookData.copyright || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.copyright || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center text-sm leading-relaxed">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'dedication') {
-                const content = translatedParagraphs || bookData.dedication || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.dedication || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center italic">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'acknowledgments') {
-                const content = translatedParagraphs || bookData.acknowledgments || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.acknowledgments || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'about-author') {
-                const content = translatedParagraphs || bookData.aboutAuthor || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.aboutAuthor || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'manifesto') {
-                const content = translatedParagraphs || bookData.manifesto || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.manifesto || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'front' && currentSection.id === 'foreword') {
-                const content = translatedParagraphs || bookData.foreword || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.foreword || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className="text-center">{p}</p>
                 ));
               }
               if (currentSection.type === 'chapter') {
-                const content = translatedParagraphs || currentSection.content || [];
+                const content = normalizeParagraphs(translatedParagraphs || currentSection.content || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-center'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'appendices') {
-                const content = translatedParagraphs || bookData.appendices || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.appendices || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-8 mb-2' : 'text-center'}>{p}</p>
                 ));
               }
               if (currentSection.type === 'back' && currentSection.id === 'epilogue') {
-                const content = translatedParagraphs || bookData.epilogue || [];
+                const content = normalizeParagraphs(translatedParagraphs || bookData.epilogue || []);
                 return content.map((p: string, i: number) => (
                   <p key={i} id={`para-${currentSection.id}-${i}`} className={p.startsWith('✦') || p.startsWith('🔥') ? 'text-gold font-semibold text-center mt-10 mb-4' : 'text-center'}>{p}</p>
                 ));
@@ -783,7 +888,13 @@ export default function ReaderPage() {
           {/* Center: Crown + Page Number - absolutely centered */}
           <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
             <button
-              onClick={() => setShowAudioPlayer(!showAudioPlayer)}
+              onClick={() => {
+                setShowAudioPlayer((prev) => {
+                  const next = !prev;
+                  if (next) setShouldAutoStartAudio(true);
+                  return next;
+                });
+              }}
               className="group relative cursor-pointer transition-all hover:scale-110 mb-1"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -834,6 +945,12 @@ export default function ReaderPage() {
           languageCode={selectedLanguage}
           voiceId="shimmer"
           isDarkMode={isDarkMode}
+          autoStart={shouldAutoStartAudio}
+          onReady={() => {
+            if (shouldAutoStartAudio) {
+              setShouldAutoStartAudio(false);
+            }
+          }}
           onClose={() => setShowAudioPlayer(false)}
         />
       )}
