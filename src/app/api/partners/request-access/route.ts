@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb } from '@/lib/db';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,14 +11,16 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    const db = readDb();
+    const supabase = getSupabaseAdmin();
     
     // Find partner by email (case-insensitive)
-    const partner = db.partners.find((p: any) => 
-      p.email.toLowerCase() === email.toLowerCase()
-    );
+    const { data: partner, error } = await supabase
+      .from('partners')
+      .select('id, name, email, access_code, coupon_code')
+      .ilike('email', email.toLowerCase())
+      .single();
     
-    if (!partner) {
+    if (error || !partner) {
       // For security, don't reveal if the email exists
       // Just return success anyway
       return NextResponse.json({ 
@@ -29,14 +31,10 @@ export async function POST(req: NextRequest) {
     
     // In production, you would send an email here
     // For now, we'll just log it and return success
-    console.log(`Access code request for ${email}: ${partner.accessCode || partner.couponCode}`);
+    console.log(`Access code request for ${email}: ${partner.access_code || partner.coupon_code}`);
     
-    // TODO: Implement email sending
-    // await sendEmail({
-    //   to: partner.email,
-    //   subject: 'Your Partner Portal Access Code',
-    //   body: `Your access code is: ${partner.accessCode || partner.couponCode}`
-    // });
+    // TODO: Implement actual email sending using Resend or similar
+    // The partner already exists in Supabase, so we can send their actual code
     
     return NextResponse.json({ 
       success: true,
