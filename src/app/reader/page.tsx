@@ -19,10 +19,13 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+const ReaderWalkthrough = dynamic(() => import('@/components/reader/ReaderWalkthrough'), { ssr: false });
 import { bookData, Chapter } from '@/data/books/crowded-bed-empty-throne';
 import LanguageSelector from '@/components/reader/LanguageSelector';
 import { translateParagraphs } from '@/lib/translate';
@@ -96,6 +99,9 @@ export default function ReaderPage() {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [audioParagraphs, setAudioParagraphs] = useState<ParagraphData[]>([]);
   const [shouldAutoStartAudio, setShouldAutoStartAudio] = useState(false);
+
+  // Walkthrough state
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
 
   // Help modal state
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -320,6 +326,19 @@ export default function ReaderPage() {
     setAudioParagraphs(paragraphs);
   }, [currentChapterIndex, selectedLanguage, translatedContent]);
 
+  // Check if walkthrough should be shown
+  useEffect(() => {
+    const hasSeenWalkthrough = localStorage.getItem('throne_reader_walkthrough_seen');
+    if (!hasSeenWalkthrough) {
+      setShowWalkthrough(true);
+    }
+  }, []);
+
+  const handleWalkthroughComplete = () => {
+    localStorage.setItem('throne_reader_walkthrough_seen', 'true');
+    setShowWalkthrough(false);
+  };
+
   // Create sections array: front matter + chapters + back matter
   type Section = {
     id: string;
@@ -421,7 +440,7 @@ export default function ReaderPage() {
           <div className="flex items-center gap-0.5 sm:gap-1 z-10">
             <button
               onClick={() => setShowHelpModal(true)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -429,10 +448,12 @@ export default function ReaderPage() {
               title="Help & FAQ"
             >
               <HelpCircle className="w-5 h-5" />
+              <span className="hidden sm:inline text-xs">FAQs</span>
             </button>
             <button
+              id="toc-toggle"
               onClick={() => setShowToc(true)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -440,10 +461,11 @@ export default function ReaderPage() {
               title="Table of Contents"
             >
               <List className="w-5 h-5" />
+              <span className="hidden sm:inline text-xs">Contents</span>
             </button>
             <Link 
               href="/reader/home"
-              className={`p-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -451,6 +473,7 @@ export default function ReaderPage() {
               title="My Library"
             >
               <Home className="w-5 h-5" />
+              <span className="hidden sm:inline text-xs">Library</span>
             </Link>
           </div>
 
@@ -470,12 +493,14 @@ export default function ReaderPage() {
 
           {/* Right: Controls */}
           <div className="flex items-center gap-0.5 sm:gap-1 z-10">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={handleLanguageChange}
-              isTranslating={isTranslating}
-              isDarkMode={isDarkMode}
-            />
+            <div id="language-dropdown">
+              <LanguageSelector
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={handleLanguageChange}
+                isTranslating={isTranslating}
+                isDarkMode={isDarkMode}
+              />
+            </div>
             <button
               onClick={() => toggleBookmark(currentSection.id)}
               className={`p-2 rounded-lg transition-colors ${
@@ -492,6 +517,7 @@ export default function ReaderPage() {
               )}
             </button>
             <button
+              id="theme-toggle"
               onClick={() => setIsDarkMode(!isDarkMode)}
               className={`p-2 rounded-lg transition-colors ${
                 isDarkMode 
@@ -888,6 +914,7 @@ export default function ReaderPage() {
           {/* Center: Crown + Page Number - absolutely centered */}
           <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
             <button
+              id="audio-toggle"
               onClick={() => {
                 setShowAudioPlayer((prev) => {
                   const next = !prev;
@@ -936,6 +963,16 @@ export default function ReaderPage() {
           </button>
         </div>
       </footer>
+
+      {/* Walkthrough */}
+      <AnimatePresence>
+        {showWalkthrough && (
+          <ReaderWalkthrough 
+            isDarkMode={isDarkMode} 
+            onComplete={handleWalkthroughComplete} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* Audio Player */}
       {showAudioPlayer && audioParagraphs.length > 0 && (
