@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb } from '@/lib/db';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,15 +11,19 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    const db = readDb();
+    const supabase = getSupabaseAdmin();
+    const codeUpper = accessCode.toUpperCase();
     
-    // Find partner by access code (case-insensitive)
-    const partner = db.partners.find((p: any) => 
-      p.accessCode?.toUpperCase() === accessCode.toUpperCase() ||
-      p.couponCode?.toUpperCase() === accessCode.toUpperCase()
-    );
+    // Find partner by access code OR coupon code (case-insensitive)
+    const { data: partner, error } = await supabase
+      .from('partners')
+      .select('*')
+      .or(`access_code.ilike.${codeUpper},coupon_code.ilike.${codeUpper}`)
+      .eq('is_active', true)
+      .single();
     
-    if (!partner) {
+    if (error || !partner) {
+      console.log('Partner login failed for code:', codeUpper, error?.message);
       return NextResponse.json({ 
         error: 'Invalid access code' 
       }, { status: 401 });
@@ -32,13 +36,13 @@ export async function POST(req: NextRequest) {
         name: partner.name,
         email: partner.email,
         slug: partner.slug,
-        couponCode: partner.couponCode,
-        accessCode: partner.accessCode,
-        commissionPercent: partner.commissionPercent,
-        clickBounty: partner.clickBounty,
-        discountPercent: partner.discountPercent,
-        amazonUrl: partner.amazonUrl,
-        bookBabyUrl: partner.bookBabyUrl,
+        couponCode: partner.coupon_code,
+        accessCode: partner.access_code,
+        commissionPercent: partner.commission_percent,
+        clickBounty: partner.click_bounty,
+        discountPercent: partner.discount_percent,
+        amazonUrl: partner.amazon_url,
+        bookBabyUrl: partner.book_baby_url,
       }
     });
     
