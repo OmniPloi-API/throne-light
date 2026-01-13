@@ -12,18 +12,34 @@ export async function POST(req: NextRequest) {
     }
     
     const supabase = getSupabaseAdmin();
-    const codeUpper = accessCode.toUpperCase();
+    const codeUpper = accessCode.toUpperCase().trim();
     
-    // Find partner by access code OR coupon code (case-insensitive)
-    const { data: partner, error } = await supabase
+    // First, try to find by access_code
+    let { data: partner, error } = await supabase
       .from('partners')
       .select('*')
-      .or(`access_code.ilike.${codeUpper},coupon_code.ilike.${codeUpper}`)
+      .ilike('access_code', codeUpper)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
     
-    if (error || !partner) {
-      console.log('Partner login failed for code:', codeUpper, error?.message);
+    // If not found, try coupon_code
+    if (!partner) {
+      const result = await supabase
+        .from('partners')
+        .select('*')
+        .ilike('coupon_code', codeUpper)
+        .eq('is_active', true)
+        .maybeSingle();
+      partner = result.data;
+      error = result.error;
+    }
+    
+    if (error) {
+      console.error('Partner login DB error:', error);
+    }
+    
+    if (!partner) {
+      console.log('Partner login failed - no partner found for code:', codeUpper);
       return NextResponse.json({ 
         error: 'Invalid access code' 
       }, { status: 401 });
