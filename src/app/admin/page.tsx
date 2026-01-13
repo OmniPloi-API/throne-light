@@ -268,6 +268,9 @@ export default function AdminPage() {
         </div>
         <div className="flex justify-center">
           <div className="flex gap-3">
+            <Link href="/admin/access-codes" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition font-semibold border border-gold/30">
+              Access Codes
+            </Link>
             <Link href="/admin/feedback" className="px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-lg text-sm transition">
               Partner Feedback
             </Link>
