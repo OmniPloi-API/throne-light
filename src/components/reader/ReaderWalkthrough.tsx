@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sun, 
@@ -9,7 +9,6 @@ import {
   Globe, 
   Crown, 
   ChevronRight, 
-  X,
   CheckCircle2
 } from 'lucide-react';
 
@@ -23,30 +22,28 @@ interface Step {
   title: string;
   description: string;
   icon: React.ReactNode;
-  targetId: string; // The ID of the element to highlight
-  position: 'bottom' | 'top' | 'left' | 'right';
+  targetId: string;
+}
+
+interface TooltipPosition {
+  top: number;
+  left: number;
+  arrowPosition: 'top' | 'bottom';
+  arrowLeft: number;
 }
 
 export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalkthroughProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
-  const steps: Step[] = [
-    {
-      id: 'theme',
-      title: 'Choose Your Atmosphere',
-      description: 'Switch between Light and Dark mode to find your perfect reading environment.',
-      icon: isDarkMode ? <Sun className="w-6 h-6 text-gold" /> : <Moon className="w-6 h-6 text-gold" />,
-      targetId: 'theme-toggle',
-      position: 'bottom',
-    },
+  const steps: Step[] = useMemo(() => [
     {
       id: 'toc',
       title: 'Navigate the Kingdom',
       description: 'Quickly jump to any chapter or section using the Table of Contents.',
       icon: <Menu className="w-6 h-6 text-gold" />,
       targetId: 'toc-toggle',
-      position: 'bottom',
     },
     {
       id: 'translate',
@@ -54,7 +51,13 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
       description: 'Translate the entire book into your preferred language with a single click.',
       icon: <Globe className="w-6 h-6 text-gold" />,
       targetId: 'language-dropdown',
-      position: 'bottom',
+    },
+    {
+      id: 'theme',
+      title: 'Choose Your Atmosphere',
+      description: 'Switch between Light and Dark mode to find your perfect reading environment.',
+      icon: isDarkMode ? <Sun className="w-6 h-6 text-gold" /> : <Moon className="w-6 h-6 text-gold" />,
+      targetId: 'theme-toggle',
     },
     {
       id: 'audio',
@@ -62,9 +65,13 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
       description: 'Experience the story through high-quality read-aloud. Perfect for hands-free immersion.',
       icon: <Crown className="w-6 h-6 text-gold" />,
       targetId: 'audio-toggle',
-      position: 'bottom',
     },
-  ];
+  ], [isDarkMode]);
+
+  const TOOLTIP_WIDTH = 320;
+  const TOOLTIP_HEIGHT = 180;
+  const ARROW_OFFSET = 20;
+  const PADDING = 16;
 
   useEffect(() => {
     const updateTargetRect = () => {
@@ -72,12 +79,66 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
       if (element) {
         setTargetRect(element.getBoundingClientRect());
       }
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
 
     updateTargetRect();
     window.addEventListener('resize', updateTargetRect);
-    return () => window.removeEventListener('resize', updateTargetRect);
-  }, [currentStep]);
+    window.addEventListener('scroll', updateTargetRect);
+    return () => {
+      window.removeEventListener('resize', updateTargetRect);
+      window.removeEventListener('scroll', updateTargetRect);
+    };
+  }, [currentStep, steps]);
+
+  const calculatePosition = (): TooltipPosition => {
+    if (!targetRect) {
+      return { top: 100, left: windowSize.width / 2 - TOOLTIP_WIDTH / 2, arrowPosition: 'top', arrowLeft: TOOLTIP_WIDTH / 2 };
+    }
+
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const spaceBelow = windowSize.height - targetRect.bottom;
+    const spaceAbove = targetRect.top;
+
+    // Determine vertical position (prefer below, use above if not enough space)
+    let top: number;
+    let arrowPosition: 'top' | 'bottom';
+
+    if (spaceBelow >= TOOLTIP_HEIGHT + ARROW_OFFSET + PADDING) {
+      // Position below the target
+      top = targetRect.bottom + ARROW_OFFSET;
+      arrowPosition = 'top';
+    } else if (spaceAbove >= TOOLTIP_HEIGHT + ARROW_OFFSET + PADDING) {
+      // Position above the target
+      top = targetRect.top - TOOLTIP_HEIGHT - ARROW_OFFSET;
+      arrowPosition = 'bottom';
+    } else {
+      // Default to center of screen
+      top = Math.max(PADDING, (windowSize.height - TOOLTIP_HEIGHT) / 2);
+      arrowPosition = 'top';
+    }
+
+    // Determine horizontal position (center on target, but keep within bounds)
+    let left = targetCenterX - TOOLTIP_WIDTH / 2;
+    let arrowLeft = TOOLTIP_WIDTH / 2;
+
+    // Clamp to screen bounds
+    if (left < PADDING) {
+      arrowLeft = targetCenterX - PADDING;
+      left = PADDING;
+    } else if (left + TOOLTIP_WIDTH > windowSize.width - PADDING) {
+      const rightEdge = windowSize.width - PADDING - TOOLTIP_WIDTH;
+      arrowLeft = targetCenterX - rightEdge;
+      left = rightEdge;
+    }
+
+    // Ensure arrow stays within tooltip bounds
+    arrowLeft = Math.max(20, Math.min(TOOLTIP_WIDTH - 20, arrowLeft));
+
+    return { top, left, arrowPosition, arrowLeft };
+  };
+
+  const position = calculatePosition();
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -100,51 +161,56 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 pointer-events-auto"
+        className="absolute inset-0 bg-black/70 pointer-events-auto"
         onClick={handleSkip}
       />
 
-      {/* Spotlight Effect (using SVG mask) */}
-      <svg className="absolute inset-0 w-full h-full">
-        <defs>
-          <mask id="spotlight-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {targetRect && (
-              <rect 
-                x={targetRect.left - 8} 
-                y={targetRect.top - 8} 
-                width={targetRect.width + 16} 
-                height={targetRect.height + 16} 
-                rx="8" 
-                fill="black" 
-              />
-            )}
-          </mask>
-        </defs>
-        <rect x="0" y="0" width="100%" height="100%" fill="transparent" mask="url(#spotlight-mask)" />
-      </svg>
+      {/* Spotlight Effect */}
+      {targetRect && (
+        <div 
+          className="absolute rounded-lg pointer-events-none"
+          style={{
+            left: targetRect.left - 8,
+            top: targetRect.top - 8,
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.7)',
+            zIndex: 101,
+          }}
+        />
+      )}
 
       {/* Tooltip */}
       <AnimatePresence mode="wait">
         {targetRect && (
           <motion.div
             key={step.id}
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              y: 0,
-              left: targetRect.left + (targetRect.width / 2),
-              top: targetRect.bottom + 20
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            className="absolute z-[102] pointer-events-auto"
+            style={{
+              top: position.top,
+              left: position.left,
+              width: TOOLTIP_WIDTH,
             }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            className="absolute z-[101] w-80 -translate-x-1/2 pointer-events-auto"
           >
-            <div className={`p-6 rounded-2xl shadow-2xl border ${
-              isDarkMode ? 'bg-onyx border-gold/30' : 'bg-ivory border-gold/40'
+            {/* Arrow pointing to target */}
+            {position.arrowPosition === 'top' && (
+              <div 
+                className={`absolute -top-2 w-4 h-4 rotate-45 border-l border-t ${
+                  isDarkMode ? 'bg-[#0a0a0a] border-gold/30' : 'bg-ivory border-gold/40'
+                }`}
+                style={{ left: position.arrowLeft - 8 }}
+              />
+            )}
+
+            <div className={`p-5 rounded-2xl shadow-2xl border ${
+              isDarkMode ? 'bg-[#0a0a0a] border-gold/30' : 'bg-ivory border-gold/40'
             }`}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-gold/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-gold/10 flex-shrink-0">
                   {step.icon}
                 </div>
                 <h3 className={`font-serif text-lg font-bold ${isDarkMode ? 'text-parchment' : 'text-charcoal'}`}>
@@ -152,7 +218,7 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
                 </h3>
               </div>
               
-              <p className={`text-sm leading-relaxed mb-6 ${isDarkMode ? 'text-parchment/70' : 'text-charcoal/70'}`}>
+              <p className={`text-sm leading-relaxed mb-5 ${isDarkMode ? 'text-parchment/70' : 'text-charcoal/70'}`}>
                 {step.description}
               </p>
 
@@ -161,8 +227,8 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
                   {steps.map((_, i) => (
                     <div 
                       key={i} 
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        i === currentStep ? 'w-4 bg-gold' : 'bg-gold/20'
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === currentStep ? 'w-4 bg-gold' : 'w-1.5 bg-gold/20'
                       }`}
                     />
                   ))}
@@ -182,7 +248,7 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
                     {currentStep === steps.length - 1 ? (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Enter Kingdom
+                        Begin Reading
                       </>
                     ) : (
                       <>
@@ -194,11 +260,16 @@ export default function ReaderWalkthrough({ onComplete, isDarkMode }: ReaderWalk
                 </div>
               </div>
             </div>
-            
-            {/* Arrow pointing up */}
-            <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-l border-t ${
-              isDarkMode ? 'bg-onyx border-gold/30' : 'bg-ivory border-gold/40'
-            }`} />
+
+            {/* Arrow pointing to target (bottom) */}
+            {position.arrowPosition === 'bottom' && (
+              <div 
+                className={`absolute -bottom-2 w-4 h-4 rotate-45 border-r border-b ${
+                  isDarkMode ? 'bg-[#0a0a0a] border-gold/30' : 'bg-ivory border-gold/40'
+                }`}
+                style={{ left: position.arrowLeft - 8 }}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

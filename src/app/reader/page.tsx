@@ -417,7 +417,7 @@ export default function ReaderPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${
-      isDarkMode ? 'bg-charcoal text-parchment' : 'bg-ivory text-charcoal'
+      isDarkMode ? 'bg-onyx text-parchment' : 'bg-ivory text-charcoal'
     }`}>
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gold/20 z-50">
@@ -440,7 +440,7 @@ export default function ReaderPage() {
           <div className="flex items-center gap-0.5 sm:gap-1 z-10">
             <button
               onClick={() => setShowHelpModal(true)}
-              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -448,12 +448,11 @@ export default function ReaderPage() {
               title="Help & FAQ"
             >
               <HelpCircle className="w-5 h-5" />
-              <span className="hidden sm:inline text-xs">FAQs</span>
             </button>
             <button
               id="toc-toggle"
               onClick={() => setShowToc(true)}
-              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -461,11 +460,10 @@ export default function ReaderPage() {
               title="Table of Contents"
             >
               <List className="w-5 h-5" />
-              <span className="hidden sm:inline text-xs">Contents</span>
             </button>
             <Link 
               href="/reader/home"
-              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -473,7 +471,6 @@ export default function ReaderPage() {
               title="My Library"
             >
               <Home className="w-5 h-5" />
-              <span className="hidden sm:inline text-xs">Library</span>
             </Link>
           </div>
 

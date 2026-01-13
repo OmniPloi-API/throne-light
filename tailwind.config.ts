@@ -9,14 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // The Throne Palette - Warm dark tones
+        // The Throne Palette
         onyx: {
-          DEFAULT: '#1a1814',
-          50: '#2a2622',
-          100: '#221f1b',
-          200: '#1a1814',
-          300: '#14120f',
-          400: '#0e0d0b',
+          DEFAULT: '#0a0a0a',
+          50: '#1a1a1a',
+          100: '#141414',
+          200: '#0f0f0f',
+          300: '#0a0a0a',
+          400: '#050505',
         },
         parchment: {
           DEFAULT: '#f5f0e8',
@@ -40,11 +40,11 @@ const config: Config = {
           900: '#42331b',
         },
         charcoal: {
-          DEFAULT: '#2d2926',
-          50: '#4a4540',
-          100: '#3a3632',
-          200: '#2d2926',
-          300: '#1f1c1a',
+          DEFAULT: '#2a2a2a',
+          50: '#4a4a4a',
+          100: '#3a3a3a',
+          200: '#2a2a2a',
+          300: '#1a1a1a',
         },
         cream: {
           DEFAULT: '#f8f4ec',
