@@ -76,7 +76,7 @@ export default function AudioToggle() {
       return;
     }
 
-    const audio = new Audio('/audio/rise.mp3');
+    const audio = new Audio('/audio/rise.m4a');
     audio.loop = false; // We handle looping manually with fade
     audio.volume = BASE_VOLUME;
     audioRef.current = audio;
