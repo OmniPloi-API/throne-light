@@ -1,35 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb, generateId, Subscriber, SubscriberSource } from '@/lib/db';
+import { SubscriberSource } from '@/lib/db';
+import { 
+  getSubscribers, 
+  getSubscribersBySource,
+  getSubscriberByEmailAndSource,
+  createSubscriber,
+  updateSubscriber,
+  deleteSubscriber as deleteSubscriberFromDb,
+  getSubscriberStats,
+  Subscriber
+} from '@/lib/db-supabase';
 import { enrollSubscriberInCampaign } from '@/lib/email-campaigns-supabase';
-import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function getSupabase() {
-  if (supabaseUrl && supabaseServiceKey) {
-    return createClient(supabaseUrl, supabaseServiceKey);
-  }
-  return null;
-}
-
-// GET - Fetch all subscribers (admin only)
+// GET - Fetch all subscribers (admin only) - USES SUPABASE
 export async function GET(request: NextRequest) {
   try {
-    const db = readDb();
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source') as SubscriberSource | null;
     const format = searchParams.get('format'); // 'csv' or 'txt'
     
-    let subscribers = db.subscribers || [];
-    
-    // Filter by source if provided
-    if (source) {
-      subscribers = subscribers.filter(s => s.source === source);
-    }
-    
-    // Sort by most recent first
-    subscribers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Fetch from Supabase (persistent storage)
+    const subscribers: Subscriber[] = source 
+      ? await getSubscribersBySource(source)
+      : await getSubscribers();
     
     // Export as CSV
     if (format === 'csv') {
@@ -75,15 +68,8 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Get stats by source
-    const stats = {
-      total: db.subscribers?.length || 0,
-      bySource: {} as Record<string, number>,
-    };
-    
-    (db.subscribers || []).forEach(s => {
-      stats.bySource[s.source] = (stats.bySource[s.source] || 0) + 1;
-    });
+    // Get stats by source from Supabase
+    const stats = await getSubscriberStats();
     
     return NextResponse.json({ subscribers, stats });
   } catch (error) {
@@ -92,7 +78,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add new subscriber
+// POST - Add new subscriber - USES SUPABASE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -102,21 +88,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and source are required' }, { status: 400 });
     }
     
-    const db = readDb();
-    
-    // Check if email already exists for this source
-    const existing = (db.subscribers || []).find(
-      s => s.email.toLowerCase() === email.toLowerCase() && s.source === source
-    );
+    // Check if email already exists for this source in Supabase
+    const existing = await getSubscriberByEmailAndSource(email, source);
     
     if (existing) {
       // Update existing subscriber
-      existing.phone = phone || existing.phone;
-      existing.firstName = firstName || existing.firstName;
-      existing.lastName = lastName || existing.lastName;
-      existing.updatedAt = new Date().toISOString();
-      writeDb(db);
-      return NextResponse.json({ success: true, subscriber: existing, updated: true });
+      const updated = await updateSubscriber(existing.id, {
+        phone: phone || existing.phone,
+        firstName: firstName || existing.firstName,
+        lastName: lastName || existing.lastName,
+      });
+      return NextResponse.json({ success: true, subscriber: updated || existing, updated: true });
     }
     
     // Get geo info from headers
@@ -124,8 +106,8 @@ export async function POST(request: NextRequest) {
     const ipAddress = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
     
-    const newSubscriber: Subscriber = {
-      id: generateId(),
+    // Create new subscriber in Supabase
+    const newSubscriber = await createSubscriber({
       email: email.toLowerCase(),
       phone: phone || undefined,
       firstName: firstName || undefined,
@@ -135,49 +117,13 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
       isVerified: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
     
-    if (!db.subscribers) {
-      db.subscribers = [];
-    }
-    db.subscribers.push(newSubscriber);
-    writeDb(db);
-    
-    // Also save to Supabase for email campaigns
-    const supabase = getSupabase();
-    let supabaseSubscriberId = newSubscriber.id;
-    
-    if (supabase) {
-      // @ts-ignore
-      const { data: supabaseSub, error: supabaseError } = await supabase
-        .from('subscribers')
-        .insert({
-          email: email.toLowerCase(),
-          phone: phone || null,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          source,
-          source_detail: sourceDetail || null,
-          ip_address: ipAddress || null,
-          user_agent: userAgent || null,
-          is_verified: false,
-        })
-        .select('id')
-        .single();
-      
-      if (supabaseError) {
-        console.error('Supabase subscriber insert error:', supabaseError);
-      } else if (supabaseSub) {
-        supabaseSubscriberId = supabaseSub.id;
-        console.log(`Subscriber saved to Supabase with ID: ${supabaseSubscriberId}`);
-      }
-    }
+    console.log(`Subscriber saved to Supabase with ID: ${newSubscriber.id}`);
     
     // For AUTHOR_MAILING_LIST subscribers, enroll in Light of EOLLES campaign
-    if (source === 'AUTHOR_MAILING_LIST' && supabase) {
-      enrollSubscriberInCampaign(supabaseSubscriberId, email, firstName)
+    if (source === 'AUTHOR_MAILING_LIST') {
+      enrollSubscriberInCampaign(newSubscriber.id, email, firstName)
         .then((result) => {
           if (result.success) {
             console.log(`Enrolled ${email} in Light of EOLLES campaign`);
@@ -197,7 +143,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Remove subscriber
+// DELETE - Remove subscriber - USES SUPABASE
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -207,15 +153,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Subscriber ID is required' }, { status: 400 });
     }
     
-    const db = readDb();
-    const index = (db.subscribers || []).findIndex(s => s.id === id);
+    const deleted = await deleteSubscriberFromDb(id);
     
-    if (index === -1) {
-      return NextResponse.json({ error: 'Subscriber not found' }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json({ error: 'Subscriber not found or could not be deleted' }, { status: 404 });
     }
-    
-    db.subscribers.splice(index, 1);
-    writeDb(db);
     
     return NextResponse.json({ success: true });
   } catch (error) {

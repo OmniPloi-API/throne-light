@@ -535,6 +535,76 @@ export async function getSubscriberByEmailAndSource(email: string, source: strin
   return toCamelCase(data) as unknown as Subscriber;
 }
 
+export async function getSubscribersBySource(source: string): Promise<Subscriber[]> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from('subscribers')
+    .select('*')
+    .eq('source', source)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching subscribers by source:', error);
+    return [];
+  }
+  
+  return (data || []).map(row => toCamelCase(row) as unknown as Subscriber);
+}
+
+export async function updateSubscriber(id: string, updates: Partial<Subscriber>): Promise<Subscriber | null> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from('subscribers')
+    .update({
+      ...toSnakeCase(updates as unknown as Record<string, unknown>),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating subscriber:', error);
+    return null;
+  }
+  
+  return toCamelCase(data) as unknown as Subscriber;
+}
+
+export async function deleteSubscriber(id: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from('subscribers')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting subscriber:', error);
+    return false;
+  }
+  
+  return true;
+}
+
+export async function getSubscriberStats(): Promise<{ total: number; bySource: Record<string, number> }> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from('subscribers')
+    .select('source');
+  
+  if (error) {
+    console.error('Error fetching subscriber stats:', error);
+    return { total: 0, bySource: {} };
+  }
+  
+  const bySource: Record<string, number> = {};
+  (data || []).forEach((row: { source: string }) => {
+    bySource[row.source] = (bySource[row.source] || 0) + 1;
+  });
+  
+  return { total: data?.length || 0, bySource };
+}
+
 // ============================================
 // REVIEWS
 // ============================================
