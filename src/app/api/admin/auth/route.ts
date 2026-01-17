@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { ADMIN_ROLES } from '../users/route';
+import { ADMIN_ROLES } from '@/lib/admin-roles';
 
 export async function POST(request: NextRequest) {
   try {
