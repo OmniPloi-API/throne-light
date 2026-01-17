@@ -247,26 +247,26 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
                       <tr>
                         <!-- Instagram -->
                         <td style="padding: 0 6px;">
-                          <a href="https://instagram.com/lightofeolles" style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none; font-size: 14px; color: #fff;">
-                            IG
+                          <a href="https://instagram.com/lightofeolles" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/icons/instagram-white.png" alt="Instagram" width="18" height="18" style="display: block; margin: 9px auto;" />
                           </a>
                         </td>
                         <!-- TikTok -->
                         <td style="padding: 0 6px;">
-                          <a href="https://tiktok.com/@lightofeolles" style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none; font-size: 14px; color: #fff;">
-                            TT
+                          <a href="https://tiktok.com/@lightofeolles" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/icons/tiktok-white.png" alt="TikTok" width="18" height="18" style="display: block; margin: 9px auto;" />
                           </a>
                         </td>
                         <!-- Twitter/X -->
                         <td style="padding: 0 6px;">
-                          <a href="https://twitter.com/lightofeolles" style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none; font-size: 14px; color: #fff;">
-                            X
+                          <a href="https://twitter.com/lightofeolles" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/icons/x-white.png" alt="X" width="18" height="18" style="display: block; margin: 9px auto;" />
                           </a>
                         </td>
                         <!-- Facebook -->
                         <td style="padding: 0 6px;">
-                          <a href="https://facebook.com/lightofeolles" style="display: inline-block; width: 32px; height: 32px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none; font-size: 14px; color: #fff;">
-                            FB
+                          <a href="https://facebook.com/lightofeolles" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #c9a961 0%, #a88a4a 100%); border-radius: 50%; text-align: center; text-decoration: none;">
+                            <img src="https://thronelightpublishing.com/images/icons/facebook-white.png" alt="Facebook" width="18" height="18" style="display: block; margin: 9px auto;" />
                           </a>
                         </td>
                       </tr>
@@ -290,7 +290,7 @@ export function generateLightOfEollesEmail(options: TemplateOptions): string {
                 <tr>
                   <td align="center">
                     <p style="color: #9a8b83; font-size: 11px; margin: 0; font-family: Georgia, 'Times New Roman', serif;">
-                      You are receiving this because you signed up for the Light of EOLLES at <a href="https://lightofeolles.com" style="color: #c9a961; text-decoration: none;">lightofeolles.com</a>
+                      You are receiving this because you signed up to receive the Light of EOLLES at <a href="https://lightofeolles.com" style="color: #c9a961; text-decoration: none;">lightofeolles.com</a>
                       <br><br>
                       <a href="${unsubscribeUrl}" style="color: #8a7b73; text-decoration: underline;">
                         Unsubscribe from these letters

@@ -106,16 +106,24 @@ export default function AdminFeedbackPage() {
   const toggleWidgetVisibility = async () => {
     setTogglingWidget(true);
     try {
+      const newValue = !widgetEnabled;
       const res = await fetch('/api/feedback/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedbackWidgetEnabled: !widgetEnabled }),
+        body: JSON.stringify({ feedbackWidgetEnabled: newValue }),
       });
       if (res.ok) {
-        setWidgetEnabled(!widgetEnabled);
+        setWidgetEnabled(newValue);
+        // Broadcast change to other tabs via localStorage event
+        localStorage.setItem('feedbackWidgetEnabled', JSON.stringify({ enabled: newValue, timestamp: Date.now() }));
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Toggle failed:', errorData);
+        alert('Failed to update widget visibility. Please try again.');
       }
     } catch (err) {
       console.error('Toggle error:', err);
+      alert('Failed to update widget visibility. Please try again.');
     }
     setTogglingWidget(false);
   };

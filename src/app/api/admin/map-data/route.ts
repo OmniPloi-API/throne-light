@@ -4,6 +4,40 @@ import { requireAdminAuth } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
+// Country coordinates for map markers (approximate center points)
+const COUNTRY_COORDINATES: Record<string, { latitude: number; longitude: number; code: string }> = {
+  'United States': { latitude: 39.8283, longitude: -98.5795, code: 'US' },
+  'USA': { latitude: 39.8283, longitude: -98.5795, code: 'US' },
+  'South Africa': { latitude: -30.5595, longitude: 22.9375, code: 'ZA' },
+  'Nigeria': { latitude: 9.0820, longitude: 8.6753, code: 'NG' },
+  'Ghana': { latitude: 7.9465, longitude: -1.0232, code: 'GH' },
+  'Botswana': { latitude: -22.3285, longitude: 24.6849, code: 'BW' },
+  'United Kingdom': { latitude: 55.3781, longitude: -3.4360, code: 'GB' },
+  'UK': { latitude: 55.3781, longitude: -3.4360, code: 'GB' },
+  'Cameroon': { latitude: 7.3697, longitude: 12.3547, code: 'CM' },
+  'France': { latitude: 46.2276, longitude: 2.2137, code: 'FR' },
+  'Germany': { latitude: 51.1657, longitude: 10.4515, code: 'DE' },
+  'Australia': { latitude: -25.2744, longitude: 133.7751, code: 'AU' },
+  'Canada': { latitude: 56.1304, longitude: -106.3468, code: 'CA' },
+  'India': { latitude: 20.5937, longitude: 78.9629, code: 'IN' },
+  'Kenya': { latitude: -0.0236, longitude: 37.9062, code: 'KE' },
+  'Brazil': { latitude: -14.2350, longitude: -51.9253, code: 'BR' },
+  'Mexico': { latitude: 23.6345, longitude: -102.5528, code: 'MX' },
+  'Japan': { latitude: 36.2048, longitude: 138.2529, code: 'JP' },
+  'China': { latitude: 35.8617, longitude: 104.1954, code: 'CN' },
+  'Netherlands': { latitude: 52.1326, longitude: 5.2913, code: 'NL' },
+  'Spain': { latitude: 40.4637, longitude: -3.7492, code: 'ES' },
+  'Italy': { latitude: 41.8719, longitude: 12.5674, code: 'IT' },
+  'Sweden': { latitude: 60.1282, longitude: 18.6435, code: 'SE' },
+  'Norway': { latitude: 60.4720, longitude: 8.4689, code: 'NO' },
+  'Denmark': { latitude: 56.2639, longitude: 9.5018, code: 'DK' },
+  'Ireland': { latitude: 53.1424, longitude: -7.6921, code: 'IE' },
+  'New Zealand': { latitude: -40.9006, longitude: 174.8860, code: 'NZ' },
+  'Singapore': { latitude: 1.3521, longitude: 103.8198, code: 'SG' },
+  'UAE': { latitude: 23.4241, longitude: 53.8478, code: 'AE' },
+  'United Arab Emirates': { latitude: 23.4241, longitude: 53.8478, code: 'AE' },
+};
+
 export async function GET(req: NextRequest) {
   const authError = requireAdminAuth(req);
   if (authError) return authError;
@@ -11,13 +45,30 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
 
-    // Get sales by location (aggregated)
-    const { data: salesData, error: salesError } = await supabase
+    // Get sales by location from sales_locations table
+    const { data: salesLocationsData } = await supabase
       .from('sales_locations')
       .select('city, country, country_code, latitude, longitude, amount')
       .not('latitude', 'is', null);
 
-    // Aggregate sales by location
+    // Also get tracking events with country data (this is where Consumer Analysis gets its data)
+    const { data: trackingEvents } = await supabase
+      .from('tracking_events')
+      .select('country, city, event_type, ip_address')
+      .not('country', 'is', null);
+
+    // Get orders for revenue data
+    const { data: ordersData } = await supabase
+      .from('orders')
+      .select('total_amount, created_at');
+
+    // Calculate total revenue from orders
+    const totalOrdersRevenue = (ordersData || []).reduce((sum, order) => {
+      return sum + (parseFloat(order.total_amount) || 0);
+    }, 0);
+    const totalOrdersCount = ordersData?.length || 0;
+
+    // Aggregate sales by location from sales_locations
     const salesByLocation: Record<string, {
       city: string;
       country: string;
@@ -28,7 +79,7 @@ export async function GET(req: NextRequest) {
       totalAmount: number;
     }> = {};
 
-    salesData?.forEach((sale) => {
+    salesLocationsData?.forEach((sale) => {
       const key = `${sale.latitude},${sale.longitude}`;
       if (!salesByLocation[key]) {
         salesByLocation[key] = {
@@ -43,6 +94,55 @@ export async function GET(req: NextRequest) {
       }
       salesByLocation[key].count++;
       salesByLocation[key].totalAmount += parseFloat(sale.amount) || 0;
+    });
+
+    // Also aggregate by country from tracking events (for countries view)
+    const countriesFromEvents: Record<string, {
+      country: string;
+      countryCode: string;
+      latitude: number;
+      longitude: number;
+      visitorCount: number;
+      saleCount: number;
+    }> = {};
+
+    trackingEvents?.forEach((event) => {
+      const country = event.country;
+      if (!country) return;
+      
+      const coords = COUNTRY_COORDINATES[country];
+      if (!coords) return;
+
+      if (!countriesFromEvents[country]) {
+        countriesFromEvents[country] = {
+          country,
+          countryCode: coords.code,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          visitorCount: 0,
+          saleCount: 0
+        };
+      }
+      countriesFromEvents[country].visitorCount++;
+      if (event.event_type === 'SALE' || event.event_type === 'CLICK_DIRECT') {
+        countriesFromEvents[country].saleCount++;
+      }
+    });
+
+    // Add countries from events to salesByLocation if not already present
+    Object.values(countriesFromEvents).forEach((countryData) => {
+      const key = `${countryData.latitude},${countryData.longitude}`;
+      if (!salesByLocation[key] && countryData.saleCount > 0) {
+        salesByLocation[key] = {
+          city: '',
+          country: countryData.country,
+          countryCode: countryData.countryCode,
+          latitude: countryData.latitude,
+          longitude: countryData.longitude,
+          count: countryData.saleCount,
+          totalAmount: 0
+        };
+      }
     });
 
     // Clean up stale reader sessions
@@ -99,18 +199,22 @@ export async function GET(req: NextRequest) {
       });
     });
 
-    // Get summary stats
-    const totalSales = Object.values(salesByLocation).reduce((sum, loc) => sum + loc.count, 0);
-    const totalRevenue = Object.values(salesByLocation).reduce((sum, loc) => sum + loc.totalAmount, 0);
+    // Get summary stats - use orders for revenue, tracking events for countries
+    const totalSalesFromLocations = Object.values(salesByLocation).reduce((sum, loc) => sum + loc.count, 0);
+    const totalSales = Math.max(totalSalesFromLocations, totalOrdersCount);
+    const totalRevenue = totalOrdersRevenue; // Use orders table for accurate revenue
     const totalActiveReaders = readersData?.length || 0;
-    const uniqueCountries = new Set([
-      ...Object.values(salesByLocation).map(s => s.countryCode),
-      ...Object.values(readersByLocation).map(r => r.countryCode)
-    ].filter(Boolean)).size;
+    
+    // Get unique countries from tracking events (same source as Consumer Analysis)
+    const countriesFromTrackingEvents = (trackingEvents || []).map(e => e.country).filter(Boolean);
+    const countriesFromReaderSessions = Object.values(readersByLocation).map(r => r.country).filter(Boolean);
+    const allCountries = [...countriesFromTrackingEvents, ...countriesFromReaderSessions];
+    const uniqueCountries = new Set(allCountries).size;
 
     return NextResponse.json({
       sales: Object.values(salesByLocation),
       readers: Object.values(readersByLocation),
+      countriesData: Object.values(countriesFromEvents),
       summary: {
         totalSales,
         totalRevenue,

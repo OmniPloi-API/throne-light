@@ -59,12 +59,14 @@ export default function FrequencySection() {
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSrcRef = useRef<string>(encodeURI('/audio/EOLLES - THE KING HAS TO RISE.mp3'));
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isFadingRef = useRef(false);
   const { language } = useLanguage();
@@ -106,7 +108,7 @@ export default function FrequencySection() {
 
   // Initialize audio for the playable track
   useEffect(() => {
-    const audio = new Audio('/audio/EOLLES - THE KING HAS TO RISE.mp3');
+    const audio = new Audio(audioSrcRef.current);
     audio.loop = false;
     audio.volume = BASE_VOLUME;
     audio.preload = 'auto';
@@ -140,10 +142,16 @@ export default function FrequencySection() {
       setProgress(0);
     };
 
+    const handleError = () => {
+      setIsPlaying(false);
+      setPlaybackError('Audio failed to load. Please refresh and try again.');
+    };
+
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.pause();
@@ -151,6 +159,7 @@ export default function FrequencySection() {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
       if (fadeIntervalRef.current) {
         clearInterval(fadeIntervalRef.current);
       }
@@ -165,6 +174,8 @@ export default function FrequencySection() {
       return;
     }
 
+    setPlaybackError(null);
+
     if (!audio.paused) {
       audio.pause();
       return;
@@ -176,8 +187,16 @@ export default function FrequencySection() {
     isFadingRef.current = false;
     audio.volume = BASE_VOLUME;
 
-    // Play the track (no modal for playable tracks)
-    audio.play().catch((err) => {
+    if (audio.src !== audioSrcRef.current) {
+      audio.src = audioSrcRef.current;
+    }
+    audio.load();
+
+    audio.play().catch((err: unknown) => {
+      const e = err as { name?: string; message?: string };
+      const name = e?.name || 'PlaybackError';
+      const message = e?.message || 'Audio playback failed. Please press Play again.';
+      setPlaybackError(`${name}: ${message}`);
       console.error(err);
     });
   };
@@ -189,6 +208,7 @@ export default function FrequencySection() {
       audioRef.current.currentTime = 0;
       setProgress(0);
     }
+    setPlaybackError(null);
     setCurrentTrack(index);
     
     // If the new track is not playable, show coming soon modal
@@ -285,6 +305,12 @@ export default function FrequencySection() {
                 style={{ width: tracks[currentTrack].playable ? `${(progress / LOOP_POINT_SECONDS) * 100}%` : '0%' }}
               />
             </div>
+
+            {playbackError && (
+              <div className="text-center -mt-4 mb-6">
+                <p className="text-xs text-red-300">{playbackError}</p>
+              </div>
+            )}
 
             {/* Controls */}
             <div className="flex items-center justify-center gap-6">

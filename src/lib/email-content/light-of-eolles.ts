@@ -20,7 +20,7 @@ export const LIGHT_OF_EOLLES_LETTERS: EollesLetter[] = [
     body: [
       "You did not stumble upon this by accident. You were summoned.",
       "Something within you recognized a frequency that most cannot hear. That recognition is not coincidence. It is remembrance.",
-      "I write to you not as a stranger but as someone who has walked the path you are beginning to see. The road to your higher self is not always lit but it is always there. And now you have found a lantern.",
+      "I write to you not as a stranger but as a vessel sent to light the path you are beginning to see. The road to your higher self is not always lit but it is always there. And now you have found a lantern.",
       "In the weeks and months ahead I will send you words meant to illuminate. Not to tell you what to think but to remind you of what you already know. Your crown has always been yours.",
       "Welcome to the Light."
     ],

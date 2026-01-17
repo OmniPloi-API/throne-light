@@ -437,40 +437,42 @@ export default function ReaderPage() {
       }`}>
         <div className="relative max-w-3xl mx-auto px-2 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: Help, Menu & Home */}
-          <div className="flex items-center gap-0.5 sm:gap-1 z-10">
+          <div className="flex items-center gap-1 sm:gap-3 z-10">
             <button
               onClick={() => setShowHelpModal(true)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
               title="Help & FAQ"
             >
-              <HelpCircle className="w-5 h-5" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">FAQs</span>
             </button>
             <button
               id="toc-toggle"
               onClick={() => setShowToc(true)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
               title="Table of Contents"
             >
-              <List className="w-5 h-5" />
+              <List className="w-4 h-4 sm:w-5 h-5" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">Menu</span>
             </button>
             <Link 
               href="/reader/home"
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
               title="My Library"
             >
-              <Home className="w-5 h-5" />
+              <Home className="w-4 h-4 sm:w-5 h-5" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider whitespace-nowrap">My Library</span>
             </Link>
           </div>
 
@@ -731,7 +733,7 @@ export default function ReaderPage() {
                 transition: color 0.15s ease;
               }
               .reader-content p:hover {
-                color: ${isDarkMode ? '#D4AF37' : '#B8860B'};
+                color: #c9a961;
               }
             `}</style>
             

@@ -1,8 +1,8 @@
 // Throne Light Reader - Service Worker
 // Implements network-only strategy for book content with offline fallback
 
-const CACHE_NAME = 'throne-light-reader-v3';
-const SHELL_CACHE = 'throne-light-shell-v3';
+const CACHE_NAME = 'throne-light-reader-v4';
+const SHELL_CACHE = 'throne-light-shell-v4';
 
 // App shell files to cache (UI, styles, logos)
 const SHELL_FILES = [
@@ -50,6 +50,14 @@ self.addEventListener('fetch', (event) => {
   
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  if (
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.startsWith('/audio/') ||
+    url.pathname.match(/\.(mp3|m4a|wav|ogg)$/)
+  ) {
     return;
   }
 
@@ -106,7 +114,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets - Cache first
-  if (url.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico|woff|woff2|css|js)$/)) {
+  if (url.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico|woff|woff2|css)$/)) {
     event.respondWith(
       caches.match(event.request)
         .then((cachedResponse) => {

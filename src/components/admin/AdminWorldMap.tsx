@@ -282,12 +282,12 @@ const AdminWorldMap = () => {
           onClick={() => handleViewModeChange('readers')}
           className={`bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border transition-all text-left ${
             viewMode === 'readers' 
-              ? 'border-green-400 ring-2 ring-green-400/50' 
-              : 'border-gold/20 hover:border-green-400/50'
+              ? 'border-purple-400 ring-2 ring-purple-400/50' 
+              : 'border-gold/20 hover:border-purple-400/50'
           }`}
         >
           <p className="text-parchment/50 text-xs uppercase tracking-wider">Active Readers</p>
-          <p className="text-2xl font-bold text-green-400">{mapData?.summary.totalActiveReaders || 0}</p>
+          <p className="text-2xl font-bold text-purple-400">{mapData?.summary.totalActiveReaders || 0}</p>
         </button>
         
         <button
@@ -306,12 +306,12 @@ const AdminWorldMap = () => {
           onClick={() => handleViewModeChange('revenue')}
           className={`bg-charcoal/80 backdrop-blur-sm rounded-lg px-4 py-2 border transition-all text-left ${
             viewMode === 'revenue' 
-              ? 'border-purple-400 ring-2 ring-purple-400/50' 
-              : 'border-gold/20 hover:border-purple-400/50'
+              ? 'border-green-400 ring-2 ring-green-400/50' 
+              : 'border-gold/20 hover:border-green-400/50'
           }`}
         >
           <p className="text-parchment/50 text-xs uppercase tracking-wider">Revenue</p>
-          <p className="text-2xl font-bold text-purple-400">
+          <p className="text-2xl font-bold text-green-400">
             ${(mapData?.summary.totalRevenue || 0).toFixed(0)}
           </p>
         </button>
@@ -396,7 +396,7 @@ const AdminWorldMap = () => {
               </Marker>
             ))}
 
-            {/* Reader Markers (Pulsing Green Beacons) - shown for 'readers' and 'all' modes */}
+            {/* Reader Markers (Pulsing Purple Beacons) - shown for 'readers' and 'all' modes */}
             {(viewMode === 'readers' || viewMode === 'all') && mapData?.readers.map((reader, i) => (
               <Marker
                 key={`reader-${i}`}
@@ -409,7 +409,7 @@ const AdminWorldMap = () => {
                   <circle
                     r={readerScale(reader.count) + 8}
                     fill="none"
-                    stroke={GREEN}
+                    stroke={PURPLE}
                     strokeWidth={2}
                     className="animate-ping-slow"
                     opacity={0.4}
@@ -418,7 +418,7 @@ const AdminWorldMap = () => {
                   <circle
                     r={readerScale(reader.count) + 4}
                     fill="none"
-                    stroke={GREEN}
+                    stroke={PURPLE}
                     strokeWidth={1.5}
                     className="animate-ping-slower"
                     opacity={0.6}
@@ -426,16 +426,16 @@ const AdminWorldMap = () => {
                   {/* Core beacon */}
                   <circle
                     r={readerScale(reader.count)}
-                    fill={GREEN}
+                    fill={PURPLE}
                     fillOpacity={0.9}
-                    stroke="#86EFAC"
+                    stroke="#C4B5FD"
                     strokeWidth={2}
-                    className="drop-shadow-green"
+                    className="drop-shadow-purple"
                   />
                   {/* Center glow */}
                   <circle
                     r={readerScale(reader.count) / 2}
-                    fill="#86EFAC"
+                    fill="#C4B5FD"
                     fillOpacity={0.8}
                   />
                 </g>
@@ -481,7 +481,7 @@ const AdminWorldMap = () => {
               </Marker>
             ))}
             
-            {/* Revenue Markers (Purple Circles with amount) - shown for 'revenue' mode */}
+            {/* Revenue Markers (Green Circles with amount) - shown for 'revenue' mode */}
             {viewMode === 'revenue' && mapData?.sales.filter(s => s.totalAmount > 0).map((sale, i) => (
               <Marker
                 key={`revenue-${i}`}
@@ -493,23 +493,23 @@ const AdminWorldMap = () => {
                   {/* Glow effect for revenue */}
                   <circle
                     r={Math.max(8, Math.min(sale.totalAmount / 5, 25))}
-                    fill={PURPLE}
+                    fill={GREEN}
                     fillOpacity={0.3}
                     className="animate-pulse"
                   />
                   {/* Core circle */}
                   <circle
                     r={Math.max(6, Math.min(sale.totalAmount / 8, 18))}
-                    fill={PURPLE}
+                    fill={GREEN}
                     fillOpacity={0.8}
-                    stroke="#C4B5FD"
+                    stroke="#86EFAC"
                     strokeWidth={2}
-                    className="drop-shadow-purple"
+                    className="drop-shadow-green"
                   />
                   {/* Center */}
                   <circle
                     r={3}
-                    fill="#C4B5FD"
+                    fill="#86EFAC"
                     fillOpacity={0.9}
                   />
                 </g>
@@ -569,8 +569,8 @@ const AdminWorldMap = () => {
             <>
               <div className="flex items-center gap-2">
                 <div className="relative w-4 h-4">
-                  <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-40" />
-                  <div className="absolute inset-1 rounded-full bg-green-400" />
+                  <div className="absolute inset-0 rounded-full bg-purple-400 animate-ping opacity-40" />
+                  <div className="absolute inset-1 rounded-full bg-purple-400" />
                 </div>
                 <span className="text-parchment/80 text-xs">Active Reader (live)</span>
               </div>
@@ -589,7 +589,7 @@ const AdminWorldMap = () => {
           {viewMode === 'revenue' && (
             <>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-purple-400/80" />
+                <div className="w-4 h-4 rounded-full bg-green-400/80" />
                 <span className="text-parchment/80 text-xs">Revenue Location</span>
               </div>
               <p className="text-parchment/50 text-xs">Hover to see amount earned</p>
@@ -603,8 +603,8 @@ const AdminWorldMap = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative w-4 h-4">
-                  <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-40" />
-                  <div className="absolute inset-1 rounded-full bg-green-400" />
+                  <div className="absolute inset-0 rounded-full bg-purple-400 animate-ping opacity-40" />
+                  <div className="absolute inset-1 rounded-full bg-purple-400" />
                 </div>
                 <span className="text-parchment/80 text-xs">Active Readers</span>
               </div>

@@ -106,6 +106,7 @@ export default function AdminPage() {
   const [showTrafficBreakdown, setShowTrafficBreakdown] = useState(false);
   const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
   const [showCommissionBreakdown, setShowCommissionBreakdown] = useState(false);
+  const [showRetentionBreakdown, setShowRetentionBreakdown] = useState(false);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -323,6 +324,8 @@ export default function AdminPage() {
               value={`${retentionRate.toFixed(1)}%`}
               sublabel="Stayed on site"
               color="green"
+              onClick={() => setShowRetentionBreakdown(true)}
+              clickable
             />
             <StatCard 
               icon={<ArrowDownRight className="text-orange-400" />} 
@@ -565,6 +568,14 @@ export default function AdminPage() {
           partners={partners}
           totalCommission={totalCommission}
           onClose={() => setShowCommissionBreakdown(false)}
+        />
+      )}
+
+      {/* Retention Breakdown Modal */}
+      {showRetentionBreakdown && (
+        <RetentionBreakdownModal
+          events={events}
+          onClose={() => setShowRetentionBreakdown(false)}
         />
       )}
 
@@ -1648,6 +1659,218 @@ function CommissionBreakdownModal({ orders, events, partners, totalCommission, o
           {partnerCommissions.length === 0 && (
             <p className="text-center text-gray-500 py-4">No commissions owed yet</p>
           )}
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-4 rounded transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Retention Breakdown Modal - Shows average time spent on pages
+function RetentionBreakdownModal({ events, onClose }: {
+  events: TrackingEvent[];
+  onClose: () => void;
+}) {
+  // Calculate session durations by grouping page views by IP
+  const sessionsByIp = new Map<string, Date[]>();
+  
+  events.forEach(event => {
+    if (event.type === 'PAGE_VIEW' && event.ipAddress) {
+      if (!sessionsByIp.has(event.ipAddress)) {
+        sessionsByIp.set(event.ipAddress, []);
+      }
+      sessionsByIp.get(event.ipAddress)!.push(new Date(event.createdAt));
+    }
+  });
+
+  // Calculate session durations (difference between first and last event for each IP)
+  const sessionDurations: number[] = [];
+  sessionsByIp.forEach((timestamps) => {
+    if (timestamps.length >= 1) {
+      const sorted = timestamps.sort((a, b) => a.getTime() - b.getTime());
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const durationMs = last.getTime() - first.getTime();
+      const durationSeconds = Math.floor(durationMs / 1000);
+      sessionDurations.push(durationSeconds);
+    }
+  });
+
+  // Categorize sessions by duration
+  const categories = {
+    under30s: sessionDurations.filter(d => d < 30).length,
+    thirtySecTo2Min: sessionDurations.filter(d => d >= 30 && d < 120).length,
+    twoTo5Min: sessionDurations.filter(d => d >= 120 && d < 300).length,
+    fiveTo10Min: sessionDurations.filter(d => d >= 300 && d < 600).length,
+    tenTo30Min: sessionDurations.filter(d => d >= 600 && d < 1800).length,
+    thirtyMinTo1Hr: sessionDurations.filter(d => d >= 1800 && d < 3600).length,
+    oneHrTo24Hr: sessionDurations.filter(d => d >= 3600 && d < 86400).length,
+    overDay: sessionDurations.filter(d => d >= 86400).length,
+  };
+
+  const totalSessions = sessionDurations.length || 1;
+  const avgDuration = sessionDurations.length > 0 
+    ? Math.floor(sessionDurations.reduce((a, b) => a + b, 0) / sessionDurations.length)
+    : 0;
+
+  const formatDuration = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+  };
+
+  const getPercentage = (count: number) => ((count / totalSessions) * 100).toFixed(1);
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-[#111] border border-gold/30 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-gold">Retention Time Breakdown</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <p className="text-3xl font-bold text-green-400 text-center">{formatDuration(avgDuration)}</p>
+          <p className="text-gray-400 text-center text-sm mt-1">Average Time on Site</p>
+          <p className="text-gray-500 text-center text-xs mt-1">{sessionDurations.length} total sessions analyzed</p>
+        </div>
+        
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Session Duration Distribution</h4>
+          
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">⚡</span>
+                <div>
+                  <p className="font-medium text-white">Under 30 seconds</p>
+                  <p className="text-xs text-gray-500">Quick bounce</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-red-400">{categories.under30s}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.under30s)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">👀</span>
+                <div>
+                  <p className="font-medium text-white">30 seconds – 2 minutes</p>
+                  <p className="text-xs text-gray-500">Brief browsing</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-orange-400">{categories.thirtySecTo2Min}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.thirtySecTo2Min)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📖</span>
+                <div>
+                  <p className="font-medium text-white">2 – 5 minutes</p>
+                  <p className="text-xs text-gray-500">Engaged exploration</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-yellow-400">{categories.twoTo5Min}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.twoTo5Min)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🎯</span>
+                <div>
+                  <p className="font-medium text-white">5 – 10 minutes</p>
+                  <p className="text-xs text-gray-500">Serious interest</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-green-400">{categories.fiveTo10Min}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.fiveTo10Min)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">⭐</span>
+                <div>
+                  <p className="font-medium text-white">10 – 30 minutes</p>
+                  <p className="text-xs text-gray-500">Deep engagement</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-blue-400">{categories.tenTo30Min}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.tenTo30Min)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🔥</span>
+                <div>
+                  <p className="font-medium text-white">30 minutes – 1 hour</p>
+                  <p className="text-xs text-gray-500">Extended session</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-purple-400">{categories.thirtyMinTo1Hr}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.thirtyMinTo1Hr)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">💎</span>
+                <div>
+                  <p className="font-medium text-white">1 – 24 hours</p>
+                  <p className="text-xs text-gray-500">Power user / Tab kept open</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-gold">{categories.oneHrTo24Hr}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.oneHrTo24Hr)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#1a1a1a] border border-[#222] rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">👑</span>
+                <div>
+                  <p className="font-medium text-white">Days+</p>
+                  <p className="text-xs text-gray-500">Persistent session</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-gold">{categories.overDay}</p>
+                <p className="text-xs text-gray-500">{getPercentage(categories.overDay)}%</p>
+              </div>
+            </div>
+          </div>
         </div>
         
         <button

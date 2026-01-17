@@ -29,7 +29,11 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
 
   const checkVisibility = useCallback(async () => {
     try {
-      const res = await fetch('/api/feedback/settings');
+      // Add cache-busting to ensure we get fresh data
+      const res = await fetch(`/api/feedback/settings?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const data = await res.json();
         setIsVisible(!!data.feedbackWidgetEnabled);
@@ -43,6 +47,14 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
     checkVisibility();
   }, [checkVisibility, pathname]);
 
+  // Poll for visibility changes every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkVisibility();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [checkVisibility]);
+
   useEffect(() => {
     const handleFocus = () => {
       checkVisibility();
@@ -52,12 +64,25 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
         checkVisibility();
       }
     };
+    // Listen for localStorage changes from admin panel
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'feedbackWidgetEnabled' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          setIsVisible(!!data.enabled);
+        } catch {
+          checkVisibility();
+        }
+      }
+    };
 
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [checkVisibility]);
 
