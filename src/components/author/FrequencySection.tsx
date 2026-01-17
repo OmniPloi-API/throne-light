@@ -67,7 +67,7 @@ export default function FrequencySection() {
   const [submitted, setSubmitted] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioSrcRef = useRef<string>('/audio/rise.m4a');
+  const audioSrcRef = useRef<string>('/audio/rise.mp3');
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isFadingRef = useRef(false);
   const { language } = useLanguage();
