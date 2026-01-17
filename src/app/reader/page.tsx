@@ -29,6 +29,7 @@ const ReaderWalkthrough = dynamic(() => import('@/components/reader/ReaderWalkth
 import { bookData, Chapter } from '@/data/books/crowded-bed-empty-throne';
 import LanguageSelector from '@/components/reader/LanguageSelector';
 import { translateParagraphs } from '@/lib/translate';
+import { getReaderTranslations } from '@/lib/reader-translations';
 import ReaderAudioPlayer from '@/components/reader/ReaderAudioPlayer';
 import { ParagraphData } from '@/hooks/useAudioSync';
 
@@ -94,6 +95,9 @@ export default function ReaderPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<Record<string, string[]>>({});
   const [translationError, setTranslationError] = useState<string | null>(null);
+  
+  // Get UI translations based on selected language
+  const t = getReaderTranslations(selectedLanguage);
   
   // Audio player state
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
@@ -445,9 +449,9 @@ export default function ReaderPage() {
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
-              title="Help & FAQ"
+              title={t.help}
             >
-              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">FAQs</span>
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">{t.faqs}</span>
             </button>
             <button
               id="toc-toggle"
@@ -457,10 +461,10 @@ export default function ReaderPage() {
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
-              title="Table of Contents"
+              title={t.tableOfContents}
             >
               <List className="w-4 h-4 sm:w-5 h-5" />
-              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">Menu</span>
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">{t.menu}</span>
             </button>
             <Link 
               href="/reader/home"
@@ -469,10 +473,10 @@ export default function ReaderPage() {
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
               }`}
-              title="My Library"
+              title={t.myLibrary}
             >
               <Home className="w-4 h-4 sm:w-5 h-5" />
-              <span className="hidden lg:inline text-[10px] sm:text-xs font-medium uppercase tracking-wider whitespace-nowrap">My Library</span>
+              <span className="hidden lg:inline text-[10px] sm:text-xs font-medium uppercase tracking-wider whitespace-nowrap">{t.myLibrary}</span>
             </Link>
           </div>
 
@@ -507,7 +511,7 @@ export default function ReaderPage() {
                   ? 'hover:bg-charcoal/50' 
                   : 'hover:bg-manuscript'
               }`}
-              title={isBookmarked(currentSection.id) ? 'Remove Bookmark' : 'Add Bookmark'}
+              title={isBookmarked(currentSection.id) ? t.removeBookmark : t.bookmark}
             >
               {isBookmarked(currentSection.id) ? (
                 <BookmarkCheck className="w-5 h-5 text-gold" />
@@ -523,7 +527,7 @@ export default function ReaderPage() {
                   ? 'hover:bg-charcoal/50 text-gold' 
                   : 'hover:bg-manuscript text-gold-700'
               }`}
-              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              title={isDarkMode ? t.lightMode : t.darkMode}
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
@@ -659,7 +663,7 @@ export default function ReaderPage() {
               ? 'text-gold hover:bg-gold/10'
               : 'text-gold-700 hover:bg-gold/10'
           }`}
-          title="Previous"
+          title={t.previous}
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -673,7 +677,7 @@ export default function ReaderPage() {
               ? 'text-gold hover:bg-gold/10'
               : 'text-gold-700 hover:bg-gold/10'
           }`}
-          title="Next"
+          title={t.next}
         >
           <ChevronRight className="w-6 h-6" />
         </button>
@@ -907,7 +911,7 @@ export default function ReaderPage() {
             }`}
           >
             <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm hidden sm:inline">Previous</span>
+            <span className="text-sm hidden sm:inline">{t.previous}</span>
           </button>
 
           {/* Center: Crown + Page Number - absolutely centered */}
@@ -926,7 +930,7 @@ export default function ReaderPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/images/THRONELIGHT-CROWN.png" 
-                alt="Activate Audio Reader" 
+                alt={t.activateAudio} 
                 width={32} 
                 height={32} 
                 className={`w-8 h-8 transition-opacity ${
@@ -957,7 +961,7 @@ export default function ReaderPage() {
                 : 'text-charcoal hover:bg-manuscript'
             }`}
           >
-            <span className="text-sm hidden sm:inline">Next</span>
+            <span className="text-sm hidden sm:inline">{t.next}</span>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
