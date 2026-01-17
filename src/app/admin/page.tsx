@@ -25,7 +25,7 @@ import {
   Users, DollarSign, TrendingUp, ExternalLink, 
   Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
   ArrowUpRight, ArrowDownRight, Link2, Loader2, LogOut,
-  Power, Trash2, RotateCcw, AlertTriangle
+  Power, Trash2, RotateCcw, AlertTriangle, Edit2, X
 } from 'lucide-react';
 import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 import SubAdminManagement from '@/components/admin/SubAdminManagement';
@@ -103,6 +103,13 @@ export default function AdminPage() {
     type: 'deactivate' | 'reactivate' | 'delete';
     partner: Partner;
   } | null>(null);
+  
+  // Edit partner rates state
+  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
+  const [editCommission, setEditCommission] = useState(0);
+  const [editClickBounty, setEditClickBounty] = useState(0);
+  const [editDiscount, setEditDiscount] = useState(0);
+  const [editSaving, setEditSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [showTrafficBreakdown, setShowTrafficBreakdown] = useState(false);
   const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
@@ -184,6 +191,38 @@ export default function AdminPage() {
       console.error('Deletion error:', err);
     }
     setActionLoading(false);
+  };
+
+  // Open edit modal for partner rates
+  const openEditPartner = (partner: Partner) => {
+    setEditingPartner(partner);
+    setEditCommission(partner.commissionPercent);
+    setEditClickBounty(partner.clickBounty);
+    setEditDiscount(partner.discountPercent);
+  };
+
+  // Save partner rate changes
+  const savePartnerRates = async () => {
+    if (!editingPartner) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/partners/${editingPartner.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commissionPercent: editCommission,
+          clickBounty: editClickBounty,
+          discountPercent: editDiscount,
+        }),
+      });
+      if (res.ok) {
+        await fetchAll();
+        setEditingPartner(null);
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+    }
+    setEditSaving(false);
   };
 
   async function fetchAll() {
@@ -469,6 +508,13 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEditPartner(p)}
+                            className="p-1.5 rounded bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 transition"
+                            title="Edit Rates"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                           {p.isActive ? (
                             <>
                               <button
@@ -542,6 +588,93 @@ export default function AdminPage() {
           }}
           onCancel={() => setConfirmAction(null)}
         />
+      )}
+
+      {/* Edit Partner Rates Modal */}
+      {editingPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111] border border-gold/30 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gold">Edit Partner Rates</h3>
+              <button
+                onClick={() => setEditingPartner(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-white font-medium">{editingPartner.name}</p>
+              <p className="text-gray-500 text-sm">{editingPartner.email}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Commission Percent (%)</label>
+                <input
+                  type="number"
+                  value={editCommission}
+                  onChange={(e) => setEditCommission(Number(e.target.value))}
+                  className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white focus:border-gold/50 focus:outline-none"
+                  min={0}
+                  max={100}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Set to 0 to disable commission earnings
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Click Bounty ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editClickBounty}
+                  onChange={(e) => setEditClickBounty(Number(e.target.value))}
+                  className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white focus:border-gold/50 focus:outline-none"
+                  min={0}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Set to 0 to disable click bounty earnings
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Discount for Customers (%)</label>
+                <input
+                  type="number"
+                  value={editDiscount}
+                  onChange={(e) => setEditDiscount(Number(e.target.value))}
+                  className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white focus:border-gold/50 focus:outline-none"
+                  min={0}
+                  max={100}
+                />
+              </div>
+
+              <div className="pt-4 border-t border-[#333] flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Changes take effect immediately
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditingPartner(null)}
+                    className="px-4 py-2 bg-[#222] hover:bg-[#333] text-gray-300 rounded transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={savePartnerRates}
+                    disabled={editSaving}
+                    className="px-4 py-2 bg-gold hover:bg-gold/90 text-black font-semibold rounded transition disabled:opacity-50"
+                  >
+                    {editSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Traffic Breakdown Modal */}

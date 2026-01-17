@@ -58,6 +58,32 @@ export async function PUT(
   }
 }
 
+// PATCH - Partially update a partner (same as PUT but semantic)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    
+    const partner = await getPartnerById(id);
+    if (!partner) {
+      return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
+    }
+    
+    const updatedPartner = await updatePartner(id, body);
+    
+    return NextResponse.json({ success: true, partner: updatedPartner });
+  } catch (error) {
+    console.error('Partner update error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update partner' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE - Delete a partner (hard delete)
 export async function DELETE(
   request: NextRequest,

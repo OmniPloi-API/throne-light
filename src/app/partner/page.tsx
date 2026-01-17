@@ -9,6 +9,7 @@ import {
   ArrowUpRight, ArrowDownRight, Link2, Wallet, Calendar, Info, Download, Power, Loader2, Key
 } from 'lucide-react';
 import { useModal } from '@/components/shared/GlobalModal';
+import TeamMemberManagement from '@/components/partner/TeamMemberManagement';
 
 export default function PartnerPage() {
   return (
@@ -44,8 +45,20 @@ interface TrackingEvent {
   type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
   device?: string;
   city?: string;
+  country?: string;
+  countryCode?: string;
   createdAt: string;
 }
+
+// Country code to flag emoji mapping
+const getCountryFlag = (countryCode?: string): string => {
+  if (!countryCode || countryCode.length !== 2) return '🌍';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
 
 interface Order {
   id: string;
@@ -471,7 +484,9 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                   <table className="w-full text-sm">
                     <thead className="border-b border-[#333] text-gray-400 sticky top-0 bg-[#111]">
                       <tr>
+                        <th className="px-4 py-3 text-left">Date</th>
                         <th className="px-4 py-3 text-left">Time</th>
+                        <th className="px-4 py-3 text-left">Country</th>
                         <th className="px-4 py-3 text-left">Device</th>
                         <th className="px-4 py-3 text-left">Action</th>
                       </tr>
@@ -480,7 +495,16 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                       {myEvents.slice().reverse().slice(0, 20).map((e) => (
                         <tr key={e.id} className="border-t border-[#222]">
                           <td className="px-4 py-2 text-gray-400 text-xs">
+                            {new Date(e.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 text-gray-400 text-xs">
                             {new Date(e.createdAt).toLocaleTimeString()}
+                          </td>
+                          <td className="px-4 py-2 text-gray-300">
+                            <span className="flex items-center gap-1.5" title={e.country || 'Unknown'}>
+                              <span className="text-lg">{getCountryFlag(e.countryCode)}</span>
+                              <span className="text-xs text-gray-500 hidden sm:inline">{e.countryCode || ''}</span>
+                            </span>
                           </td>
                           <td className="px-4 py-2 text-gray-300">
                             {e.device || 'Unknown'}
@@ -492,7 +516,7 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                       ))}
                       {myEvents.length === 0 && (
                         <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                             No activity yet. Share your link to start tracking!
                           </td>
                         </tr>
@@ -502,15 +526,17 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                 </div>
               </div>
               
-              {/* Transparency Note */}
-              <div className="mt-3 flex items-start gap-2 text-xs text-gray-500">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <p>
-                  We track clicks sent to Amazon, but final Amazon sales data is 
-                  delayed/owned by Amazon. You earn ${selectedPartner.clickBounty.toFixed(2)} per 
-                  click to external retailers.
-                </p>
-              </div>
+              {/* Transparency Note - Only show if click bounty > 0 */}
+              {selectedPartner.clickBounty > 0 && (
+                <div className="mt-3 flex items-start gap-2 text-xs text-gray-500">
+                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <p>
+                    We track clicks sent to Amazon, but final Amazon sales data is 
+                    delayed/owned by Amazon. You earn ${selectedPartner.clickBounty.toFixed(2)} per 
+                    click to external retailers.
+                  </p>
+                </div>
+              )}
             </section>
 
             {/* Marketing Assets - 40% (Desktop) */}
@@ -553,20 +579,26 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                   </div>
                 </div>
                 
-                {/* Commission Info */}
-                <div className="pt-4 border-t border-[#222]">
-                  <h4 className="text-sm font-semibold mb-2">Your Rates</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-[#1a1a1a] rounded p-3">
-                      <p className="text-gray-500 text-xs">Direct Sale</p>
-                      <p className="text-green-400 font-semibold">{selectedPartner.commissionPercent}% commission</p>
-                    </div>
-                    <div className="bg-[#1a1a1a] rounded p-3">
-                      <p className="text-gray-500 text-xs">External Click</p>
-                      <p className="text-orange-400 font-semibold">${selectedPartner.clickBounty.toFixed(2)} per click</p>
+                {/* Commission Info - Only show if partner has rates */}
+                {(selectedPartner.commissionPercent > 0 || selectedPartner.clickBounty > 0) && (
+                  <div className="pt-4 border-t border-[#222]">
+                    <h4 className="text-sm font-semibold mb-2">Your Rates</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {selectedPartner.commissionPercent > 0 && (
+                        <div className="bg-[#1a1a1a] rounded p-3">
+                          <p className="text-gray-500 text-xs">Direct Sale</p>
+                          <p className="text-green-400 font-semibold">{selectedPartner.commissionPercent}% commission</p>
+                        </div>
+                      )}
+                      {selectedPartner.clickBounty > 0 && (
+                        <div className="bg-[#1a1a1a] rounded p-3">
+                          <p className="text-gray-500 text-xs">External Click</p>
+                          <p className="text-orange-400 font-semibold">${selectedPartner.clickBounty.toFixed(2)} per click</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Download Assets */}
                 <button className="w-full bg-[#222] hover:bg-[#333] text-white py-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2">
@@ -584,6 +616,11 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                 </button>
               </div>
             </section>
+          </div>
+
+          {/* Team Member Management */}
+          <div className="mt-6 md:mt-10">
+            <TeamMemberManagement partnerId={selectedPartner.id} />
           </div>
 
           {/* Metrics Table - Mobile Friendly */}
