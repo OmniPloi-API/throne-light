@@ -4,6 +4,113 @@ import { requireAdminAuth } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
+// US City coordinates for accurate map markers
+const US_CITY_COORDINATES: Record<string, { latitude: number; longitude: number }> = {
+  // Florida
+  'jensen beach': { latitude: 27.2545, longitude: -80.2295 },
+  'miami': { latitude: 25.7617, longitude: -80.1918 },
+  'orlando': { latitude: 28.5383, longitude: -81.3792 },
+  'jacksonville': { latitude: 30.3322, longitude: -81.6557 },
+  'tampa': { latitude: 27.9506, longitude: -82.4572 },
+  'fort lauderdale': { latitude: 26.1224, longitude: -80.1373 },
+  'gallatin': { latitude: 36.3884, longitude: -86.4469 },
+  
+  // Nebraska
+  'omaha': { latitude: 41.2565, longitude: -95.9345 },
+  'lincoln': { latitude: 40.8258, longitude: -96.6852 },
+  
+  // Illinois
+  'chicago': { latitude: 41.8781, longitude: -87.6298 },
+  'quincy': { latitude: 39.9356, longitude: -91.4099 },
+  
+  // Virginia
+  'ashburn': { latitude: 39.0438, longitude: -77.4874 },
+  'richmond': { latitude: 37.5407, longitude: -77.4360 },
+  
+  // New York
+  'new york': { latitude: 40.7128, longitude: -74.0060 },
+  'brooklyn': { latitude: 40.6782, longitude: -73.9442 },
+  'manhattan': { latitude: 40.7831, longitude: -73.9712 },
+  'buffalo': { latitude: 42.8864, longitude: -78.8784 },
+  
+  // California
+  'los angeles': { latitude: 34.0522, longitude: -118.2437 },
+  'san francisco': { latitude: 37.7749, longitude: -122.4194 },
+  'san diego': { latitude: 32.7157, longitude: -117.1611 },
+  'san jose': { latitude: 37.3382, longitude: -121.8863 },
+  
+  // Texas
+  'houston': { latitude: 29.7604, longitude: -95.3698 },
+  'dallas': { latitude: 32.7767, longitude: -96.7970 },
+  'austin': { latitude: 30.2672, longitude: -97.7431 },
+  'san antonio': { latitude: 29.4241, longitude: -98.4936 },
+  
+  // Georgia
+  'atlanta': { latitude: 33.7490, longitude: -84.3880 },
+  
+  // Washington
+  'seattle': { latitude: 47.6062, longitude: -122.3321 },
+  
+  // Massachusetts
+  'boston': { latitude: 42.3601, longitude: -71.0589 },
+  
+  // Pennsylvania
+  'philadelphia': { latitude: 39.9526, longitude: -75.1652 },
+  'pittsburgh': { latitude: 40.4406, longitude: -79.9959 },
+  
+  // Arizona
+  'phoenix': { latitude: 33.4484, longitude: -112.0740 },
+  
+  // Colorado
+  'denver': { latitude: 39.7392, longitude: -104.9903 },
+  
+  // Tennessee
+  'nashville': { latitude: 36.1627, longitude: -86.7816 },
+  'memphis': { latitude: 35.1495, longitude: -90.0490 },
+  
+  // Michigan
+  'detroit': { latitude: 42.3314, longitude: -83.0458 },
+  
+  // Ohio
+  'columbus': { latitude: 39.9612, longitude: -82.9988 },
+  'cleveland': { latitude: 41.4993, longitude: -81.6944 },
+  
+  // North Carolina
+  'charlotte': { latitude: 35.2271, longitude: -80.8431 },
+  'raleigh': { latitude: 35.7796, longitude: -78.6382 },
+  
+  // Minnesota
+  'minneapolis': { latitude: 44.9778, longitude: -93.2650 },
+  
+  // Missouri
+  'st louis': { latitude: 38.6270, longitude: -90.1994 },
+  'kansas city': { latitude: 39.0997, longitude: -94.5786 },
+  
+  // Nevada
+  'las vegas': { latitude: 36.1699, longitude: -115.1398 },
+  
+  // Oregon
+  'portland': { latitude: 45.5152, longitude: -122.6784 },
+  
+  // Maryland
+  'baltimore': { latitude: 39.2904, longitude: -76.6122 },
+  
+  // Wisconsin
+  'milwaukee': { latitude: 43.0389, longitude: -87.9065 },
+  
+  // Indiana
+  'indianapolis': { latitude: 39.7684, longitude: -86.1581 },
+};
+
+// Nigeria city coordinates
+const NIGERIA_CITY_COORDINATES: Record<string, { latitude: number; longitude: number }> = {
+  'lagos': { latitude: 6.5244, longitude: 3.3792 },
+  'abuja': { latitude: 9.0765, longitude: 7.3986 },
+  'kano': { latitude: 12.0022, longitude: 8.5920 },
+  'ibadan': { latitude: 7.3775, longitude: 3.9470 },
+  'port harcourt': { latitude: 4.8156, longitude: 7.0498 },
+};
+
 // Country coordinates for map markers (capital city locations for accuracy)
 const COUNTRY_COORDINATES: Record<string, { latitude: number; longitude: number; code: string }> = {
   // Americas
@@ -90,6 +197,25 @@ const COUNTRY_COORDINATES: Record<string, { latitude: number; longitude: number;
   'New Zealand': { latitude: -41.2866, longitude: 174.7756, code: 'NZ' }, // Wellington
 };
 
+// Helper function to get city coordinates
+function getCityCoordinates(city: string | null, country: string | null): { latitude: number; longitude: number } | null {
+  if (!city) return null;
+  
+  const cityLower = city.toLowerCase().trim();
+  
+  // Check US cities first
+  if (US_CITY_COORDINATES[cityLower]) {
+    return US_CITY_COORDINATES[cityLower];
+  }
+  
+  // Check Nigeria cities
+  if (country === 'Nigeria' && NIGERIA_CITY_COORDINATES[cityLower]) {
+    return NIGERIA_CITY_COORDINATES[cityLower];
+  }
+  
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   const authError = requireAdminAuth(req);
   if (authError) return authError;
@@ -104,6 +230,7 @@ export async function GET(req: NextRequest) {
       .not('latitude', 'is', null);
 
     // Also get tracking events with country data (this is where Consumer Analysis gets its data)
+    // Include SALE and CLICK_DIRECT events for sales mapping
     const { data: trackingEvents } = await supabase
       .from('tracking_events')
       .select('country, city, event_type, ip_address')
@@ -158,42 +285,91 @@ export async function GET(req: NextRequest) {
       saleCount: number;
     }> = {};
 
+    // Aggregate SALE events by city (with city-level coordinates when available)
+    const salesFromEvents: Record<string, {
+      city: string;
+      country: string;
+      countryCode: string;
+      latitude: number;
+      longitude: number;
+      count: number;
+    }> = {};
+
     trackingEvents?.forEach((event) => {
       const country = event.country;
       if (!country) return;
       
-      const coords = COUNTRY_COORDINATES[country];
-      if (!coords) return;
+      const countryCoords = COUNTRY_COORDINATES[country];
+      if (!countryCoords) return;
 
+      // Count for countries view
       if (!countriesFromEvents[country]) {
         countriesFromEvents[country] = {
           country,
-          countryCode: coords.code,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
+          countryCode: countryCoords.code,
+          latitude: countryCoords.latitude,
+          longitude: countryCoords.longitude,
           visitorCount: 0,
           saleCount: 0
         };
       }
       countriesFromEvents[country].visitorCount++;
+      
+      // For SALE events, try to use city-level coordinates
       if (event.event_type === 'SALE' || event.event_type === 'CLICK_DIRECT') {
         countriesFromEvents[country].saleCount++;
+        
+        // Try to get city-level coordinates
+        const cityCoords = getCityCoordinates(event.city, country);
+        
+        if (cityCoords && event.city) {
+          // Use city-level coordinates
+          const key = `${cityCoords.latitude},${cityCoords.longitude}`;
+          if (!salesFromEvents[key]) {
+            salesFromEvents[key] = {
+              city: event.city,
+              country,
+              countryCode: countryCoords.code,
+              latitude: cityCoords.latitude,
+              longitude: cityCoords.longitude,
+              count: 0
+            };
+          }
+          salesFromEvents[key].count++;
+        } else {
+          // Fall back to country-level coordinates
+          const key = `${countryCoords.latitude},${countryCoords.longitude}`;
+          if (!salesFromEvents[key]) {
+            salesFromEvents[key] = {
+              city: event.city || '',
+              country,
+              countryCode: countryCoords.code,
+              latitude: countryCoords.latitude,
+              longitude: countryCoords.longitude,
+              count: 0
+            };
+          }
+          salesFromEvents[key].count++;
+        }
       }
     });
 
-    // Add countries from events to salesByLocation if not already present
-    Object.values(countriesFromEvents).forEach((countryData) => {
-      const key = `${countryData.latitude},${countryData.longitude}`;
-      if (!salesByLocation[key] && countryData.saleCount > 0) {
+    // Add sales from tracking events to salesByLocation (with city-level precision)
+    Object.values(salesFromEvents).forEach((saleData) => {
+      const key = `${saleData.latitude},${saleData.longitude}`;
+      if (!salesByLocation[key]) {
         salesByLocation[key] = {
-          city: '',
-          country: countryData.country,
-          countryCode: countryData.countryCode,
-          latitude: countryData.latitude,
-          longitude: countryData.longitude,
-          count: countryData.saleCount,
+          city: saleData.city,
+          country: saleData.country,
+          countryCode: saleData.countryCode,
+          latitude: saleData.latitude,
+          longitude: saleData.longitude,
+          count: saleData.count,
           totalAmount: 0
         };
+      } else {
+        // Add to existing location count
+        salesByLocation[key].count += saleData.count;
       }
     });
 
