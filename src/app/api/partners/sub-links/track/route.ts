@@ -98,13 +98,17 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET - Get sub-link stats by code
- * Used for the partner dashboard to show sub-link performance
+ * GET - Get sub-link stats
+ * PERMISSION ENFORCEMENT:
+ * - Team members see: clicks, Amazon clicks, direct sales COUNT (no dollar amounts)
+ * - Partners see: everything including revenue
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const partnerId = searchParams.get('partnerId');
+    const teamMemberId = searchParams.get('teamMemberId');
+    const isTeamMemberView = searchParams.get('isTeamMember') === 'true';
 
     if (!partnerId) {
       return NextResponse.json({ error: 'Partner ID required' }, { status: 400 });
@@ -113,7 +117,7 @@ export async function GET(req: NextRequest) {
     const supabase = getSupabaseAdmin();
 
     // Get all sub-links with their stats
-    const { data: subLinks, error } = await supabase
+    let query = supabase
       .from('partner_sub_links')
       .select(`
         id,
@@ -122,13 +126,21 @@ export async function GET(req: NextRequest) {
         team_member_id,
         click_count,
         sale_count,
+        amazon_click_count,
+        direct_sale_count,
         revenue_generated,
         is_active,
         created_at,
         partner_team_members:team_member_id (name, email)
       `)
-      .eq('partner_id', partnerId)
-      .order('click_count', { ascending: false });
+      .eq('partner_id', partnerId);
+
+    // Team members only see their own links
+    if (teamMemberId) {
+      query = query.eq('team_member_id', teamMemberId);
+    }
+
+    const { data: subLinks, error } = await query.order('click_count', { ascending: false });
 
     if (error) {
       console.error('Error fetching sub-link stats:', error);
@@ -144,15 +156,19 @@ export async function GET(req: NextRequest) {
 
     const stats = (subLinks || []).map(link => {
       const memberData = link.partner_team_members as unknown as { name: string; email: string } | null;
-      return {
+      
+      // Base stats - what TEAM MEMBERS can see (no financials)
+      const baseStats = {
         id: link.id,
         code: link.code,
         label: link.label,
         createdBy: memberData?.name || 'Partner (Main)',
         isActive: link.is_active,
+        // Non-financial metrics - team members CAN see these
         clicks: link.click_count || 0,
+        amazonClicks: link.amazon_click_count || 0,
+        directSales: link.direct_sale_count || 0,
         sales: link.sale_count || 0,
-        revenue: link.revenue_generated || 0,
         conversionRate: link.click_count > 0 
           ? ((link.sale_count || 0) / link.click_count * 100).toFixed(1) + '%'
           : '0%',
@@ -160,14 +176,31 @@ export async function GET(req: NextRequest) {
           ? `https://thronelightpublishing.com/partners/${partner.slug}/${link.code}`
           : null,
       };
+
+      // TEAM MEMBERS: No financial data ever
+      if (isTeamMemberView || teamMemberId) {
+        return baseStats;
+      }
+
+      // PARTNERS: Full stats including revenue
+      return {
+        ...baseStats,
+        revenue: link.revenue_generated || 0,
+      };
     });
 
-    // Calculate totals
-    const totals = {
+    // Calculate totals (exclude revenue for team members)
+    const totals: Record<string, number> = {
       totalClicks: stats.reduce((sum, s) => sum + s.clicks, 0),
+      totalAmazonClicks: stats.reduce((sum, s) => sum + (s.amazonClicks || 0), 0),
+      totalDirectSales: stats.reduce((sum, s) => sum + (s.directSales || 0), 0),
       totalSales: stats.reduce((sum, s) => sum + s.sales, 0),
-      totalRevenue: stats.reduce((sum, s) => sum + s.revenue, 0),
     };
+
+    // Only include revenue for partners
+    if (!isTeamMemberView && !teamMemberId) {
+      totals.totalRevenue = stats.reduce((sum, s) => sum + ((s as any).revenue || 0), 0);
+    }
 
     return NextResponse.json({ stats, totals });
   } catch (error) {

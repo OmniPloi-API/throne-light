@@ -23,12 +23,17 @@ function generateSubLinkCode(prefix: string = 'ref'): string {
 
 /**
  * GET - List sub-links for a partner or team member
+ * PERMISSION ENFORCEMENT:
+ * - Team members NEVER see revenue/financial data
+ * - Team members only see: clicks, sale counts (no dollar amounts)
+ * - Partners see everything for their own links
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const partnerId = searchParams.get('partnerId');
     const teamMemberId = searchParams.get('teamMemberId');
+    const isTeamMemberView = searchParams.get('isTeamMember') === 'true';
 
     if (!partnerId) {
       return NextResponse.json({ error: 'Partner ID required' }, { status: 400 });
@@ -48,6 +53,8 @@ export async function GET(req: NextRequest) {
         created_at,
         click_count,
         sale_count,
+        amazon_click_count,
+        direct_sale_count,
         revenue_generated,
         partner_team_members:team_member_id (name, email)
       `)
@@ -74,20 +81,35 @@ export async function GET(req: NextRequest) {
 
     const formattedLinks = (subLinks || []).map(link => {
       const memberData = link.partner_team_members as unknown as { name: string; email: string } | null;
-      return {
+      
+      // Base stats that EVERYONE can see
+      const baseStats = {
         id: link.id,
         code: link.code,
         label: link.label,
         isActive: link.is_active,
         createdAt: link.created_at,
-        clickCount: link.click_count || 0,
-        saleCount: link.sale_count || 0,
-        revenueGenerated: link.revenue_generated || 0,
         createdBy: memberData?.name || 'Partner',
-        createdByEmail: memberData?.email,
         fullUrl: partner?.slug 
           ? `https://thronelightpublishing.com/partners/${partner.slug}/${link.code}`
           : null,
+        // Non-financial stats - team members CAN see these
+        clickCount: link.click_count || 0,
+        amazonClicks: link.amazon_click_count || 0,
+        directSales: link.direct_sale_count || 0,
+        saleCount: link.sale_count || 0,
+      };
+
+      // TEAM MEMBERS: Never see financial data
+      if (isTeamMemberView || teamMemberId) {
+        return baseStats;
+      }
+
+      // PARTNERS: See everything including financials
+      return {
+        ...baseStats,
+        createdByEmail: memberData?.email,
+        revenueGenerated: link.revenue_generated || 0,
       };
     });
 
