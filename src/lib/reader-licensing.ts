@@ -898,3 +898,457 @@ export async function sendDailySalesReportEmail(): Promise<{ success: boolean; e
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
+
+// ============================================================================
+// LICENSE EXTENSION SUPPORT SYSTEM
+// Auto-approves first 2 license extension requests, then requires admin review
+// ============================================================================
+
+const MAX_AUTO_APPROVALS = 2; // After 2 auto-approvals, require human review
+const AUTO_APPROVAL_DELAY_MS = 2 * 60 * 1000; // 2-5 minute delay (randomized)
+
+export interface LicenseExtensionResult {
+  success: boolean;
+  claimNumber?: string;
+  autoApproved?: boolean;
+  requiresReview?: boolean;
+  newMaxDevices?: number;
+  error?: string;
+}
+
+/**
+ * Request a license extension (add 1 device slot)
+ * Auto-approves first 2 requests, then requires admin review
+ */
+export async function requestLicenseExtension(
+  licenseCode: string,
+  email: string,
+  reason: string,
+  receiptInfo?: string
+): Promise<LicenseExtensionResult> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  try {
+    // Find the license
+    const { data: license, error: licenseError } = await supabase
+      .from('reader_licenses')
+      .select('id, license_code, email, customer_name, max_devices')
+      .eq('license_code', licenseCode.toUpperCase())
+      .single();
+
+    if (licenseError || !license) {
+      return { success: false, error: 'License not found' };
+    }
+
+    // Verify email matches
+    if (license.email.toLowerCase() !== email.toLowerCase()) {
+      return { success: false, error: 'Email does not match license' };
+    }
+
+    // Count previous auto-approved extensions for this license
+    const { data: previousExtensions } = await supabase
+      .from('license_extension_requests')
+      .select('id, status')
+      .eq('license_id', license.id)
+      .eq('status', 'approved');
+
+    const approvedCount = previousExtensions?.length || 0;
+    const canAutoApprove = approvedCount < MAX_AUTO_APPROVALS;
+
+    // Generate claim number
+    const claimNumber = generateClaimNumber();
+
+    // Create extension request record
+    const { error: insertError } = await supabase
+      .from('license_extension_requests')
+      .insert({
+        claim_number: claimNumber,
+        license_id: license.id,
+        license_code: license.license_code,
+        email: email.toLowerCase(),
+        reason,
+        receipt_info: receiptInfo,
+        status: canAutoApprove ? 'pending_auto_approval' : 'pending_review',
+        auto_approval_eligible: canAutoApprove,
+        previous_approvals: approvedCount,
+      });
+
+    if (insertError) {
+      console.error('Failed to create extension request:', insertError);
+      return { success: false, error: 'Failed to create request' };
+    }
+
+    // Send acknowledgment email immediately
+    await sendExtensionAcknowledgmentEmail(email, claimNumber, license.customer_name);
+
+    if (canAutoApprove) {
+      // Schedule auto-approval with delay (2-5 minutes)
+      const delay = AUTO_APPROVAL_DELAY_MS + Math.random() * 3 * 60 * 1000;
+      
+      // In production, use a job queue. For now, use setTimeout
+      setTimeout(async () => {
+        await processAutoApproval(claimNumber, license.id, license.max_devices);
+      }, delay);
+
+      return {
+        success: true,
+        claimNumber,
+        autoApproved: false, // Will be auto-approved after delay
+        requiresReview: false,
+      };
+    } else {
+      // Requires human review - notify admin
+      await sendAdminReviewNotification(claimNumber, email, reason, approvedCount);
+
+      return {
+        success: true,
+        claimNumber,
+        autoApproved: false,
+        requiresReview: true,
+      };
+    }
+  } catch (error) {
+    console.error('License extension request error:', error);
+    return { success: false, error: 'Failed to process request' };
+  }
+}
+
+/**
+ * Process auto-approval of license extension
+ */
+async function processAutoApproval(
+  claimNumber: string,
+  licenseId: string,
+  currentMaxDevices: number
+): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  try {
+    // Update license to add 1 device slot
+    const newMaxDevices = currentMaxDevices + 1;
+    
+    const { error: updateLicenseError } = await supabase
+      .from('reader_licenses')
+      .update({ max_devices: newMaxDevices })
+      .eq('id', licenseId);
+
+    if (updateLicenseError) {
+      console.error('Failed to update license:', updateLicenseError);
+      return;
+    }
+
+    // Update extension request status
+    const { data: request, error: updateRequestError } = await supabase
+      .from('license_extension_requests')
+      .update({
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: 'auto',
+        new_max_devices: newMaxDevices,
+      })
+      .eq('claim_number', claimNumber)
+      .select('email, license_code')
+      .single();
+
+    if (updateRequestError || !request) {
+      console.error('Failed to update extension request:', updateRequestError);
+      return;
+    }
+
+    // Send approval email to customer
+    await sendExtensionApprovalEmail(request.email, claimNumber, newMaxDevices);
+
+    console.log(`Auto-approved license extension ${claimNumber}, new max devices: ${newMaxDevices}`);
+  } catch (error) {
+    console.error('Auto-approval processing error:', error);
+  }
+}
+
+/**
+ * Manually approve license extension (admin action)
+ */
+export async function approveLicenseExtension(
+  claimNumber: string,
+  approvedBy: string
+): Promise<{ success: boolean; newMaxDevices?: number; error?: string }> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  try {
+    // Get the extension request
+    const { data: request, error: requestError } = await supabase
+      .from('license_extension_requests')
+      .select('license_id, email, status')
+      .eq('claim_number', claimNumber)
+      .single();
+
+    if (requestError || !request) {
+      return { success: false, error: 'Request not found' };
+    }
+
+    if (request.status === 'approved') {
+      return { success: false, error: 'Request already approved' };
+    }
+
+    // Get current license
+    const { data: license, error: licenseError } = await supabase
+      .from('reader_licenses')
+      .select('max_devices')
+      .eq('id', request.license_id)
+      .single();
+
+    if (licenseError || !license) {
+      return { success: false, error: 'License not found' };
+    }
+
+    const newMaxDevices = license.max_devices + 1;
+
+    // Update license
+    await supabase
+      .from('reader_licenses')
+      .update({ max_devices: newMaxDevices })
+      .eq('id', request.license_id);
+
+    // Update request
+    await supabase
+      .from('license_extension_requests')
+      .update({
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: approvedBy,
+        new_max_devices: newMaxDevices,
+      })
+      .eq('claim_number', claimNumber);
+
+    // Send approval email
+    await sendExtensionApprovalEmail(request.email, claimNumber, newMaxDevices);
+
+    return { success: true, newMaxDevices };
+  } catch (error) {
+    console.error('Manual approval error:', error);
+    return { success: false, error: 'Failed to approve' };
+  }
+}
+
+/**
+ * Send acknowledgment email when extension request is received
+ */
+async function sendExtensionAcknowledgmentEmail(
+  email: string,
+  claimNumber: string,
+  customerName: string | null
+): Promise<void> {
+  const client = getResend();
+  if (!client) return;
+
+  const firstName = customerName?.split(' ')[0] || 'Valued Reader';
+
+  try {
+    await client.emails.send({
+      from: 'Throne Light Support <support@thronelightpublishing.com>',
+      to: email,
+      subject: `Support Request Received - ${claimNumber}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: Georgia, serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #111; border: 1px solid #222; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="padding: 40px; text-align: center; border-bottom: 1px solid #222;">
+              <h1 style="margin: 0; color: #c9a961; font-size: 24px;">Support Request Received</h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Claim #${claimNumber}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
+                Dear ${firstName},
+              </p>
+              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
+                We have received your license support request. Our team is reviewing your case and you will receive an update shortly.
+              </p>
+              <div style="background: #1a1a1a; border-left: 4px solid #c9a961; padding: 20px; margin: 30px 0;">
+                <p style="margin: 0; color: #888; font-size: 14px;">
+                  <strong style="color: #c9a961;">Expected Response Time:</strong><br>
+                  Most requests are reviewed within 2-5 minutes. In some cases, it may take up to 48 hours.
+                </p>
+              </div>
+              <p style="color: #888; font-size: 14px; margin: 30px 0 0;">
+                Please keep this claim number for your reference: <strong style="color: #c9a961;">${claimNumber}</strong>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 40px; background-color: #0a0a0a; text-align: center; border-top: 1px solid #222;">
+              <p style="margin: 0; color: #666; font-size: 12px;">
+                © ${new Date().getFullYear()} Throne Light Publishing. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `.trim(),
+    });
+
+    console.log(`Sent extension acknowledgment to ${email}`);
+  } catch (error) {
+    console.error('Failed to send acknowledgment email:', error);
+  }
+}
+
+/**
+ * Send approval email when extension is granted
+ */
+async function sendExtensionApprovalEmail(
+  email: string,
+  claimNumber: string,
+  newMaxDevices: number
+): Promise<void> {
+  const client = getResend();
+  if (!client) return;
+
+  try {
+    await client.emails.send({
+      from: 'Throne Light Support <support@thronelightpublishing.com>',
+      to: email,
+      subject: `✅ License Extended - ${claimNumber}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: Georgia, serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #111; border: 1px solid #222; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="padding: 40px; text-align: center; border-bottom: 1px solid #222;">
+              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 28px;">✓</span>
+              </div>
+              <h1 style="margin: 0; color: #22c55e; font-size: 24px;">License Extended!</h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Claim #${claimNumber}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
+                Great news! Your license support request has been reviewed and approved.
+              </p>
+              <div style="background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                <p style="margin: 0 0 10px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">
+                  Your New Device Limit
+                </p>
+                <p style="margin: 0; color: #22c55e; font-size: 48px; font-weight: bold;">
+                  ${newMaxDevices}
+                </p>
+                <p style="margin: 10px 0 0; color: #888; font-size: 14px;">devices</p>
+              </div>
+              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 20px 0;">
+                You can now activate the Throne Light Reader on an additional device. Simply enter your access code on the new device to begin reading.
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://thecrowdedbedandtheemptythrone.com/login" 
+                   style="display: inline-block; background: linear-gradient(135deg, #c9a961 0%, #b8944a 100%); color: #000; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Access Reader →
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 40px; background-color: #0a0a0a; text-align: center; border-top: 1px solid #222;">
+              <p style="margin: 0; color: #666; font-size: 12px;">
+                © ${new Date().getFullYear()} Throne Light Publishing. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `.trim(),
+    });
+
+    console.log(`Sent extension approval to ${email}`);
+  } catch (error) {
+    console.error('Failed to send approval email:', error);
+  }
+}
+
+/**
+ * Notify admin when review is required (after 2 auto-approvals)
+ */
+async function sendAdminReviewNotification(
+  claimNumber: string,
+  customerEmail: string,
+  reason: string,
+  previousApprovals: number
+): Promise<void> {
+  const client = getResend();
+  if (!client) return;
+
+  try {
+    await client.emails.send({
+      from: 'Throne Light Support <support@thronelightpublishing.com>',
+      to: DEVELOPER_EMAIL,
+      subject: `🔔 License Extension Review Required - ${claimNumber}`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #c9a961;">License Extension Review Required</h2>
+          <p style="color: #666;">This customer has exceeded the auto-approval limit.</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">Claim Number:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #eee;">${claimNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">Customer Email:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #eee;">${customerEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">Previous Approvals:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #eee; color: #f97316;">${previousApprovals} (limit: ${MAX_AUTO_APPROVALS})</td>
+            </tr>
+          </table>
+          
+          <h3 style="color: #333;">Customer's Reason:</h3>
+          <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${reason}</div>
+          
+          <p style="margin-top: 24px;">
+            <a href="https://thronelightpublishing.com/admin/license-claims/${claimNumber}" 
+               style="background: #c9a961; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Review & Approve
+            </a>
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`Sent admin review notification for ${claimNumber}`);
+  } catch (error) {
+    console.error('Failed to send admin notification:', error);
+  }
+}
