@@ -65,8 +65,9 @@ export default function FrequencySection() {
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioSrcRef = useRef<string>(encodeURI('/audio/EOLLES - THE KING HAS TO RISE.mp3'));
+  const audioSrcRef = useRef<string>('/audio/EOLLES - THE KING HAS TO RISE.mp3');
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isFadingRef = useRef(false);
   const { language } = useLanguage();
@@ -108,14 +109,16 @@ export default function FrequencySection() {
 
   // Initialize audio for the playable track
   useEffect(() => {
-    const audio = new Audio(audioSrcRef.current);
+    const audio = new Audio();
     audio.loop = false;
     audio.volume = BASE_VOLUME;
     audio.preload = 'auto';
     audioRef.current = audio;
-    
-    // Preload the audio
-    audio.load();
+
+    const handleCanPlayThrough = () => {
+      setAudioReady(true);
+      setPlaybackError(null);
+    };
 
     const handleTimeUpdate = () => {
       setProgress(audio.currentTime);
@@ -142,19 +145,31 @@ export default function FrequencySection() {
       setProgress(0);
     };
 
-    const handleError = () => {
+    const handleError = (e: Event) => {
+      const target = e.target as HTMLAudioElement;
+      const error = target?.error;
+      console.error('Audio error:', error);
       setIsPlaying(false);
-      setPlaybackError('Audio failed to load. Please refresh and try again.');
+      setAudioReady(false);
+      if (error) {
+        setPlaybackError(`Audio error: ${error.message || 'Failed to load audio file'}`);
+      }
     };
 
+    audio.addEventListener('canplaythrough', handleCanPlayThrough);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
+    // Set the source and load
+    audio.src = audioSrcRef.current;
+    audio.load();
+
     return () => {
       audio.pause();
+      audio.removeEventListener('canplaythrough', handleCanPlayThrough);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
@@ -169,6 +184,8 @@ export default function FrequencySection() {
   const handlePlayClick = () => {
     const track = tracks[currentTrack];
     const audio = audioRef.current;
+    
+    // For non-playable tracks, just show coming soon modal
     if (!track.playable || !audio) {
       setShowComingSoonModal(true);
       return;
@@ -176,29 +193,47 @@ export default function FrequencySection() {
 
     setPlaybackError(null);
 
+    // If already playing, pause
     if (!audio.paused) {
       audio.pause();
       return;
     }
 
+    // Reset fade state
     if (fadeIntervalRef.current) {
       clearInterval(fadeIntervalRef.current);
     }
     isFadingRef.current = false;
     audio.volume = BASE_VOLUME;
 
-    if (audio.src !== audioSrcRef.current) {
-      audio.src = audioSrcRef.current;
+    // Show coming soon modal simultaneously when playing Rise
+    if (currentTrack === 0) {
+      setShowComingSoonModal(true);
     }
-    audio.load();
 
-    audio.play().catch((err: unknown) => {
-      const e = err as { name?: string; message?: string };
-      const name = e?.name || 'PlaybackError';
-      const message = e?.message || 'Audio playback failed. Please press Play again.';
-      setPlaybackError(`${name}: ${message}`);
-      console.error(err);
-    });
+    // Play the audio (it should already be loaded)
+    if (audioReady) {
+      audio.play().catch((err: unknown) => {
+        const e = err as { name?: string; message?: string };
+        const name = e?.name || 'PlaybackError';
+        const message = e?.message || 'Audio playback failed. Please press Play again.';
+        setPlaybackError(`${name}: ${message}`);
+        console.error('Play error:', err);
+      });
+    } else {
+      // If not ready yet, try loading again and play when ready
+      const playWhenReady = () => {
+        audio.play().catch((err: unknown) => {
+          const e = err as { name?: string; message?: string };
+          setPlaybackError(`${e?.name || 'Error'}: ${e?.message || 'Playback failed'}`);
+          console.error('Play error:', err);
+        });
+        audio.removeEventListener('canplaythrough', playWhenReady);
+      };
+      audio.addEventListener('canplaythrough', playWhenReady);
+      audio.src = audioSrcRef.current;
+      audio.load();
+    }
   };
 
   const handleTrackClick = (index: number) => {
