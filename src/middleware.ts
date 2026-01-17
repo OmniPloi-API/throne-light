@@ -51,7 +51,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - images (public images)
      * - downloads (public downloads)
+     * - audio (public audio files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|images|downloads).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|images|downloads|audio).*)',
   ],
 };

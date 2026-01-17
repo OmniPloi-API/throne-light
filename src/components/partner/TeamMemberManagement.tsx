@@ -256,6 +256,9 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="Team member name"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
                     className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white text-sm focus:border-gold/50 focus:outline-none"
                   />
                 </div>
@@ -266,6 +269,9 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="team@example.com"
+                    autoComplete="new-email"
+                    data-lpignore="true"
+                    data-form-type="other"
                     className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-white text-sm focus:border-gold/50 focus:outline-none"
                   />
                 </div>
@@ -294,6 +300,9 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                       value={formPassword}
                       onChange={(e) => setFormPassword(e.target.value)}
                       placeholder="Min 6 characters"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
                       className="w-full px-3 py-2 pr-10 bg-[#1a1a1a] border border-[#333] rounded text-white text-sm focus:border-gold/50 focus:outline-none"
                     />
                     <button
