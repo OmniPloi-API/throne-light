@@ -26,6 +26,9 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
   
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
+  
+  // Hide on reader pages
+  const isReaderPage = pathname?.startsWith('/reader');
 
   const checkVisibility = useCallback(async () => {
     try {
@@ -228,7 +231,7 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
     transcriptRef.current = '';
   };
 
-  if (!enabled || !isVisible) return null;
+  if (!enabled || !isVisible || isReaderPage) return null;
 
   return (
     <>

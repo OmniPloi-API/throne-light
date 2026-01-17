@@ -35,6 +35,11 @@ interface SupportTicket {
   selected_language: string;
   audio_enabled: boolean;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  category?: 'reader_issue' | 'billing_refund' | 'technical' | 'content_feedback' | 'general';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  requires_human_review?: boolean;
+  ai_analysis?: string;
+  suggested_response?: string;
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
@@ -48,6 +53,21 @@ const statusConfig = {
   closed: { label: 'Closed', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30', icon: XCircle },
 };
 
+const categoryConfig: Record<string, { label: string; color: string }> = {
+  reader_issue: { label: 'Reader Issue', color: 'bg-blue-500/20 text-blue-400' },
+  billing_refund: { label: 'Billing/Refund', color: 'bg-red-500/20 text-red-400' },
+  technical: { label: 'Technical', color: 'bg-purple-500/20 text-purple-400' },
+  content_feedback: { label: 'Content Feedback', color: 'bg-orange-500/20 text-orange-400' },
+  general: { label: 'General', color: 'bg-gray-500/20 text-gray-400' },
+};
+
+const priorityConfig: Record<string, { label: string; color: string }> = {
+  low: { label: 'Low', color: 'bg-gray-500/20 text-gray-400' },
+  medium: { label: 'Medium', color: 'bg-blue-500/20 text-blue-400' },
+  high: { label: 'High', color: 'bg-orange-500/20 text-orange-400' },
+  urgent: { label: 'Urgent', color: 'bg-red-500/20 text-red-400' },
+};
+
 export default function ReaderSupportPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -57,9 +77,9 @@ export default function ReaderSupportPage() {
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
 
-  // Auth check
+  // Auth check - use sessionStorage with same key as admin login
   useEffect(() => {
-    const isAdmin = localStorage.getItem('admin-authenticated');
+    const isAdmin = sessionStorage.getItem('adminAuthenticated');
     if (isAdmin !== 'true') {
       router.push('/admin/login');
     }
@@ -262,10 +282,29 @@ export default function ReaderSupportPage() {
                     className="w-full px-6 py-4 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[ticket.status].color}`}>
-                        <StatusIcon className="w-3 h-3 inline-block mr-1" />
-                        {statusConfig[ticket.status].label}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[ticket.status].color}`}>
+                          <StatusIcon className="w-3 h-3 inline-block mr-1" />
+                          {statusConfig[ticket.status].label}
+                        </span>
+                        <div className="flex gap-1">
+                          {ticket.category && (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${categoryConfig[ticket.category]?.color || 'bg-gray-500/20 text-gray-400'}`}>
+                              {categoryConfig[ticket.category]?.label || ticket.category}
+                            </span>
+                          )}
+                          {ticket.priority && ticket.priority !== 'low' && (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${priorityConfig[ticket.priority]?.color || ''}`}>
+                              {priorityConfig[ticket.priority]?.label}
+                            </span>
+                          )}
+                          {ticket.requires_human_review && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400">
+                              ⚠️ Review
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <div className="text-left">
                         <p className="text-white font-medium">{ticket.email}</p>
                         <p className="text-gray-400 text-sm truncate max-w-md">
@@ -301,6 +340,32 @@ export default function ReaderSupportPage() {
                           <p className="text-gray-300 text-sm bg-[#0a0a0a] p-4 rounded-lg">
                             {ticket.message}
                           </p>
+                          
+                          {/* AI Analysis */}
+                          {ticket.ai_analysis && (
+                            <>
+                              <h4 className="text-sm font-medium text-gold mt-4 mb-2">🤖 AI Analysis</h4>
+                              <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-lg">
+                                <p className="text-purple-300 text-sm">{ticket.ai_analysis}</p>
+                              </div>
+                            </>
+                          )}
+                          
+                          {/* Suggested Response */}
+                          {ticket.suggested_response && (
+                            <>
+                              <h4 className="text-sm font-medium text-gold mt-4 mb-2">💡 Suggested Response</h4>
+                              <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-lg">
+                                <p className="text-green-300 text-sm whitespace-pre-line">{ticket.suggested_response}</p>
+                                <button 
+                                  onClick={() => navigator.clipboard.writeText(ticket.suggested_response || '')}
+                                  className="mt-2 text-xs text-green-400 hover:text-green-300 underline"
+                                >
+                                  Copy to clipboard
+                                </button>
+                              </div>
+                            </>
+                          )}
 
                           {/* Admin Notes */}
                           <h4 className="text-sm font-medium text-gold mt-4 mb-2">Admin Notes</h4>

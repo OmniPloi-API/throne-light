@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   Users, DollarSign, TrendingUp, ExternalLink, 
   Eye, MousePointer, ShoppingCart, BarChart3, Copy, Check,
-  ArrowUpRight, ArrowDownRight, Link2, Wallet, Calendar, Info, Download, Power, Loader2
+  ArrowUpRight, ArrowDownRight, Link2, Wallet, Calendar, Info, Download, Power, Loader2, Key
 } from 'lucide-react';
 import { useModal } from '@/components/shared/GlobalModal';
 
@@ -76,6 +76,9 @@ function PartnerContent() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   const [showMaturityTooltip, setShowMaturityTooltip] = useState(false);
+  
+  // Access code change state
+  const [showChangeAccessCodeModal, setShowChangeAccessCodeModal] = useState(false);
 
   // SECURITY: Check authentication on mount - redirect to login if not authenticated
   useEffect(() => {
@@ -570,6 +573,15 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
                   <Download className="w-4 h-4" />
                   Download Book Cover Assets
                 </button>
+                
+                {/* Change Access Code */}
+                <button 
+                  onClick={() => setShowChangeAccessCodeModal(true)}
+                  className="w-full bg-[#1a1a1a] hover:bg-[#222] text-gray-300 py-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 border border-[#333]"
+                >
+                  <Key className="w-4 h-4" />
+                  Change Access Code
+                </button>
               </div>
             </section>
           </div>
@@ -631,6 +643,17 @@ const clickBountyEarned = (amazonClicks + booksByClicks) * (selectedPartner?.cli
         isOpen={showStripeOnboardingModal}
         onClose={() => setShowStripeOnboardingModal(false)}
         onConfirm={startStripeOnboarding}
+      />
+      
+      {/* Change Access Code Modal */}
+      <ChangeAccessCodeModal
+        isOpen={showChangeAccessCodeModal}
+        onClose={() => setShowChangeAccessCodeModal(false)}
+        partnerId={selectedPartner?.id || ''}
+        onSuccess={() => {
+          setShowChangeAccessCodeModal(false);
+          modal.showSuccess('Your access code has been changed. A new code has been sent to your email.', 'Access Code Changed');
+        }}
       />
     </div>
   );
@@ -860,6 +883,104 @@ function StripeOnboardingModal({
             </p>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Change Access Code Modal
+function ChangeAccessCodeModal({ 
+  isOpen, 
+  onClose, 
+  partnerId,
+  onSuccess 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  partnerId: string;
+  onSuccess: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  if (!isOpen) return null;
+  
+  const handleChangeCode = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/partners/change-access-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerId }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        onSuccess();
+      } else {
+        setError(data.error || 'Failed to change access code');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-gold/30 rounded-xl p-8 max-w-md w-full shadow-2xl">
+        {/* Icon */}
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
+          <Key className="w-8 h-8 text-gold" />
+        </div>
+        
+        {/* Title */}
+        <h3 className="text-2xl font-bold text-gold mb-3 text-center">Change Access Code</h3>
+        
+        {/* Description */}
+        <p className="text-gray-300 text-center mb-6 leading-relaxed">
+          Generate a new access code for your partner portal. Your current code will be invalidated and a new one will be sent to your email.
+        </p>
+        
+        {/* Warning */}
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
+          <p className="text-yellow-400 text-sm text-center">
+            ⚠️ This action cannot be undone. Make sure to save your new code.
+          </p>
+        </div>
+        
+        {error && (
+          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
+        )}
+        
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleChangeCode}
+            disabled={loading}
+            className="flex-1 bg-gold hover:bg-gold/90 text-black px-6 py-3 rounded-lg font-semibold transition shadow-lg shadow-gold/20 hover:shadow-gold/30 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              'Generate New Code'
+            )}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 bg-[#222] hover:bg-[#333] text-gray-300 px-6 py-3 rounded-lg font-semibold transition border border-[#333] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

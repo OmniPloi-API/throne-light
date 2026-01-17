@@ -15,12 +15,12 @@ function generateAccessCodeEmail(partnerName: string, accessCode: string): { sub
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #111 0%, #1a1a1a 100%); border: 1px solid #333; border-radius: 16px; overflow: hidden;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #111 0%, #1a1a1a 100%); border: 1px solid #2a2a2a; border-radius: 16px; overflow: hidden;">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; border-bottom: 1px solid #222;">
-              <h1 style="margin: 0; color: #D4AF37; font-size: 28px; font-weight: 600; letter-spacing: 1px;">
-                Partner Portal Access
+            <td style="padding: 40px 40px 20px; text-align: center; border-bottom: 1px solid #2a2a2a;">
+              <h1 style="margin: 0; color: #c9a961; font-size: 28px; font-weight: 600; font-style: italic; letter-spacing: 1px;">
+                Partner Portal
               </h1>
               <p style="margin: 10px 0 0; color: #888; font-size: 14px;">
                 Throne Light Publishing
@@ -31,7 +31,7 @@ function generateAccessCodeEmail(partnerName: string, accessCode: string): { sub
           <!-- Content -->
           <tr>
             <td style="padding: 40px;">
-              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
+              <p style="color: #e8e8e8; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
                 Dear ${partnerName},
               </p>
               <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 30px;">
@@ -39,28 +39,28 @@ function generateAccessCodeEmail(partnerName: string, accessCode: string): { sub
               </p>
               
               <!-- Access Code Box -->
-              <div style="background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); border: 2px solid #D4AF37; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
-                <p style="margin: 0 0 10px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">
-                  Your Access Code
+              <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                <p style="margin: 0 0 10px; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">
+                  Access Code
                 </p>
-                <p style="margin: 0; color: #D4AF37; font-size: 32px; font-family: monospace; font-weight: bold; letter-spacing: 4px;">
+                <p style="margin: 0; color: #e8e8e8; font-size: 28px; font-family: monospace; font-weight: bold; letter-spacing: 6px;">
                   ${accessCode}
                 </p>
               </div>
               
-              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 30px 0;">
-                Use this code to log in to your Partner Dashboard at:
+              <p style="color: #888; font-size: 14px; line-height: 1.6; margin: 20px 0;">
+                Enter your unique partner access code
               </p>
               
               <!-- Login Button -->
               <div style="text-align: center; margin: 30px 0;">
                 <a href="https://thronelightpublishing.com/partner/login" 
-                   style="display: inline-block; background: linear-gradient(135deg, #D4AF37 0%, #B8942E 100%); color: #000; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  Access Partner Portal →
+                   style="display: inline-block; background: #c9a961; color: #0a0a0a; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  →  Access Dashboard  →
                 </a>
               </div>
               
-              <p style="color: #888; font-size: 14px; line-height: 1.6; margin: 30px 0 0; padding-top: 20px; border-top: 1px solid #333;">
+              <p style="color: #666; font-size: 13px; line-height: 1.6; margin: 30px 0 0; padding-top: 20px; border-top: 1px solid #2a2a2a;">
                 If you did not request this email, please ignore it. Your access code remains secure.
               </p>
             </td>
@@ -68,8 +68,8 @@ function generateAccessCodeEmail(partnerName: string, accessCode: string): { sub
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 30px 40px; background-color: #0a0a0a; text-align: center; border-top: 1px solid #222;">
-              <p style="margin: 0; color: #666; font-size: 12px;">
+            <td style="padding: 30px 40px; background-color: #0a0a0a; text-align: center; border-top: 1px solid #2a2a2a;">
+              <p style="margin: 0; color: #555; font-size: 12px;">
                 © ${new Date().getFullYear()} Throne Light Publishing. All rights reserved.
               </p>
             </td>
