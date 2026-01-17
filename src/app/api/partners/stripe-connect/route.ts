@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readDb, writeDb } from '@/lib/db';
+import { getPartnerById, updatePartner } from '@/lib/db-supabase';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    const db = readDb();
-    const partner = db.partners.find(p => p.id === partnerId);
+    // Use Supabase to find partner
+    const partner = await getPartnerById(partnerId);
     
     if (!partner) {
       return NextResponse.json({ 
@@ -48,9 +48,8 @@ export async function POST(req: NextRequest) {
       
       stripeAccountId = account.id;
       
-      // Save Stripe account ID to partner
-      partner.stripeAccountId = stripeAccountId;
-      writeDb(db);
+      // Save Stripe account ID to partner via Supabase
+      await updatePartner(partnerId, { stripeAccountId });
       
       console.log(`Created Stripe Connect account ${stripeAccountId} for partner ${partner.name}`);
     }
@@ -95,8 +94,8 @@ export async function GET(req: NextRequest) {
       }, { status: 400 });
     }
     
-    const db = readDb();
-    const partner = db.partners.find(p => p.id === partnerId);
+    // Use Supabase to find partner
+    const partner = await getPartnerById(partnerId);
     
     if (!partner) {
       return NextResponse.json({ 
@@ -120,18 +119,12 @@ export async function GET(req: NextRequest) {
     const taxFormVerified = account.requirements?.currently_due?.length === 0 || 
       !account.requirements?.currently_due?.some(r => r.includes('tax'));
     
-    // Update partner record if status changed
-    let updated = false;
-    if (partner.stripeOnboardingComplete !== onboardingComplete) {
-      partner.stripeOnboardingComplete = onboardingComplete;
-      updated = true;
-    }
-    if (partner.taxFormVerified !== taxFormVerified) {
-      partner.taxFormVerified = taxFormVerified;
-      updated = true;
-    }
-    if (updated) {
-      writeDb(db);
+    // Update partner record if status changed via Supabase
+    if (partner.stripeOnboardingComplete !== onboardingComplete || partner.taxFormVerified !== taxFormVerified) {
+      await updatePartner(partnerId, {
+        stripeOnboardingComplete: onboardingComplete,
+        taxFormVerified,
+      });
     }
     
     return NextResponse.json({
