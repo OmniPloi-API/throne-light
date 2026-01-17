@@ -435,12 +435,12 @@ export default function ReaderPage() {
           ? 'bg-onyx/95 backdrop-blur-sm border-gold/20' 
           : 'bg-white/95 backdrop-blur-sm border-gold/30'
       }`}>
-        <div className="relative max-w-3xl mx-auto px-2 sm:px-6 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-2 sm:px-6 py-3 grid grid-cols-3 items-center">
           {/* Left: Help, Menu & Home */}
-          <div className="flex items-center gap-1 sm:gap-3 z-10">
+          <div className="flex items-center gap-1 sm:gap-2 justify-start">
             <button
               onClick={() => setShowHelpModal(true)}
-              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -452,7 +452,7 @@ export default function ReaderPage() {
             <button
               id="toc-toggle"
               onClick={() => setShowToc(true)}
-              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -464,7 +464,7 @@ export default function ReaderPage() {
             </button>
             <Link 
               href="/reader/home"
-              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1.5 ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex items-center gap-1 ${
                 isDarkMode 
                   ? 'hover:bg-charcoal/50 text-parchment/70' 
                   : 'hover:bg-manuscript text-charcoal/70'
@@ -472,18 +472,18 @@ export default function ReaderPage() {
               title="My Library"
             >
               <Home className="w-4 h-4 sm:w-5 h-5" />
-              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider whitespace-nowrap">My Library</span>
+              <span className="hidden lg:inline text-[10px] sm:text-xs font-medium uppercase tracking-wider whitespace-nowrap">My Library</span>
             </Link>
           </div>
 
-          {/* Center: Title - Hidden on mobile to prevent overlap */}
-          <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 text-center">
-            <p className={`text-sm font-serif whitespace-nowrap ${
+          {/* Center: Title */}
+          <div className="hidden sm:block text-center">
+            <p className={`text-sm font-serif truncate ${
               isDarkMode ? 'text-parchment/80' : 'text-charcoal/80'
             }`}>
               {bookData.title}
             </p>
-            <p className={`text-xs tracking-wider ${
+            <p className={`text-xs tracking-wider truncate ${
               isDarkMode ? 'text-gold/60' : 'text-gold-700/60'
             }`}>
               by <span className="uppercase">{bookData.author}</span>
@@ -491,7 +491,7 @@ export default function ReaderPage() {
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-0.5 sm:gap-1 z-10">
+          <div className="flex items-center gap-0.5 sm:gap-1 justify-end">
             <div id="language-dropdown">
               <LanguageSelector
                 selectedLanguage={selectedLanguage}
