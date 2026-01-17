@@ -12,7 +12,10 @@ import {
   Check,
   X,
   UserPlus,
-  Shield
+  Shield,
+  RefreshCw,
+  Bell,
+  Mail
 } from 'lucide-react';
 import { TEAM_MEMBER_ROLES, type TeamMemberRole } from '@/lib/team-member-roles';
 
@@ -22,8 +25,18 @@ interface TeamMember {
   email: string;
   role: TeamMemberRole;
   is_active: boolean;
+  auto_approve: boolean;
   created_at: string;
   last_login?: string;
+}
+
+interface AccessRequest {
+  id: string;
+  email: string;
+  name: string;
+  message?: string;
+  is_new_member: boolean;
+  created_at: string;
 }
 
 interface TeamMemberManagementProps {
@@ -38,6 +51,7 @@ const ROLE_COLORS: Record<TeamMemberRole, string> = {
 export default function TeamMemberManagement({ partnerId }: TeamMemberManagementProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   
@@ -50,6 +64,7 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -64,9 +79,20 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
     }
   };
 
+  const fetchAccessRequests = async () => {
+    try {
+      const res = await fetch(`/api/partners/team-access-request?partnerId=${partnerId}`);
+      const data = await res.json();
+      setAccessRequests(data.requests || []);
+    } catch (error) {
+      console.error('Error fetching access requests:', error);
+    }
+  };
+
   useEffect(() => {
-    if (isExpanded && members.length === 0) {
+    if (isExpanded) {
       fetchMembers();
+      fetchAccessRequests();
     }
   }, [isExpanded]);
 
@@ -167,6 +193,72 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
     }
   };
 
+  const handleToggleAutoApprove = async (member: TeamMember) => {
+    try {
+      const res = await fetch('/api/partners/team-members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: member.id,
+          partnerId,
+          autoApprove: !member.auto_approve,
+        }),
+      });
+
+      if (res.ok) {
+        fetchMembers();
+      }
+    } catch (error) {
+      console.error('Error toggling auto-approve:', error);
+    }
+  };
+
+  const handleAccessRequest = async (request: AccessRequest, action: 'approve' | 'deny') => {
+    setProcessingRequest(request.id);
+    try {
+      const res = await fetch('/api/partners/team-access-request', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: request.id,
+          partnerId,
+          action,
+          role: 'view_clicks_only',
+        }),
+      });
+
+      if (res.ok) {
+        fetchAccessRequests();
+        if (action === 'approve') {
+          fetchMembers();
+        }
+      }
+    } catch (error) {
+      console.error('Error processing request:', error);
+    }
+    setProcessingRequest(null);
+  };
+
+  const handleResendAccessCode = async (member: TeamMember) => {
+    try {
+      const res = await fetch('/api/partners/team-members/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: member.id,
+          partnerId,
+        }),
+      });
+
+      if (res.ok) {
+        setFormSuccess(`New access code sent to ${member.email}`);
+        setTimeout(() => setFormSuccess(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error resending code:', error);
+    }
+  };
+
   return (
     <section className="mb-6 md:mb-10">
       {/* Collapsible Header */}
@@ -200,6 +292,61 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
       {/* Expanded Content */}
       {isExpanded && (
         <div className="mt-3 space-y-3">
+          {/* Access Requests */}
+          {accessRequests.length > 0 && (
+            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-3">
+              <div className="flex items-center gap-2 mb-3">
+                <Bell className="w-4 h-4 text-yellow-400" />
+                <h4 className="text-sm font-semibold text-yellow-400">
+                  Pending Access Requests ({accessRequests.length})
+                </h4>
+              </div>
+              <div className="space-y-2">
+                {accessRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-3 bg-[#111] border border-[#333] rounded-lg"
+                  >
+                    <div>
+                      <p className="text-white text-sm font-medium">{request.name}</p>
+                      <p className="text-gray-500 text-xs">{request.email}</p>
+                      {request.message && (
+                        <p className="text-gray-400 text-xs mt-1 italic">"{request.message}"</p>
+                      )}
+                      <p className="text-gray-600 text-xs mt-1">
+                        {request.is_new_member ? 'New member' : 'Existing member - needs new code'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAccessRequest(request, 'approve')}
+                        disabled={processingRequest === request.id}
+                        className="px-3 py-1 bg-green-900/30 hover:bg-green-900/50 text-green-400 border border-green-500/30 rounded text-xs transition-colors disabled:opacity-50"
+                      >
+                        {processingRequest === request.id ? '...' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => handleAccessRequest(request, 'deny')}
+                        disabled={processingRequest === request.id}
+                        className="px-3 py-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-500/30 rounded text-xs transition-colors disabled:opacity-50"
+                      >
+                        Deny
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {formSuccess && (
+            <div className="mb-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-400" />
+              <p className="text-green-400 text-sm">{formSuccess}</p>
+            </div>
+          )}
+
           {/* Role Info */}
           <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3">
             <p className="text-xs text-gray-500 mb-2">
@@ -355,6 +502,7 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                     <th className="px-4 py-2 text-left">Name</th>
                     <th className="px-4 py-2 text-left hidden sm:table-cell">Email</th>
                     <th className="px-4 py-2 text-left">Access</th>
+                    <th className="px-4 py-2 text-left hidden md:table-cell">Auto-Approve</th>
                     <th className="px-4 py-2 text-left">Status</th>
                     <th className="px-4 py-2 text-right">Actions</th>
                   </tr>
@@ -369,6 +517,19 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                           {TEAM_MEMBER_ROLES[member.role]?.label || member.role}
                         </span>
                       </td>
+                      <td className="px-4 py-2 hidden md:table-cell">
+                        <button
+                          onClick={() => handleToggleAutoApprove(member)}
+                          className={`px-2 py-1 rounded text-xs transition ${
+                            member.auto_approve
+                              ? 'bg-green-900/30 text-green-400 border border-green-500/30'
+                              : 'bg-gray-900/30 text-gray-500 border border-gray-600/30'
+                          }`}
+                          title={member.auto_approve ? 'Auto-approve enabled - click to disable' : 'Click to enable auto-approve for access requests'}
+                        >
+                          {member.auto_approve ? 'On' : 'Off'}
+                        </button>
+                      </td>
                       <td className="px-4 py-2">
                         {member.is_active ? (
                           <span className="text-green-400 text-xs">Active</span>
@@ -378,6 +539,13 @@ export default function TeamMemberManagement({ partnerId }: TeamMemberManagement
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleResendAccessCode(member)}
+                            className="p-1 rounded bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 transition"
+                            title="Send new access code"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => handleToggleActive(member)}
                             className={`p-1 rounded transition ${

@@ -215,6 +215,19 @@ export default function PartnerLogin() {
           )}
         </div>
 
+        {/* Team Member Access */}
+        <div className="bg-[#111] border border-[#222] rounded-xl p-4 mt-4">
+          <div className="text-center">
+            <p className="text-gray-500 text-xs mb-2">Are you a team member?</p>
+            <Link 
+              href="/partner/team-login"
+              className="text-blue-400 hover:text-blue-300 text-sm transition inline-flex items-center gap-1"
+            >
+              Team Member Access →
+            </Link>
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="text-center mt-8">
           <Link 

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     
     const { data: members, error } = await supabase
       .from('partner_team_members')
-      .select('id, email, name, role, is_active, created_at, last_login')
+      .select('id, email, name, role, is_active, auto_approve, created_at, last_login')
       .eq('partner_id', partnerId)
       .order('created_at', { ascending: false });
 
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, partnerId, name, role, isActive } = await req.json();
+    const { id, partnerId, name, role, isActive, autoApprove } = await req.json();
 
     if (!id || !partnerId) {
       return NextResponse.json({ error: 'Member ID and Partner ID required' }, { status: 400 });
@@ -167,6 +167,7 @@ export async function PATCH(req: NextRequest) {
     if (name) updates.name = name;
     if (role && validateTeamMemberRole(role)) updates.role = role;
     if (typeof isActive === 'boolean') updates.is_active = isActive;
+    if (typeof autoApprove === 'boolean') updates.auto_approve = autoApprove;
 
     const { data, error } = await supabase
       .from('partner_team_members')
@@ -234,6 +235,11 @@ async function sendTeamMemberInvite(
   try {
     const roleInfo = TEAM_MEMBER_ROLES[role];
     
+    // Build access description based on role
+    const accessDescription = roleInfo.canViewSales 
+      ? 'Your access level allows you to view sales and clicks.'
+      : 'Your access level allows you to view clicks and traffic data.';
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -243,7 +249,7 @@ async function sendTeamMemberInvite(
       body: JSON.stringify({
         from: 'Throne Light Publishing <partners@thronelightpublishing.com>',
         to: email,
-        subject: `You've been invited to view ${partnerName}'s Partner Dashboard`,
+        subject: `Throne Light Publishing Team Dashboard Access`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -258,8 +264,8 @@ async function sendTeamMemberInvite(
         <table width="600" cellpadding="0" cellspacing="0" style="background: #111; border: 1px solid #222; border-radius: 16px; overflow: hidden;">
           <tr>
             <td style="padding: 40px; text-align: center; border-bottom: 1px solid #222;">
-              <h1 style="margin: 0; color: #c9a961; font-size: 24px;">Team Dashboard Access</h1>
-              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Throne Light Publishing</p>
+              <h1 style="margin: 0; color: #c9a961; font-size: 24px;">Throne Light Publishing</h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Team Dashboard Access</p>
             </td>
           </tr>
           <tr>
@@ -270,18 +276,9 @@ async function sendTeamMemberInvite(
               <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
                 <strong style="color: #c9a961;">${partnerName}</strong> has invited you to view their Partner Dashboard at Throne Light Publishing.
               </p>
-              
-              <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 24px; margin: 30px 0;">
-                <p style="margin: 0 0 8px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">
-                  Your Access Level
-                </p>
-                <p style="margin: 0; color: #c9a961; font-size: 18px; font-weight: bold;">
-                  ${roleInfo.label}
-                </p>
-                <p style="margin: 8px 0 0; color: #888; font-size: 14px;">
-                  ${roleInfo.description}
-                </p>
-              </div>
+              <p style="color: #ccc; font-size: 16px; line-height: 1.8; margin: 0 0 20px;">
+                ${accessDescription} You'll also be able to create unique promo links to track your referrals, so your efforts can be seen and measured.
+              </p>
               
               <div style="background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); border: 2px solid #c9a961; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
                 <p style="margin: 0 0 10px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">
@@ -300,7 +297,7 @@ async function sendTeamMemberInvite(
               </div>
               
               <p style="color: #888; font-size: 14px; margin: 30px 0 0; padding-top: 20px; border-top: 1px solid #333;">
-                This is a view-only access code. You cannot make changes or request withdrawals.
+                This is a view-only access code.
               </p>
             </td>
           </tr>
