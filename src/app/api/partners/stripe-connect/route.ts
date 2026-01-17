@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
         // RECIPIENT AGREEMENT (for countries like Nigeria)
         // - Cannot process payments, only receive transfers
         // - Uses cross-border/global payouts
+        // NOTE: 'type' and 'controller' are mutually exclusive - use type: 'custom' only
         type: 'custom',
         country,
         email: partner.email,
@@ -87,12 +88,6 @@ export async function POST(req: NextRequest) {
         },
         tos_acceptance: {
           service_agreement: 'recipient',
-        },
-        controller: {
-          stripe_dashboard: { type: 'none' },
-          fees: { payer: 'application' },
-          losses: { payments: 'application' },
-          requirement_collection: 'application',
         },
         business_type: 'individual',
         metadata: {
