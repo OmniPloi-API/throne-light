@@ -4,38 +4,90 @@ import { requireAdminAuth } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
-// Country coordinates for map markers (approximate center points)
+// Country coordinates for map markers (capital city locations for accuracy)
 const COUNTRY_COORDINATES: Record<string, { latitude: number; longitude: number; code: string }> = {
-  'United States': { latitude: 39.8283, longitude: -98.5795, code: 'US' },
-  'USA': { latitude: 39.8283, longitude: -98.5795, code: 'US' },
-  'South Africa': { latitude: -30.5595, longitude: 22.9375, code: 'ZA' },
-  'Nigeria': { latitude: 9.0820, longitude: 8.6753, code: 'NG' },
-  'Ghana': { latitude: 7.9465, longitude: -1.0232, code: 'GH' },
-  'Botswana': { latitude: -22.3285, longitude: 24.6849, code: 'BW' },
-  'United Kingdom': { latitude: 55.3781, longitude: -3.4360, code: 'GB' },
-  'UK': { latitude: 55.3781, longitude: -3.4360, code: 'GB' },
-  'Cameroon': { latitude: 7.3697, longitude: 12.3547, code: 'CM' },
-  'France': { latitude: 46.2276, longitude: 2.2137, code: 'FR' },
-  'Germany': { latitude: 51.1657, longitude: 10.4515, code: 'DE' },
-  'Australia': { latitude: -25.2744, longitude: 133.7751, code: 'AU' },
-  'Canada': { latitude: 56.1304, longitude: -106.3468, code: 'CA' },
-  'India': { latitude: 20.5937, longitude: 78.9629, code: 'IN' },
-  'Kenya': { latitude: -0.0236, longitude: 37.9062, code: 'KE' },
-  'Brazil': { latitude: -14.2350, longitude: -51.9253, code: 'BR' },
-  'Mexico': { latitude: 23.6345, longitude: -102.5528, code: 'MX' },
-  'Japan': { latitude: 36.2048, longitude: 138.2529, code: 'JP' },
-  'China': { latitude: 35.8617, longitude: 104.1954, code: 'CN' },
-  'Netherlands': { latitude: 52.1326, longitude: 5.2913, code: 'NL' },
-  'Spain': { latitude: 40.4637, longitude: -3.7492, code: 'ES' },
-  'Italy': { latitude: 41.8719, longitude: 12.5674, code: 'IT' },
-  'Sweden': { latitude: 60.1282, longitude: 18.6435, code: 'SE' },
-  'Norway': { latitude: 60.4720, longitude: 8.4689, code: 'NO' },
-  'Denmark': { latitude: 56.2639, longitude: 9.5018, code: 'DK' },
-  'Ireland': { latitude: 53.1424, longitude: -7.6921, code: 'IE' },
-  'New Zealand': { latitude: -40.9006, longitude: 174.8860, code: 'NZ' },
+  // Americas
+  'United States': { latitude: 38.9072, longitude: -77.0369, code: 'US' }, // Washington DC
+  'USA': { latitude: 38.9072, longitude: -77.0369, code: 'US' },
+  'Canada': { latitude: 45.4215, longitude: -75.6972, code: 'CA' }, // Ottawa
+  'Mexico': { latitude: 19.4326, longitude: -99.1332, code: 'MX' }, // Mexico City
+  'Brazil': { latitude: -15.7975, longitude: -47.8919, code: 'BR' }, // Brasilia
+  'Argentina': { latitude: -34.6037, longitude: -58.3816, code: 'AR' }, // Buenos Aires
+  'Colombia': { latitude: 4.7110, longitude: -74.0721, code: 'CO' }, // Bogota
+  'Chile': { latitude: -33.4489, longitude: -70.6693, code: 'CL' }, // Santiago
+  'Peru': { latitude: -12.0464, longitude: -77.0428, code: 'PE' }, // Lima
+  'Jamaica': { latitude: 18.0179, longitude: -76.8099, code: 'JM' }, // Kingston
+  'Trinidad and Tobago': { latitude: 10.6918, longitude: -61.2225, code: 'TT' }, // Port of Spain
+  
+  // Europe
+  'United Kingdom': { latitude: 51.5074, longitude: -0.1278, code: 'GB' }, // London
+  'UK': { latitude: 51.5074, longitude: -0.1278, code: 'GB' },
+  'France': { latitude: 48.8566, longitude: 2.3522, code: 'FR' }, // Paris
+  'Germany': { latitude: 52.5200, longitude: 13.4050, code: 'DE' }, // Berlin
+  'Netherlands': { latitude: 52.3676, longitude: 4.9041, code: 'NL' }, // Amsterdam
+  'Spain': { latitude: 40.4168, longitude: -3.7038, code: 'ES' }, // Madrid
+  'Italy': { latitude: 41.9028, longitude: 12.4964, code: 'IT' }, // Rome
+  'Sweden': { latitude: 59.3293, longitude: 18.0686, code: 'SE' }, // Stockholm
+  'Norway': { latitude: 59.9139, longitude: 10.7522, code: 'NO' }, // Oslo
+  'Denmark': { latitude: 55.6761, longitude: 12.5683, code: 'DK' }, // Copenhagen
+  'Ireland': { latitude: 53.3498, longitude: -6.2603, code: 'IE' }, // Dublin
+  'Belgium': { latitude: 50.8503, longitude: 4.3517, code: 'BE' }, // Brussels
+  'Switzerland': { latitude: 46.9480, longitude: 7.4474, code: 'CH' }, // Bern
+  'Austria': { latitude: 48.2082, longitude: 16.3738, code: 'AT' }, // Vienna
+  'Poland': { latitude: 52.2297, longitude: 21.0122, code: 'PL' }, // Warsaw
+  'Portugal': { latitude: 38.7223, longitude: -9.1393, code: 'PT' }, // Lisbon
+  'Greece': { latitude: 37.9838, longitude: 23.7275, code: 'GR' }, // Athens
+  'Finland': { latitude: 60.1699, longitude: 24.9384, code: 'FI' }, // Helsinki
+  'Czech Republic': { latitude: 50.0755, longitude: 14.4378, code: 'CZ' }, // Prague
+  'Romania': { latitude: 44.4268, longitude: 26.1025, code: 'RO' }, // Bucharest
+  'Hungary': { latitude: 47.4979, longitude: 19.0402, code: 'HU' }, // Budapest
+  
+  // Africa
+  'South Africa': { latitude: -25.7479, longitude: 28.2293, code: 'ZA' }, // Pretoria
+  'Nigeria': { latitude: 9.0765, longitude: 7.3986, code: 'NG' }, // Abuja
+  'Ghana': { latitude: 5.6037, longitude: -0.1870, code: 'GH' }, // Accra
+  'Kenya': { latitude: -1.2921, longitude: 36.8219, code: 'KE' }, // Nairobi
+  'Ethiopia': { latitude: 9.0320, longitude: 38.7420, code: 'ET' }, // Addis Ababa
+  'Egypt': { latitude: 30.0444, longitude: 31.2357, code: 'EG' }, // Cairo
+  'Morocco': { latitude: 33.9716, longitude: -6.8498, code: 'MA' }, // Rabat
+  'Tanzania': { latitude: -6.1659, longitude: 35.7516, code: 'TZ' }, // Dodoma
+  'Uganda': { latitude: 0.3476, longitude: 32.5825, code: 'UG' }, // Kampala
+  'Cameroon': { latitude: 3.8480, longitude: 11.5021, code: 'CM' }, // Yaounde
+  'Botswana': { latitude: -24.6282, longitude: 25.9231, code: 'BW' }, // Gaborone
+  'Zimbabwe': { latitude: -17.8252, longitude: 31.0335, code: 'ZW' }, // Harare
+  'Zambia': { latitude: -15.3875, longitude: 28.3228, code: 'ZM' }, // Lusaka
+  'Rwanda': { latitude: -1.9403, longitude: 29.8739, code: 'RW' }, // Kigali
+  'Senegal': { latitude: 14.7167, longitude: -17.4677, code: 'SN' }, // Dakar
+  'Ivory Coast': { latitude: 6.8276, longitude: -5.2893, code: 'CI' }, // Yamoussoukro
+  "Côte d'Ivoire": { latitude: 6.8276, longitude: -5.2893, code: 'CI' },
+  
+  // Asia
+  'India': { latitude: 28.6139, longitude: 77.2090, code: 'IN' }, // New Delhi
+  'China': { latitude: 39.9042, longitude: 116.4074, code: 'CN' }, // Beijing
+  'Japan': { latitude: 35.6762, longitude: 139.6503, code: 'JP' }, // Tokyo
+  'South Korea': { latitude: 37.5665, longitude: 126.9780, code: 'KR' }, // Seoul
+  'Indonesia': { latitude: -6.2088, longitude: 106.8456, code: 'ID' }, // Jakarta
+  'Philippines': { latitude: 14.5995, longitude: 120.9842, code: 'PH' }, // Manila
+  'Thailand': { latitude: 13.7563, longitude: 100.5018, code: 'TH' }, // Bangkok
+  'Vietnam': { latitude: 21.0285, longitude: 105.8542, code: 'VN' }, // Hanoi
+  'Malaysia': { latitude: 3.1390, longitude: 101.6869, code: 'MY' }, // Kuala Lumpur
   'Singapore': { latitude: 1.3521, longitude: 103.8198, code: 'SG' },
-  'UAE': { latitude: 23.4241, longitude: 53.8478, code: 'AE' },
-  'United Arab Emirates': { latitude: 23.4241, longitude: 53.8478, code: 'AE' },
+  'Pakistan': { latitude: 33.6844, longitude: 73.0479, code: 'PK' }, // Islamabad
+  'Bangladesh': { latitude: 23.8103, longitude: 90.4125, code: 'BD' }, // Dhaka
+  'Sri Lanka': { latitude: 6.9271, longitude: 79.8612, code: 'LK' }, // Colombo
+  
+  // Middle East
+  'UAE': { latitude: 24.4539, longitude: 54.3773, code: 'AE' }, // Abu Dhabi
+  'United Arab Emirates': { latitude: 24.4539, longitude: 54.3773, code: 'AE' },
+  'Saudi Arabia': { latitude: 24.7136, longitude: 46.6753, code: 'SA' }, // Riyadh
+  'Israel': { latitude: 31.7683, longitude: 35.2137, code: 'IL' }, // Jerusalem
+  'Turkey': { latitude: 39.9334, longitude: 32.8597, code: 'TR' }, // Ankara
+  'Qatar': { latitude: 25.2854, longitude: 51.5310, code: 'QA' }, // Doha
+  'Kuwait': { latitude: 29.3759, longitude: 47.9774, code: 'KW' }, // Kuwait City
+  
+  // Oceania
+  'Australia': { latitude: -35.2809, longitude: 149.1300, code: 'AU' }, // Canberra
+  'New Zealand': { latitude: -41.2866, longitude: 174.7756, code: 'NZ' }, // Wellington
 };
 
 export async function GET(req: NextRequest) {

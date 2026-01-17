@@ -157,10 +157,26 @@ const AdminWorldMap = () => {
     });
   };
   
-  // Get unique countries from both sales and readers
+  // Get unique countries from sales, readers, AND countriesData from API
   const getUniqueCountries = () => {
     if (!mapData) return [];
-    const countryMap = new Map<string, { country: string; countryCode: string; latitude: number; longitude: number; readerCount: number; salesCount: number }>();
+    const countryMap = new Map<string, { country: string; countryCode: string; latitude: number; longitude: number; readerCount: number; salesCount: number; visitorCount: number }>();
+    
+    // First, add all countries from the API's countriesData (from tracking events)
+    // This is the most comprehensive source since it tracks all page views
+    if ((mapData as any).countriesData) {
+      (mapData as any).countriesData.forEach((c: any) => {
+        countryMap.set(c.country, {
+          country: c.country,
+          countryCode: c.countryCode,
+          latitude: c.latitude,
+          longitude: c.longitude,
+          readerCount: 0,
+          salesCount: c.saleCount || 0,
+          visitorCount: c.visitorCount || 0
+        });
+      });
+    }
     
     // Add reader locations
     mapData.readers.forEach(r => {
@@ -174,7 +190,8 @@ const AdminWorldMap = () => {
           latitude: r.latitude,
           longitude: r.longitude,
           readerCount: r.count,
-          salesCount: 0
+          salesCount: 0,
+          visitorCount: 0
         });
       }
     });
@@ -191,7 +208,8 @@ const AdminWorldMap = () => {
           latitude: s.latitude,
           longitude: s.longitude,
           readerCount: 0,
-          salesCount: s.count
+          salesCount: s.count,
+          visitorCount: 0
         });
       }
     });

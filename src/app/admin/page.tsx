@@ -522,7 +522,7 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* Consumer Activity */}
+        {/* Consumer Journey */}
         <ConsumerActivitySection events={events} partners={partners} />
       </main>
 
@@ -761,7 +761,7 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
 
   return (
     <section>
-      <h2 className="text-xl font-semibold mb-4">Consumer Activity</h2>
+      <h2 className="text-xl font-semibold mb-4">Consumer Journey</h2>
       <p className="text-gray-500 text-sm mb-4">
         Track customer journeys across your constellation. Click a row to see full activity history.
       </p>
@@ -870,7 +870,7 @@ function ConsumerActivitySection({ events, partners }: { events: TrackingEvent[]
             {consumers.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                  No consumer activity yet. Traffic will appear here as visitors interact with your domains.
+                  No consumer journey data yet. Traffic will appear here as visitors interact with your domains.
                 </td>
               </tr>
             )}

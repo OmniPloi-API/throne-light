@@ -27,8 +27,13 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
   
-  // Hide on reader pages
-  const isReaderPage = pathname?.startsWith('/reader');
+  // Only show on admin and partner dashboard pages (not public consumer pages)
+  const isAdminPage = pathname?.startsWith('/admin');
+  const isPartnerDashboard = pathname === '/partner' || pathname?.startsWith('/partner/');
+  const isInternalPage = isAdminPage || isPartnerDashboard;
+  
+  // Hide on all public-facing consumer pages
+  const shouldHide = !isInternalPage;
 
   const checkVisibility = useCallback(async () => {
     try {
@@ -231,7 +236,7 @@ export default function FeedbackWidget({ enabled = true }: FeedbackWidgetProps) 
     transcriptRef.current = '';
   };
 
-  if (!enabled || !isVisible || isReaderPage) return null;
+  if (!enabled || !isVisible || shouldHide) return null;
 
   return (
     <>
