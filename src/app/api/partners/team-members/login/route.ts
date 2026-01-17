@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { TEAM_MEMBER_ROLES, TeamMemberRole } from '../route';
+import { TEAM_MEMBER_ROLES, type TeamMemberRole } from '@/lib/team-member-roles';
 
 /**
  * POST - Team member login with access code
