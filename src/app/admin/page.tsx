@@ -28,6 +28,7 @@ import {
   Power, Trash2, RotateCcw, AlertTriangle
 } from 'lucide-react';
 import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
+import SubAdminManagement from '@/components/admin/SubAdminManagement';
 
 interface Partner {
   id: string;
@@ -403,6 +404,9 @@ export default function AdminPage() {
             }} 
           />
         )}
+
+        {/* Sub-Admin Management - Collapsible Section */}
+        <SubAdminManagement />
 
         {/* Partners Table */}
         <section className="mb-10">
