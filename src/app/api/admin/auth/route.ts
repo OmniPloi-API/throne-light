@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { ADMIN_ROLES } from '../users/route';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,11 +18,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (password === adminPassword) {
-      // Set a secure HTTP-only cookie for admin session
-      const response = NextResponse.json({ success: true });
+      // Super admin login - full access
+      const response = NextResponse.json({ 
+        success: true,
+        user: {
+          id: 'super_admin',
+          name: 'Super Admin',
+          role: 'super_admin',
+          permissions: ['all'],
+        }
+      });
       
-      // Create a simple token (in production, use proper JWT)
-      const token = Buffer.from(`admin:${Date.now()}:${adminPassword.slice(0, 4)}`).toString('base64');
+      // Create token for super admin
+      const token = Buffer.from(`superadmin:super_admin:super_admin:${Date.now()}`).toString('base64');
       
       response.cookies.set('admin_session', token, {
         httpOnly: true,
@@ -50,10 +59,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Verify admin session
+// Verify admin session and return user info with permissions
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get('admin_session');
 
     if (!session?.value) {
@@ -63,9 +72,32 @@ export async function GET() {
     // Verify token format
     try {
       const decoded = Buffer.from(session.value, 'base64').toString();
-      const [prefix, timestamp] = decoded.split(':');
+      const parts = decoded.split(':');
+      const [prefix, userId, role, timestamp] = parts;
       
-      if (prefix !== 'admin') {
+      // Support both old format (admin:timestamp:hash) and new format (superadmin/subadmin:id:role:timestamp)
+      if (prefix === 'admin') {
+        // Old format - treat as super admin for backward compatibility
+        const sessionTime = parseInt(parts[1]);
+        const now = Date.now();
+        const eightHours = 8 * 60 * 60 * 1000;
+        
+        if (now - sessionTime > eightHours) {
+          return NextResponse.json({ authenticated: false });
+        }
+        
+        return NextResponse.json({ 
+          authenticated: true,
+          user: {
+            id: 'super_admin',
+            name: 'Super Admin',
+            role: 'super_admin',
+            permissions: ['all'],
+          }
+        });
+      }
+      
+      if (prefix !== 'superadmin' && prefix !== 'subadmin') {
         return NextResponse.json({ authenticated: false });
       }
 
@@ -78,7 +110,17 @@ export async function GET() {
         return NextResponse.json({ authenticated: false });
       }
 
-      return NextResponse.json({ authenticated: true });
+      // Get permissions for role
+      const rolePermissions = ADMIN_ROLES[role as keyof typeof ADMIN_ROLES]?.permissions || [];
+
+      return NextResponse.json({ 
+        authenticated: true,
+        user: {
+          id: userId,
+          role,
+          permissions: rolePermissions,
+        }
+      });
     } catch {
       return NextResponse.json({ authenticated: false });
     }
