@@ -265,7 +265,7 @@ export default function TeamDashboardPage() {
               <Users className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-white font-semibold">Team {session.partnerName}</h1>
+              <h1 className="text-gold font-semibold">Team {session.partnerName}</h1>
               <p className="text-gray-500 text-xs">Team Dashboard • {session.name}</p>
             </div>
           </div>
@@ -368,7 +368,7 @@ export default function TeamDashboardPage() {
               <ExternalLink className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h2 className="text-white font-semibold">Partner Promo Link</h2>
+              <h2 className="text-gold font-semibold">Partner Promo Link</h2>
               <p className="text-gray-500 text-xs">Share this link or generate your own tracked link below</p>
             </div>
           </div>
@@ -410,7 +410,7 @@ export default function TeamDashboardPage() {
                 <Link2 className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <h2 className="text-white font-semibold">Your Tracked Links</h2>
+                <h2 className="text-gold font-semibold">Your Tracked Links</h2>
                 <p className="text-gray-500 text-xs">Generate unique links to track your personal referrals</p>
               </div>
             </div>
