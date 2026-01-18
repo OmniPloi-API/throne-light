@@ -103,6 +103,19 @@ export default function TeamDashboardPage() {
       const result = await res.json();
       setData(result.data);
       setSubLinkStats(result.subLinkStats || []);
+      
+      // Update session with partnerSlug if missing (for existing sessions)
+      if (result.partnerSlug) {
+        const sessionData = localStorage.getItem('teamMemberSession');
+        if (sessionData) {
+          const currentSession = JSON.parse(sessionData);
+          if (!currentSession.partnerSlug) {
+            currentSession.partnerSlug = result.partnerSlug;
+            localStorage.setItem('teamMemberSession', JSON.stringify(currentSession));
+            setSession(currentSession);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }

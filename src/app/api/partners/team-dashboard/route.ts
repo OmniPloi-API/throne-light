@@ -25,6 +25,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Get partner slug for constructing links
+    const { data: partner } = await supabase
+      .from('partners')
+      .select('slug')
+      .eq('id', partnerId)
+      .single();
+
     // Get event data (traffic + clicks) for this partner
     const { data: events, error: eventsError } = await supabase
       .from('tracking_events')
@@ -108,6 +115,7 @@ export async function GET(req: NextRequest) {
         totalSales: salesCount || 0,
       },
       subLinkStats,
+      partnerSlug: partner?.slug || '',
     });
   } catch (error) {
     console.error('Team dashboard error:', error);
