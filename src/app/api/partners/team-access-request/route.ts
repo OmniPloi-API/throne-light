@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, message } = await req.json();
+    const { email, name, partnerName, message } = await req.json();
 
     if (!email || !name) {
       return NextResponse.json({ error: 'Email and name are required' }, { status: 400 });
@@ -67,12 +67,39 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // New team member - we need them to provide partner info or we search for matching partner email domain
-    // For now, create a general request that partners can see
+    // New team member - try to find partner by name if provided
+    let matchedPartnerId: string | null = null;
+    
+    if (partnerName) {
+      const { data: matchedPartner } = await supabase
+        .from('partners')
+        .select('id, name, email')
+        .ilike('name', `%${partnerName}%`)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+      
+      if (matchedPartner) {
+        matchedPartnerId = matchedPartner.id;
+        
+        // Send notification to the matched partner
+        if (matchedPartner.email) {
+          await sendPartnerNotificationEmail(
+            matchedPartner.email, 
+            matchedPartner.name, 
+            name, 
+            email
+          );
+        }
+      }
+    }
+
     const { error: requestError } = await supabase
       .from('team_access_requests')
       .insert({
         id: uuidv4(),
+        partner_id: matchedPartnerId,
+        partner_name_provided: partnerName || null,
         email: email.toLowerCase(),
         name,
         message: message || null,
@@ -89,7 +116,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       autoApproved: false,
-      message: 'Your request has been submitted. A partner will review your request.',
+      message: matchedPartnerId 
+        ? 'Your request has been sent to the partner for approval.'
+        : 'Your request has been submitted. We will review and contact you soon.',
     });
   } catch (error) {
     console.error('Access request error:', error);

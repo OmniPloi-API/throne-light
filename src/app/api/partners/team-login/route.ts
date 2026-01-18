@@ -20,6 +20,24 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error || !member) {
+      // Log for debugging - check if email exists with different code
+      const { data: emailCheck } = await supabase
+        .from('partner_team_members')
+        .select('id, access_code')
+        .eq('email', email.trim().toLowerCase())
+        .single();
+      
+      if (emailCheck) {
+        console.log('Team login: Email found but access code mismatch', {
+          providedCode: accessCode.trim().toUpperCase(),
+          email: email.trim().toLowerCase(),
+        });
+      } else {
+        console.log('Team login: Email not found in system', {
+          email: email.trim().toLowerCase(),
+        });
+      }
+      
       return NextResponse.json({ error: 'Invalid access code or email' }, { status: 401 });
     }
 

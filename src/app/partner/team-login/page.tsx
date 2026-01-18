@@ -18,6 +18,7 @@ export default function TeamLoginPage() {
   const [showRequestAccess, setShowRequestAccess] = useState(false);
   const [requestEmail, setRequestEmail] = useState('');
   const [requestName, setRequestName] = useState('');
+  const [requestPartnerName, setRequestPartnerName] = useState('');
   const [requestMessage, setRequestMessage] = useState('');
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
@@ -75,6 +76,7 @@ export default function TeamLoginPage() {
         body: JSON.stringify({
           email: requestEmail.trim().toLowerCase(),
           name: requestName.trim(),
+          partnerName: requestPartnerName.trim(),
           message: requestMessage.trim(),
         }),
       });
@@ -204,6 +206,7 @@ export default function TeamLoginPage() {
                     setRequestSuccess(false);
                     setRequestEmail('');
                     setRequestName('');
+                    setRequestPartnerName('');
                     setRequestMessage('');
                   }}
                   className="text-gold hover:text-gold/80 text-sm underline underline-offset-4"
@@ -233,7 +236,19 @@ export default function TeamLoginPage() {
                     type="text"
                     value={requestName}
                     onChange={(e) => setRequestName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder="Name"
+                    required
+                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-white placeholder:text-gray-600 focus:border-gold/50 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Partner Name *</label>
+                  <input
+                    type="text"
+                    value={requestPartnerName}
+                    onChange={(e) => setRequestPartnerName(e.target.value)}
+                    placeholder="Name of the partner you're joining"
                     required
                     className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-white placeholder:text-gray-600 focus:border-gold/50 focus:outline-none"
                   />
@@ -264,7 +279,7 @@ export default function TeamLoginPage() {
 
                 <button
                   type="submit"
-                  disabled={requestLoading || !requestEmail || !requestName}
+                  disabled={requestLoading || !requestEmail || !requestName || !requestPartnerName}
                   className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {requestLoading ? 'Submitting...' : 'Submit Request'}
