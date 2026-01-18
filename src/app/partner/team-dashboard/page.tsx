@@ -272,7 +272,7 @@ export default function TeamDashboardPage() {
 
       {/* Header */}
       <header className="bg-[#111] border-b border-[#222] sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 relative flex items-center justify-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-900/30 rounded-lg">
               <Users className="w-5 h-5 text-blue-400" />
@@ -284,7 +284,7 @@ export default function TeamDashboardPage() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-gold hover:text-red-400 transition ml-4 p-2 rounded-lg hover:bg-red-400/10"
+            className="absolute right-4 text-gold hover:text-red-400 transition p-2 rounded-lg hover:bg-red-400/10"
             title="Logout"
           >
             <Power className="w-5 h-5" />
