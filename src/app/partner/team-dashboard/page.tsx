@@ -36,6 +36,16 @@ interface SubLink {
   clickCount: number;
 }
 
+interface SubLinkStats {
+  id: string;
+  code: string;
+  label: string;
+  traffic: number;
+  clicks: number;
+  amazonClicks: number;
+  sales: number;
+}
+
 interface DashboardData {
   totalTraffic: number;
   totalClicks: number;
@@ -49,6 +59,7 @@ export default function TeamDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const [subLinks, setSubLinks] = useState<SubLink[]>([]);
+  const [subLinkStats, setSubLinkStats] = useState<SubLinkStats[]>([]);
   const [showCreateLink, setShowCreateLink] = useState(false);
   const [newLinkName, setNewLinkName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -82,6 +93,7 @@ export default function TeamDashboardPage() {
       const res = await fetch(`/api/partners/team-dashboard?partnerId=${partnerId}&memberId=${memberId}`);
       const result = await res.json();
       setData(result.data);
+      setSubLinkStats(result.subLinkStats || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -122,6 +134,7 @@ export default function TeamDashboardPage() {
         setNewLinkName('');
         setShowCreateLink(false);
         fetchSubLinks(session.partnerId, session.id);
+        fetchDashboardData(session.partnerId, session.id, session.role);
       }
     } catch (error) {
       console.error('Error creating link:', error);
@@ -310,43 +323,81 @@ export default function TeamDashboardPage() {
             </div>
           )}
 
-          {/* Links List */}
-          {subLinks.length === 0 ? (
+          {/* Links List with Stats */}
+          {subLinkStats.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Link2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm">No promo links yet</p>
               <p className="text-xs text-gray-600 mt-1">Create a link to start tracking your referrals</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {subLinks.map((link) => (
-                <div
-                  key={link.id}
-                  className="flex items-center justify-between p-4 bg-[#1a1a1a] border border-[#333] rounded-lg"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm">{link.label}</p>
-                    <p className="text-gray-500 text-xs truncate">{link.fullUrl || ''}</p>
-                  </div>
-                  <div className="flex items-center gap-4 ml-4">
-                    <div className="text-right">
-                      <p className="text-gold font-semibold">{link.clickCount || 0}</p>
-                      <p className="text-gray-600 text-xs">clicks</p>
+            <div className="space-y-6">
+              {subLinkStats.map((linkStat) => {
+                const linkInfo = subLinks.find(l => l.id === linkStat.id);
+                return (
+                  <div
+                    key={linkStat.id}
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl p-5"
+                  >
+                    {/* Link Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-base">{linkStat.label}</p>
+                        <p className="text-gray-500 text-xs truncate mt-1">{linkInfo?.fullUrl || ''}</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(linkInfo?.fullUrl || '', linkStat.id)}
+                        disabled={!linkInfo?.fullUrl}
+                        className="p-2 bg-[#333] hover:bg-[#444] rounded-lg transition-colors ml-4"
+                        title="Copy link"
+                      >
+                        {copiedId === linkStat.id ? (
+                          <Check className="w-4 h-4 text-green-400" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => copyToClipboard(link.fullUrl || '', link.id)}
-                      disabled={!link.fullUrl}
-                      className="p-2 bg-[#333] hover:bg-[#444] rounded-lg transition-colors"
-                    >
-                      {copiedId === link.id ? (
-                        <Check className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-gray-400" />
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+                          <Eye className="w-3 h-3" />
+                          <span className="text-xs">Traffic</span>
+                        </div>
+                        <p className="text-lg font-bold text-white">{linkStat.traffic}</p>
+                      </div>
+
+                      <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+                          <MousePointer className="w-3 h-3" />
+                          <span className="text-xs">Clicks</span>
+                        </div>
+                        <p className="text-lg font-bold text-white">{linkStat.clicks}</p>
+                      </div>
+
+                      <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+                          <ExternalLink className="w-3 h-3" />
+                          <span className="text-xs">Amazon</span>
+                        </div>
+                        <p className="text-lg font-bold text-white">{linkStat.amazonClicks}</p>
+                      </div>
+
+                      {canViewSales && (
+                        <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-3 text-center">
+                          <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+                            <ShoppingBag className="w-3 h-3" />
+                            <span className="text-xs">Sales</span>
+                          </div>
+                          <p className="text-lg font-bold text-gold">{linkStat.sales}</p>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.section>

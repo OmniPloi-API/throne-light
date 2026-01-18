@@ -58,6 +58,48 @@ export async function GET(req: NextRequest) {
       console.error('Team dashboard sales error:', salesError);
     }
 
+    // Get sub-links for this team member with detailed stats
+    const { data: subLinks } = await supabase
+      .from('partner_sub_links')
+      .select('id, code, label')
+      .eq('partner_id', partnerId)
+      .eq('team_member_id', memberId)
+      .eq('is_active', true);
+
+    // Calculate per-sub-link stats from tracking_events
+    const subLinkStats = await Promise.all(
+      (subLinks || []).map(async (link) => {
+        // Get all events for this sub-link
+        const { data: linkEvents } = await supabase
+          .from('tracking_events')
+          .select('event_type')
+          .eq('sub_link_id', link.id);
+
+        const events = linkEvents || [];
+        const traffic = events.filter(e => e.event_type === 'PAGE_VIEW').length;
+        const clicks = events.filter(e => CLICK_EVENT_TYPES.has(e.event_type)).length;
+        const amazonClicks = events.filter(e => e.event_type === 'CLICK_AMAZON').length;
+
+        // Get sales count for this sub-link from orders
+        const { count: linkSales } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('partner_id', partnerId)
+          .eq('sub_link_id', link.id)
+          .eq('status', 'COMPLETED');
+
+        return {
+          id: link.id,
+          code: link.code,
+          label: link.label,
+          traffic,
+          clicks,
+          amazonClicks,
+          sales: linkSales || 0,
+        };
+      })
+    );
+
     return NextResponse.json({
       data: {
         totalTraffic,
@@ -65,6 +107,7 @@ export async function GET(req: NextRequest) {
         amazonClicks,
         totalSales: salesCount || 0,
       },
+      subLinkStats,
     });
   } catch (error) {
     console.error('Team dashboard error:', error);
