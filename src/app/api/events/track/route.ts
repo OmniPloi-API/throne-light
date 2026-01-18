@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing partnerId or type' }, { status: 400 });
     }
     
-    const validTypes = ['PAGE_VIEW', 'CLICK_AMAZON', 'CLICK_BOOKBABY', 'CLICK_DIRECT', 'PENDING_SALE', 'SALE'];
+    const validTypes = ['PAGE_VIEW', 'CLICK_AMAZON', 'CLICK_KINDLE', 'CLICK_BOOKBABY', 'CLICK_DIRECT', 'PENDING_SALE', 'SALE'];
     if (!validTypes.includes(type)) {
       return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
     }
@@ -56,6 +56,10 @@ export async function POST(req: NextRequest) {
     
     // Get geo-location from IP
     const geo = ipAddress ? await getGeoLocation(ipAddress) : { country: undefined, city: undefined };
+
+    // Read attribution cookies (set by /partners/[slug]/[code])
+    const subLinkId = req.cookies.get('sub_link_id')?.value;
+    const teamMemberId = req.cookies.get('team_member_id')?.value;
     
     // Simple device detection
     let device = 'Desktop';
@@ -74,6 +78,8 @@ export async function POST(req: NextRequest) {
       country: geo.country,
       city: geo.city,
       pagePath: pagePath || undefined,
+      subLinkId: subLinkId || undefined,
+      teamMemberId: teamMemberId || undefined,
     });
     
     return NextResponse.json(event, { status: 201 });

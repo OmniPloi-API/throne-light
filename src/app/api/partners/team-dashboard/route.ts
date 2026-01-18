@@ -25,40 +25,45 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get partner's slug for tracking
-    const { data: partner } = await supabase
-      .from('partners')
-      .select('slug')
-      .eq('id', partnerId)
-      .single();
-
-    if (!partner) {
-      return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
-    }
-
-    // Get click data
-    const { data: clicks } = await supabase
+    // Get event data (traffic + clicks) for this partner
+    const { data: events, error: eventsError } = await supabase
       .from('tracking_events')
       .select('event_type')
-      .eq('partner_slug', partner.slug);
+      .eq('partner_id', partnerId);
 
-    const totalClicks = clicks?.filter(c => c.event_type === 'CLICK_LINK').length || 0;
-    const amazonClicks = clicks?.filter(c => c.event_type === 'CLICK_AMAZON').length || 0;
-    const readerDownloads = clicks?.filter(c => c.event_type === 'READER_DOWNLOAD').length || 0;
+    if (eventsError) {
+      console.error('Team dashboard events error:', eventsError);
+    }
 
-    // Get sales count (no dollar amounts)
-    const { count: salesCount } = await supabase
-      .from('tracking_events')
-      .select('id', { count: 'exact' })
-      .eq('partner_slug', partner.slug)
-      .in('event_type', ['SALE', 'CLICK_DIRECT']);
+    const safeEvents = events || [];
+    const totalTraffic = safeEvents.filter(e => e.event_type === 'PAGE_VIEW').length;
+
+    const CLICK_EVENT_TYPES = new Set([
+      'CLICK_AMAZON',
+      'CLICK_KINDLE',
+      'CLICK_BOOKBABY',
+      'CLICK_DIRECT',
+    ]);
+    const totalClicks = safeEvents.filter(e => CLICK_EVENT_TYPES.has(e.event_type)).length;
+    const amazonClicks = safeEvents.filter(e => e.event_type === 'CLICK_AMAZON').length;
+
+    // Stripe-verified sales: orders table (COMPLETED)
+    const { count: salesCount, error: salesError } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('partner_id', partnerId)
+      .eq('status', 'COMPLETED');
+
+    if (salesError) {
+      console.error('Team dashboard sales error:', salesError);
+    }
 
     return NextResponse.json({
       data: {
+        totalTraffic,
         totalClicks,
         amazonClicks,
         totalSales: salesCount || 0,
-        readerDownloads,
       },
     });
   } catch (error) {

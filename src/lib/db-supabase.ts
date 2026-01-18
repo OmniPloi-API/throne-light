@@ -44,6 +44,8 @@ export interface TrackingEvent {
   id: string;
   partnerId: string;
   type: 'PAGE_VIEW' | 'CLICK_AMAZON' | 'CLICK_KINDLE' | 'CLICK_BOOKBABY' | 'CLICK_DIRECT' | 'PENDING_SALE' | 'SALE';
+  subLinkId?: string;
+  teamMemberId?: string;
   ipAddress?: string;
   userAgent?: string;
   country?: string;
@@ -319,6 +321,8 @@ export async function createEvent(event: Omit<TrackingEvent, 'id' | 'createdAt'>
   const newEvent = {
     id,
     partner_id: event.partnerId,
+    sub_link_id: event.subLinkId,
+    team_member_id: event.teamMemberId,
     event_type: event.type,
     ip_address: event.ipAddress,
     user_agent: event.userAgent,

@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
   Users, 
-  LogOut, 
+  Power, 
+  Eye,
   MousePointer, 
   ShoppingBag, 
   Link2, 
@@ -14,8 +15,7 @@ import {
   Copy,
   Check,
   ExternalLink,
-  TrendingUp,
-  Eye
+  TrendingUp
 } from 'lucide-react';
 import { TEAM_MEMBER_ROLES, type TeamMemberRole } from '@/lib/team-member-roles';
 
@@ -28,11 +28,19 @@ interface TeamMemberSession {
   partnerName: string;
 }
 
+interface SubLink {
+  id: string;
+  code: string;
+  label: string;
+  fullUrl: string | null;
+  clickCount: number;
+}
+
 interface DashboardData {
+  totalTraffic: number;
   totalClicks: number;
   amazonClicks: number;
   totalSales: number;
-  readerDownloads: number;
 }
 
 export default function TeamDashboardPage() {
@@ -40,7 +48,7 @@ export default function TeamDashboardPage() {
   const [session, setSession] = useState<TeamMemberSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
-  const [subLinks, setSubLinks] = useState<any[]>([]);
+  const [subLinks, setSubLinks] = useState<SubLink[]>([]);
   const [showCreateLink, setShowCreateLink] = useState(false);
   const [newLinkName, setNewLinkName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -57,11 +65,17 @@ export default function TeamDashboardPage() {
       const parsed = JSON.parse(sessionData);
       setSession(parsed);
       fetchDashboardData(parsed.partnerId, parsed.id, parsed.role);
-      fetchSubLinks(parsed.id);
+      fetchSubLinks(parsed.partnerId, parsed.id);
     } catch {
       router.push('/partner/team-login');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (session?.partnerName) {
+      document.title = `Team ${session.partnerName}`;
+    }
+  }, [session?.partnerName]);
 
   const fetchDashboardData = async (partnerId: string, memberId: string, role: TeamMemberRole) => {
     try {
@@ -74,11 +88,11 @@ export default function TeamDashboardPage() {
     setLoading(false);
   };
 
-  const fetchSubLinks = async (memberId: string) => {
+  const fetchSubLinks = async (partnerId: string, memberId: string) => {
     try {
-      const res = await fetch(`/api/partners/team-sub-links?memberId=${memberId}`);
+      const res = await fetch(`/api/partners/sub-links?partnerId=${partnerId}&teamMemberId=${memberId}&isTeamMember=true`);
       const result = await res.json();
-      setSubLinks(result.links || []);
+      setSubLinks((result.subLinks || []) as SubLink[]);
     } catch (error) {
       console.error('Error fetching sub-links:', error);
     }
@@ -94,20 +108,20 @@ export default function TeamDashboardPage() {
     setCreating(true);
 
     try {
-      const res = await fetch('/api/partners/team-sub-links', {
+      const res = await fetch('/api/partners/sub-links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          memberId: session.id,
           partnerId: session.partnerId,
-          name: newLinkName.trim(),
+          teamMemberId: session.id,
+          label: newLinkName.trim(),
         }),
       });
 
       if (res.ok) {
         setNewLinkName('');
         setShowCreateLink(false);
-        fetchSubLinks(session.id);
+        fetchSubLinks(session.partnerId, session.id);
       }
     } catch (error) {
       console.error('Error creating link:', error);
@@ -146,16 +160,16 @@ export default function TeamDashboardPage() {
               <Users className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-white font-semibold">{session.partnerName}</h1>
+              <h1 className="text-white font-semibold">Team {session.partnerName}</h1>
               <p className="text-gray-500 text-xs">Team Dashboard • {session.name}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors text-sm"
+            className="text-gold hover:text-red-400 transition ml-4 p-2 rounded-lg hover:bg-red-400/10"
+            title="Logout"
           >
-            <LogOut className="w-4 h-4" />
-            Sign Out
+            <Power className="w-5 h-5" />
           </button>
         </div>
       </header>
@@ -186,9 +200,22 @@ export default function TeamDashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
+            className="bg-[#111] border border-[#222] rounded-xl p-5 flex flex-col items-center justify-center text-center"
           >
-            <div className="flex items-center gap-2 text-gray-400 mb-2">
+            <div className="flex items-center gap-2 text-gray-400 mb-2 justify-center">
+              <Eye className="w-4 h-4" />
+              <span className="text-xs">Total Traffic</span>
+            </div>
+            <p className="text-2xl font-bold text-white">{data?.totalTraffic || 0}</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-[#111] border border-[#222] rounded-xl p-5 flex flex-col items-center justify-center text-center"
+          >
+            <div className="flex items-center gap-2 text-gray-400 mb-2 justify-center">
               <MousePointer className="w-4 h-4" />
               <span className="text-xs">Total Clicks</span>
             </div>
@@ -198,10 +225,10 @@ export default function TeamDashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
+            transition={{ delay: 0.2 }}
+            className="bg-[#111] border border-[#222] rounded-xl p-5 flex flex-col items-center justify-center text-center"
           >
-            <div className="flex items-center gap-2 text-gray-400 mb-2">
+            <div className="flex items-center gap-2 text-gray-400 mb-2 justify-center">
               <ExternalLink className="w-4 h-4" />
               <span className="text-xs">Amazon Clicks</span>
             </div>
@@ -212,29 +239,16 @@ export default function TeamDashboardPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-[#111] border border-[#222] rounded-xl p-5"
+              transition={{ delay: 0.25 }}
+              className="bg-[#111] border border-[#222] rounded-xl p-5 flex flex-col items-center justify-center text-center"
             >
-              <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <div className="flex items-center gap-2 text-gray-400 mb-2 justify-center">
                 <ShoppingBag className="w-4 h-4" />
                 <span className="text-xs">Total Sales</span>
               </div>
               <p className="text-2xl font-bold text-gold">{data?.totalSales || 0}</p>
             </motion.div>
           )}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
-          >
-            <div className="flex items-center gap-2 text-gray-400 mb-2">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs">Reader Downloads</span>
-            </div>
-            <p className="text-2xl font-bold text-white">{data?.readerDownloads || 0}</p>
-          </motion.div>
         </div>
 
         {/* Promo Links Section */}
@@ -311,16 +325,17 @@ export default function TeamDashboardPage() {
                   className="flex items-center justify-between p-4 bg-[#1a1a1a] border border-[#333] rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm">{link.name}</p>
-                    <p className="text-gray-500 text-xs truncate">{link.url}</p>
+                    <p className="text-white font-medium text-sm">{link.label}</p>
+                    <p className="text-gray-500 text-xs truncate">{link.fullUrl || ''}</p>
                   </div>
                   <div className="flex items-center gap-4 ml-4">
                     <div className="text-right">
-                      <p className="text-gold font-semibold">{link.clicks || 0}</p>
+                      <p className="text-gold font-semibold">{link.clickCount || 0}</p>
                       <p className="text-gray-600 text-xs">clicks</p>
                     </div>
                     <button
-                      onClick={() => copyToClipboard(link.url, link.id)}
+                      onClick={() => copyToClipboard(link.fullUrl || '', link.id)}
+                      disabled={!link.fullUrl}
                       className="p-2 bg-[#333] hover:bg-[#444] rounded-lg transition-colors"
                     >
                       {copiedId === link.id ? (
