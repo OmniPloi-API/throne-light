@@ -15,7 +15,8 @@ import {
   Copy,
   Check,
   ExternalLink,
-  TrendingUp
+  TrendingUp,
+  Briefcase
 } from 'lucide-react';
 import { TEAM_MEMBER_ROLES, type TeamMemberRole } from '@/lib/team-member-roles';
 
@@ -26,6 +27,8 @@ interface TeamMemberSession {
   email: string;
   role: TeamMemberRole;
   partnerName: string;
+  partnerSlug: string;
+  position?: string;
 }
 
 interface SubLink {
@@ -60,10 +63,12 @@ export default function TeamDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [subLinks, setSubLinks] = useState<SubLink[]>([]);
   const [subLinkStats, setSubLinkStats] = useState<SubLinkStats[]>([]);
-  const [showCreateLink, setShowCreateLink] = useState(false);
-  const [newLinkName, setNewLinkName] = useState('');
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedMain, setCopiedMain] = useState(false);
+  const [showPositionPrompt, setShowPositionPrompt] = useState(false);
+  const [position, setPosition] = useState('');
+  const [savingPosition, setSavingPosition] = useState(false);
 
   useEffect(() => {
     const sessionData = localStorage.getItem('teamMemberSession');
@@ -77,6 +82,10 @@ export default function TeamDashboardPage() {
       setSession(parsed);
       fetchDashboardData(parsed.partnerId, parsed.id, parsed.role);
       fetchSubLinks(parsed.partnerId, parsed.id);
+      // Show position prompt if not set
+      if (!parsed.position) {
+        setShowPositionPrompt(true);
+      }
     } catch {
       router.push('/partner/team-login');
     }
@@ -115,8 +124,8 @@ export default function TeamDashboardPage() {
     router.push('/partner/team-login');
   };
 
-  const handleCreateLink = async () => {
-    if (!newLinkName.trim() || !session) return;
+  const handleGenerateLink = async () => {
+    if (!session) return;
     setCreating(true);
 
     try {
@@ -126,13 +135,11 @@ export default function TeamDashboardPage() {
         body: JSON.stringify({
           partnerId: session.partnerId,
           teamMemberId: session.id,
-          label: newLinkName.trim(),
+          label: `${session.name}'s Link`,
         }),
       });
 
       if (res.ok) {
-        setNewLinkName('');
-        setShowCreateLink(false);
         fetchSubLinks(session.partnerId, session.id);
         fetchDashboardData(session.partnerId, session.id, session.role);
       }
@@ -146,6 +153,45 @@ export default function TeamDashboardPage() {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const copyMainLink = () => {
+    if (!session?.partnerSlug) return;
+    const mainLink = `https://thronelightpublishing.com/partners/${session.partnerSlug}`;
+    navigator.clipboard.writeText(mainLink);
+    setCopiedMain(true);
+    setTimeout(() => setCopiedMain(false), 2000);
+  };
+
+  const partnerMainLink = session?.partnerSlug 
+    ? `https://thronelightpublishing.com/partners/${session.partnerSlug}` 
+    : '';
+
+  const handleSavePosition = async () => {
+    if (!position.trim() || !session) return;
+    setSavingPosition(true);
+
+    try {
+      const res = await fetch('/api/partners/team-members/position', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: session.id,
+          position: position.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        // Update session with position
+        const updatedSession = { ...session, position: position.trim() };
+        setSession(updatedSession);
+        localStorage.setItem('teamMemberSession', JSON.stringify(updatedSession));
+        setShowPositionPrompt(false);
+      }
+    } catch (error) {
+      console.error('Error saving position:', error);
+    }
+    setSavingPosition(false);
   };
 
   const roleInfo = session?.role ? TEAM_MEMBER_ROLES[session.role] : null;
@@ -165,6 +211,52 @@ export default function TeamDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Position Prompt Modal */}
+      {showPositionPrompt && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#111] border border-[#333] rounded-2xl p-8 max-w-md w-full"
+          >
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/20 rounded-full mb-4">
+                <Briefcase className="w-8 h-8 text-gold" />
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-2">Welcome to the Team!</h2>
+              <p className="text-gray-400 text-sm">
+                What's your role or position on {session.partnerName}'s team?
+              </p>
+            </div>
+
+            <input
+              type="text"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="e.g., Manager, Marketing Lead, Sales Rep"
+              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-white placeholder:text-gray-500 focus:border-gold/50 focus:outline-none mb-4"
+              autoFocus
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleSavePosition}
+                disabled={savingPosition || !position.trim()}
+                className="flex-1 py-3 bg-gold hover:bg-gold/90 text-black font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {savingPosition ? 'Saving...' : 'Save & Continue'}
+              </button>
+              <button
+                onClick={() => setShowPositionPrompt(false)}
+                className="px-6 py-3 bg-[#333] hover:bg-[#444] text-gray-300 rounded-lg transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-[#111] border-b border-[#222] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -264,11 +356,52 @@ export default function TeamDashboardPage() {
           )}
         </div>
 
-        {/* Promo Links Section */}
+        {/* Partner's Main Link */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="bg-[#111] border border-[#222] rounded-xl p-6 mb-6"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-900/30 rounded-lg">
+              <ExternalLink className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-white font-semibold">Partner Promo Link</h2>
+              <p className="text-gray-500 text-xs">Share this link or generate your own tracked link below</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 p-4 bg-[#1a1a1a] border border-[#333] rounded-lg">
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-mono text-sm truncate">{partnerMainLink}</p>
+            </div>
+            <button
+              onClick={copyMainLink}
+              disabled={!partnerMainLink}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm"
+            >
+              {copiedMain ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </>
+              )}
+            </button>
+          </div>
+        </motion.section>
+
+        {/* Your Tracked Links Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
           className="bg-[#111] border border-[#222] rounded-xl p-6"
         >
           <div className="flex items-center justify-between mb-6">
@@ -277,51 +410,25 @@ export default function TeamDashboardPage() {
                 <Link2 className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <h2 className="text-white font-semibold">Your Promo Links</h2>
-                <p className="text-gray-500 text-xs">Create unique links to track your referrals</p>
+                <h2 className="text-white font-semibold">Your Tracked Links</h2>
+                <p className="text-gray-500 text-xs">Generate unique links to track your personal referrals</p>
               </div>
             </div>
-            {!showCreateLink && (
-              <button
-                onClick={() => setShowCreateLink(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-gold/20 hover:bg-gold/30 text-gold border border-gold/30 rounded-lg transition-colors text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                Create Link
-              </button>
-            )}
+            <button
+              onClick={handleGenerateLink}
+              disabled={creating}
+              className="flex items-center gap-2 px-4 py-2 bg-gold hover:bg-gold/90 text-black font-medium rounded-lg transition-colors text-sm disabled:opacity-50"
+            >
+              {creating ? (
+                'Generating...'
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Generate Link
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Create Link Form */}
-          {showCreateLink && (
-            <div className="mb-6 p-4 bg-[#1a1a1a] border border-[#333] rounded-lg">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={newLinkName}
-                  onChange={(e) => setNewLinkName(e.target.value)}
-                  placeholder="Link name (e.g., Instagram Bio, Twitter)"
-                  className="flex-1 px-4 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-white placeholder:text-gray-600 focus:border-gold/50 focus:outline-none text-sm"
-                />
-                <button
-                  onClick={handleCreateLink}
-                  disabled={creating || !newLinkName.trim()}
-                  className="px-4 py-2 bg-gold hover:bg-gold/90 text-black font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
-                >
-                  {creating ? 'Creating...' : 'Create'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCreateLink(false);
-                    setNewLinkName('');
-                  }}
-                  className="px-4 py-2 bg-[#333] hover:bg-[#444] text-gray-300 rounded-lg transition-colors text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Links List with Stats */}
           {subLinkStats.length === 0 ? (

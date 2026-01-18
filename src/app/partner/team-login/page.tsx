@@ -54,7 +54,9 @@ export default function TeamLoginPage() {
         name: data.member.name,
         email: data.member.email,
         role: data.member.role,
+        position: data.member.position,
         partnerName: data.partnerName,
+        partnerSlug: data.partnerSlug,
       }));
 
       router.push('/partner/team-dashboard');

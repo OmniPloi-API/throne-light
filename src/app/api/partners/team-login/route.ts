@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     // Find team member by access code and email
     const { data: member, error } = await supabase
       .from('partner_team_members')
-      .select('id, partner_id, name, email, role, is_active, access_code')
+      .select('id, partner_id, name, email, role, is_active, access_code, position')
       .eq('access_code', accessCode.trim().toUpperCase())
       .eq('email', email.trim().toLowerCase())
       .single();
@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Your access has been deactivated. Please contact the partner.' }, { status: 403 });
     }
 
-    // Get partner name
+    // Get partner info including slug
     const { data: partner } = await supabase
       .from('partners')
-      .select('name')
+      .select('name, slug')
       .eq('id', member.partner_id)
       .single();
 
@@ -66,8 +66,10 @@ export async function POST(req: NextRequest) {
         name: member.name,
         email: member.email,
         role: member.role,
+        position: member.position || null,
       },
       partnerName: partner?.name || 'Partner',
+      partnerSlug: partner?.slug || '',
     });
   } catch (error) {
     console.error('Team login error:', error);

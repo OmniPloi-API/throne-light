@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, ArrowRight, LogIn, Mail, Send } from 'lucide-react';
+import { Lock, ArrowRight, LogIn, Mail, Send, Eye, EyeOff } from 'lucide-react';
 
 export default function PartnerLogin() {
   const [accessCode, setAccessCode] = useState('');
@@ -12,6 +12,7 @@ export default function PartnerLogin() {
   const [showRequestAccess, setShowRequestAccess] = useState(false);
   const [requestEmail, setRequestEmail] = useState('');
   const [requestSent, setRequestSent] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -97,14 +98,22 @@ export default function PartnerLogin() {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
-                      type="text"
+                      type={showCode ? 'text' : 'password'}
                       value={accessCode}
                       onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                      className="w-full pl-10 pr-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold transition font-mono tracking-widest text-center text-lg"
-                      placeholder="XXXX-XXXX-XXXX"
+                      className="w-full pl-10 pr-12 py-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gold transition font-mono tracking-widest text-center text-lg"
+                      placeholder="••••••••••"
                       required
                       autoFocus
+                      autoComplete="off"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowCode(!showCode)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition"
+                    >
+                      {showCode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                   <p className="text-gray-500 text-xs mt-2 text-center">
                     Enter your unique partner access code
