@@ -119,11 +119,11 @@ const AdminWorldMap = () => {
 
   // Scale for marker sizes
   const saleScale = scaleLinear()
-    .domain([1, Math.max(...(mapData?.sales.map(s => s.count) || [1]), 10)])
+    .domain([1, Math.max(...(mapData?.sales?.map(s => s.count) || [1]), 10)])
     .range([4, 20]);
 
   const readerScale = scaleLinear()
-    .domain([1, Math.max(...(mapData?.readers.map(r => r.count) || [1]), 5)])
+    .domain([1, Math.max(...(mapData?.readers?.map(r => r.count) || [1]), 5)])
     .range([6, 24]);
 
   const handleMarkerHover = (
@@ -179,7 +179,7 @@ const AdminWorldMap = () => {
     }
     
     // Add reader locations
-    mapData.readers.forEach(r => {
+    (mapData.readers || []).forEach(r => {
       const existing = countryMap.get(r.country);
       if (existing) {
         existing.readerCount += r.count;
@@ -197,7 +197,7 @@ const AdminWorldMap = () => {
     });
     
     // Add sales locations
-    mapData.sales.forEach(s => {
+    (mapData.sales || []).forEach(s => {
       const existing = countryMap.get(s.country);
       if (existing) {
         existing.salesCount += s.count;
@@ -396,7 +396,7 @@ const AdminWorldMap = () => {
             </Geographies>
 
             {/* Sale Markers (Gold Circles) - shown for 'sales' and 'all' modes */}
-            {(viewMode === 'sales' || viewMode === 'all') && mapData?.sales.map((sale, i) => (
+            {(viewMode === 'sales' || viewMode === 'all') && mapData?.sales?.map((sale, i) => (
               <Marker
                 key={`sale-${i}`}
                 coordinates={[sale.longitude, sale.latitude]}
@@ -415,7 +415,7 @@ const AdminWorldMap = () => {
             ))}
 
             {/* Reader Markers (Pulsing Purple Beacons) - shown for 'readers' and 'all' modes */}
-            {(viewMode === 'readers' || viewMode === 'all') && mapData?.readers.map((reader, i) => (
+            {(viewMode === 'readers' || viewMode === 'all') && mapData?.readers?.map((reader, i) => (
               <Marker
                 key={`reader-${i}`}
                 coordinates={[reader.longitude, reader.latitude]}
@@ -500,7 +500,7 @@ const AdminWorldMap = () => {
             ))}
             
             {/* Revenue Markers (Green Circles with amount) - shown for 'revenue' mode */}
-            {viewMode === 'revenue' && mapData?.sales.filter(s => s.totalAmount > 0).map((sale, i) => (
+            {viewMode === 'revenue' && mapData?.sales?.filter(s => s.totalAmount > 0).map((sale, i) => (
               <Marker
                 key={`revenue-${i}`}
                 coordinates={[sale.longitude, sale.latitude]}
